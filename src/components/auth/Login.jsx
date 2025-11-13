@@ -1,3 +1,4 @@
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\auth\Login.jsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
@@ -15,7 +16,7 @@ import logo from '../../assets/logotusuka-removebg-preview.png';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isLoading, isAuthenticated, isAdmin, isUser } = useAuth();
+  const { login, isLoading, isAuthenticated, isAdmin, hasRole } = useAuth();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -50,11 +51,11 @@ const Login = () => {
     if (isAuthenticated) {
       if (isAdmin()) {
         navigate('/admin/dashboard');
-      } else if (isUser()) {
+      } else if (hasRole('User')) {
         navigate('/user/transactions');
       }
     }
-  }, [isAuthenticated, navigate, isAdmin, isUser]);
+  }, [isAuthenticated, navigate, isAdmin, hasRole]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -99,7 +100,7 @@ const Login = () => {
     if (formData.rememberMe) {
       localStorage.setItem('tusuka_login_credentials', JSON.stringify({
         username: formData.username,
-        password: formData.password, // ✅ Now saving password too
+        password: formData.password,
         rememberMe: true
       }));
     } else {
@@ -118,11 +119,6 @@ const Login = () => {
     } else {
       setApiError(result.message || 'Invalid username or password');
     }
-  };
-
-  // ✅ Toggle password visibility
-  const togglePasswordVisibility = () => {
-    setShowPassword(prev => !prev);
   };
 
   // ✅ Handle "Forgot Password" - clear saved credentials
@@ -225,14 +221,6 @@ const Login = () => {
                       : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
                   } disabled:bg-gray-200 disabled:cursor-not-allowed`}
                 />
-                {/* <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-800 hover:text-gray-900 transition-colors"
-                  disabled={isLoading}
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </button> */}
               </div>
               {errors.password && (
                 <p className="text-red-600 text-xs font-medium mt-1">{errors.password}</p>
@@ -256,7 +244,7 @@ const Login = () => {
               </label>
               <p
                 onClick={handleForgotPassword}
-                className="text-gray-800 text-sm font-medium hover:text-gray-900 underline transition-colors"
+                className="text-gray-800 text-sm font-medium hover:text-gray-900 underline transition-colors cursor-pointer"
               >
                 Forgot password?
               </p>

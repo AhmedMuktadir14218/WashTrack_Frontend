@@ -1,25 +1,87 @@
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\user\UserTransactionPage.jsx
 import { useState, useEffect } from 'react';
 import { useProcessStage } from '../../hooks/useProcessStage';
+import { useAuth } from '../../hooks/useAuth';
 import { workOrderApi } from '../../api/workOrderApi';
 import { washTransactionApi } from '../../api/washTransactionApi';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import toast from 'react-hot-toast';
-import { Search, Save, Delete, SwapHoriz, LocalShipping, X, Remove, Info } from '@mui/icons-material';
-
+import { Search, Save, SwapHoriz, LocalShipping, X, Remove, Info, Lock } from '@mui/icons-material'; 
 const UserTransactionPage = () => {
   const { stages, loading: stagesLoading } = useProcessStage();
+  const { getFirstStageAccess, isAdmin } = useAuth();  // ✅ Add isAdmin
+  
   const [step, setStep] = useState(1);
   const [transactionType, setTransactionType] = useState(null);
   const [selectedStage, setSelectedStage] = useState(null);
+  const [userStageAccess, setUserStageAccess] = useState(null);
+  const [setupDone, setSetupDone] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [workOrders, setWorkOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('workOrders');
-  const [showMarks, setShowMarks] = useState({});
+const UpArrowIcon = ({ className, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className} fill="currentColor" {...props}>
+    <path d="M50 25 L75 50 L62 50 L62 75 L38 75 L38 50 L25 50 Z" />
+  </svg>
+);
 
+const DownArrowIcon = ({ className, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className} fill="currentColor" {...props}>
+    <path transform="rotate(180 50 50)" d="M50 25 L75 50 L62 50 L62 75 L38 75 L38 50 L25 50 Z" />
+  </svg>
+);
+  // ✅ Auto-select stage based on user's process stage access
+  useEffect(() => {
+    if (isAdmin()) {
+      // Admin doesn't use this page
+      return;
+    }
+
+    try {
+      const firstStageAccess = getFirstStageAccess();
+      
+      console.log('First Stage Access:', firstStageAccess);
+      console.log('All Stages:', stages);
+
+      if (!firstStageAccess) {
+        toast.error('No process stage access assigned');
+        setSetupDone(true);
+        return;
+      }
+
+      if (!firstStageAccess.canView) {
+        toast.error('You do not have view access to assigned stage');
+        setSetupDone(true);
+        return;
+      }
+
+      setUserStageAccess(firstStageAccess);
+
+      // Find matching process stage by ID
+      if (stages.length > 0) {
+        const matchingStage = stages.find(s => s.id === firstStageAccess.processStageId);
+        console.log('Matching Stage:', matchingStage);
+        
+        if (matchingStage) {
+          setSelectedStage(matchingStage.id);
+          setSetupDone(true);
+        } else {
+          toast.error(`Process stage not found`);
+          setSetupDone(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up user stage access:', error);
+      toast.error('Failed to setup user access');
+      setSetupDone(true);
+    }
+  }, [stages, getFirstStageAccess, isAdmin]);
+
+  // Fetch work orders
   useEffect(() => {
     const fetchWorkOrders = async () => {
       try {
@@ -49,13 +111,16 @@ const UserTransactionPage = () => {
   });
 
   const handleTypeSelect = (type) => {
+    if (!userStageAccess?.canView) {
+      toast.error(`You don't have access to ${userStageAccess?.processStageName}`);
+      return;
+    }
+
     setTransactionType(type);
     setStep(2);
-    setSelectedStage(null);
     setSearchQuery('');
     setSelectedRows({});
     setActiveTab('workOrders');
-    setShowMarks({});
   };
 
   const handleQuantityChange = (workOrderId, quantity) => {
@@ -77,16 +142,14 @@ const UserTransactionPage = () => {
     setSelectedRows(newRows);
   };
 
-  const toggleMarks = (workOrderId) => {
-    setShowMarks(prev => ({
-      ...prev,
-      [workOrderId]: !prev[workOrderId]
-    }));
-  };
-
   const handleSave = async () => {
     if (!selectedStage) {
-      toast.error('Please select a process stage');
+      toast.error('Process stage not configured');
+      return;
+    }
+
+    if (!userStageAccess?.canView) {
+      toast.error('You do not have permission to perform this action');
       return;
     }
 
@@ -130,11 +193,9 @@ const UserTransactionPage = () => {
         );
         setStep(1);
         setTransactionType(null);
-        setSelectedStage(null);
         setSearchQuery('');
         setSelectedRows({});
         setActiveTab('workOrders');
-        setShowMarks({});
       }
     } catch (error) {
       toast.error('Error creating transactions');
@@ -150,61 +211,89 @@ const UserTransactionPage = () => {
 
   const selectedWorkOrders = workOrders.filter(wo => selectedRows[wo.id]);
 
+  // Show loading while setting up
+  if (!setupDone) {
+    return (
+      <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Show access denied
+  if (!userStageAccess || !userStageAccess.canView) {
+    return (
+      <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="p-4 bg-red-100 rounded-full">
+              <Lock className="text-red-600" style={{ fontSize: 40 }} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-600">
+            You don't have permission to access this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-[550px] bg-gray-50 overflow-hidden">
+    <div className="w-full bg-gray-50 overflow-hidden rounded-xl shadow-md">
       {step === 1 ? (
         // ===== STEP 1: CHOOSE TYPE =====
-        <div className="h-full flex flex-col">
-          <div className="px-6 pt-6 pb-4 flex-shrink-0">
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">
-              Create Transaction
-            </h1>
-            <p className="text-sm text-gray-600">
-              Select transaction type
-            </p>
-          </div>
-
-          <div className="flex-1 px-6 pb-6 space-y-4">
-            {/* Receive Option */}
-            <button
-              onClick={() => handleTypeSelect('receive')}
-              className="w-full p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition duration-300 group text-left shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-green-100 rounded-xl group-hover:bg-green-200 transition duration-200">
-                  <SwapHoriz className="text-green-600" style={{ fontSize: 24 }} />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                Receive Transaction
-              </h3>
-              <p className="text-sm text-gray-600">
-                Add material received at washing stage
-              </p>
-            </button>
-
-            {/* Delivery Option */}
-            <button
-              onClick={() => handleTypeSelect('delivery')}
-              className="w-full p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition duration-300 group text-left shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition duration-200">
-                  <LocalShipping className="text-blue-600" style={{ fontSize: 24 }} />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                Delivery Transaction
-              </h3>
-              <p className="text-sm text-gray-600">
-                Record material delivery from washing stage
-              </p>
-            </button>
-          </div>
+     <div className="h-screen min-h-[550px] flex flex-col bg-white">
+      {/* <div className="px-6 pt-2 pb-2 flex-shrink-0">
+        <div className="flex items-center gap-2 mt-3">
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+            📦 {userStageAccess?.processStageName}
+          </span>
+          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+            ✓ Can Access
+          </span>
         </div>
+      </div> */}
+
+  <div className="flex-1 px-6 pb-6 space-y-8 flex flex-col justify-center items-center">
+    
+     <div className="flex-1 px-6 pb-6 space-y-8 flex flex-col justify-center items-center">
+    
+    {/* Delivery/Send Option - Big Circle (Light Red) */}
+    <button
+      onClick={() => handleTypeSelect('delivery')}
+      className="flex flex-col items-center justify-center p-8 w-48 h-48 bg-red-50 border-2 border-red-200 rounded-full hover:border-red-500 hover:bg-red-100 transition duration-300 group text-center shadow-lg hover:shadow-xl cursor-pointer"
+    >
+      {/* Change: Icon size increased from w-16 h-16 to w-24 h-24 */}
+      <UpArrowIcon className="text-red-600 mb-1 w-24 h-24" />
+      
+      {/* Change: Text size decreased from text-2xl to text-xl */}
+      <h3 className="text-lg font-bold text-red-700">
+        Delivery
+      </h3>
+    </button>
+
+    {/* Receive Option - Big Circle (Light Green) */}
+    <button
+      onClick={() => handleTypeSelect('receive')}
+      className="flex flex-col items-center justify-center p-8 w-48 h-48 bg-green-50 border-2 border-green-200 rounded-full hover:border-green-500 hover:bg-green-100 transition duration-300 group text-center shadow-lg hover:shadow-xl cursor-pointer"
+    >
+      {/* Change: Icon size increased from w-16 h-16 to w-24 h-24 */}
+      <DownArrowIcon className="text-green-600 mb-1 w-24 h-24" />
+
+      {/* Change: Text size decreased from text-2xl to text-xl */}
+      <h3 className="text-lg font-bold text-green-700">
+        RECEIVE
+      </h3>
+    </button>
+
+  </div>
+
+  </div>
+    </div>
       ) : (
-        // ===== STEP 2: TAB VIEW =====
-        <div className="h-full flex flex-col">
+        // ===== STEP 2: TAB VIEW ===== (same as before - copy from previous code)
+        <div className="min-h-[550px] flex flex-col">
           {/* Header */}
           <div className="px-6 pt-4 pb-2 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
@@ -218,41 +307,16 @@ const UserTransactionPage = () => {
                 <h1 className="text-xl font-bold text-gray-800">
                   {transactionType === 'receive' ? 'Receive' : 'Delivery'} Transactions
                 </h1>
-                <p className="text-xs text-gray-600">
-                  {selectedStage ? stageName : 'Select process stage'}
-                </p>
+                <div className="flex items-center gap-2 mt-1 justify-end">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                    {stageName}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Stage Selection */}
-            <div className="mb-3">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Process Stage:
-              </label>
-              {stagesLoading ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <select
-                  value={selectedStage || ''}
-                  onChange={(e) => {
-                    setSelectedStage(e.target.value ? parseInt(e.target.value) : null);
-                    setSelectedRows({});
-                    setSearchQuery('');
-                    setShowMarks({});
-                  }}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 text-sm"
-                >
-                  <option value="">Select a stage</option>
-                  {stages.map(stage => (
-                    <option key={stage.id} value={stage.id}>
-                      {stage.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+             
 
-            {/* Tabs */}
             <div className="flex border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('workOrders')}
@@ -281,7 +345,6 @@ const UserTransactionPage = () => {
           <div className="flex-1 overflow-hidden">
             {activeTab === 'workOrders' && (
               <div className="h-full flex flex-col p-4 pt-2">
-                {/* Search Bar */}
                 <div className="mb-3 relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 18 }} />
                   <input
@@ -293,7 +356,6 @@ const UserTransactionPage = () => {
                   />
                 </div>
 
-                {/* Work Orders List */}
                 <div className="flex-1 overflow-hidden border border-gray-200 rounded-lg bg-white">
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
@@ -304,8 +366,6 @@ const UserTransactionPage = () => {
                       <EmptyState 
                         title="No Work Orders"
                         description="No work orders found matching your search"
-                        variant="search"
-                        size="sm"
                       />
                     </div>
                   ) : (
@@ -316,14 +376,13 @@ const UserTransactionPage = () => {
                             <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">WO No</th>
                             <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Style</th>
                             <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Order Qty</th>
-                            <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Marks</th>
                             <th className="px-3 py-2 text-center font-semibold text-gray-700 text-xs">Add Qty</th>
+                            <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Marks</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                           {filteredWorkOrders.map((wo) => {
                             const hasQuantity = selectedRows[wo.id];
-                            const isMarksVisible = showMarks[wo.id];
                             return (
                               <tr
                                 key={wo.id}
@@ -347,14 +406,6 @@ const UserTransactionPage = () => {
                                   </div>
                                 </td>
                                 <td className="px-3 py-2">
-                                  <div className="flex items-center gap-1">
-           
-                                    <div className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
-                                      {wo.marks}
-                                    </div>
-                                    </div> 
-                                </td>
-                                <td className="px-3 py-2">
                                   <div className="flex items-center justify-center gap-1">
                                     <input
                                       type="number"
@@ -375,6 +426,11 @@ const UserTransactionPage = () => {
                                     )}
                                   </div>
                                 </td>
+                                <td className="px-3 py-2">
+                                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700 max-h-12 overflow-hidden">
+                                    {wo.marks || '-'}
+                                  </div>
+                                </td>
                               </tr>
                             );
                           })}
@@ -388,7 +444,6 @@ const UserTransactionPage = () => {
 
             {activeTab === 'selected' && (
               <div className="h-full flex flex-col p-4 pt-2">
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-xs text-blue-600 font-semibold mb-1">Selected Items</p>
@@ -400,7 +455,6 @@ const UserTransactionPage = () => {
                   </div>
                 </div>
 
-                {/* Selected Items List */}
                 <div className="flex-1 overflow-hidden border border-gray-200 rounded-lg bg-white">
                   {selectedCount === 0 ? (
                     <div className="flex flex-col items-center justify-center h-32 text-gray-500">
@@ -415,7 +469,6 @@ const UserTransactionPage = () => {
                           <tr>
                             <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">WO No</th>
                             <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Style</th>
-                            <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">Marks</th>
                             <th className="px-3 py-2 text-center font-semibold text-gray-700 text-xs">Quantity</th>
                             <th className="px-3 py-2 text-center font-semibold text-gray-700 text-xs">Action</th>
                           </tr>
@@ -428,15 +481,6 @@ const UserTransactionPage = () => {
                               </td>
                               <td className="px-3 py-2">
                                 <div className="text-xs text-gray-700">{wo.styleName}</div>
-                              </td>
-                              <td className="px-3 py-2">
-                                {wo.marks ? (
-                                  <div className="text-xs text-gray-600 truncate max-w-[100px]" title={wo.marks}>
-                                    {wo.marks.substring(0, 20)}...
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-400">-</span>
-                                )}
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <span className="font-bold text-green-700 text-xs">
@@ -459,12 +503,11 @@ const UserTransactionPage = () => {
                   )}
                 </div>
 
-                {/* Save Button */}
                 {selectedCount > 0 && (
                   <div className="mt-3">
                     <button
                       onClick={handleSave}
-                      disabled={isSaving || !selectedStage}
+                      disabled={isSaving}
                       className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-sm rounded-lg shadow-lg hover:shadow-xl transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isSaving ? (
@@ -479,11 +522,6 @@ const UserTransactionPage = () => {
                         </>
                       )}
                     </button>
-                    {!selectedStage && (
-                      <p className="text-xs text-red-600 text-center mt-2">
-                        Please select a process stage first
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
@@ -492,14 +530,13 @@ const UserTransactionPage = () => {
         </div>
       )}
 
-      {/* Add this CSS to hide scrollbars */}
       <style jsx>{`
         .scrollbar-hide {
-          -ms-overflow-style: none;  /* Internet Explorer 10+ */
-          scrollbar-width: none;  /* Firefox */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
         .scrollbar-hide::-webkit-scrollbar {
-          display: none;  /* Safari and Chrome */
+          display: none;
         }
       `}</style>
     </div>

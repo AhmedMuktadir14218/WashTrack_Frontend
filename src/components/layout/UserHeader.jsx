@@ -78,7 +78,7 @@ const UserHeader = () => {
             <LocalLaundryService sx={{ fontSize: { xs: 32, sm: 40 }, color: 'primary.main' }} />
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1.1rem' } }}>
-                Wash Transaction
+                Wash Track
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
                 User Portal

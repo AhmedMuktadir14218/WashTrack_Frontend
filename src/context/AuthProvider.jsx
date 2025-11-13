@@ -1,3 +1,4 @@
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\context\AuthProvider.jsx
 import { useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
 import { authApi } from '../api/authApi';
@@ -42,17 +43,15 @@ export const AuthProvider = ({ children }) => {
       const data = response.data;
 
       if (data.success) {
-        // Save to state
         setUser(data.user);
         setToken(data.token);
         setIsAuthenticated(true);
 
-        // Save to localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
         toast.success(data.message || 'Login successful!');
-        return { success: true, data, user: data.user };
+        return { success: true, user: data.user };
       } else {
         toast.error(data.message || 'Login failed');
         return { success: false, message: data.message };
@@ -106,37 +105,55 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
-  // Check if user has specific role
+  // ==================== ROLE METHODS ====================
   const hasRole = (roleName) => {
     if (!user || !user.roles) return false;
     return user.roles.includes(roleName);
   };
 
-  // Check if user is admin
   const isAdmin = () => {
     return hasRole('Admin');
   };
 
-  // Check if user is regular user
   const isUser = () => {
     return hasRole('User');
   };
 
-  // Get user categories
+  // ==================== PROCESS STAGE METHODS (NEW) ====================
+  const getStageAccesses = () => {
+    if (!user || !user.processStageAccesses) return [];
+    return user.processStageAccesses;
+  };
+
+  const getFirstStageAccess = () => {
+    const accesses = getStageAccesses();
+    return accesses.length > 0 ? accesses[0] : null;
+  };
+
+  const hasStageAccess = (stageName) => {
+    if (isAdmin()) return true;
+    const accesses = getStageAccesses();
+    return accesses.some(access => access.processStageName === stageName);
+  };
+
+  const getStageName = () => {
+    const accesses = getStageAccesses();
+    return accesses.length > 0 ? accesses[0].processStageName : null;
+  };
+
+  // ==================== CATEGORY METHODS (OLD - for backward compatibility) ====================
   const getCategories = () => {
     if (!user || !user.categoryAccesses) return [];
     return user.categoryAccesses;
   };
 
-  // Get category names only
   const getCategoryNames = () => {
     const categories = getCategories();
     return categories.map(cat => cat.categoryName);
   };
 
-  // Check if user has access to specific category
   const hasCategory = (categoryName) => {
-    if (isAdmin()) return true; // Admin has access to all
+    if (isAdmin()) return true;
     const categories = getCategoryNames();
     return categories.includes(categoryName);
   };
@@ -154,10 +171,18 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
 
-    // Utilities
+    // Role Utilities
     hasRole,
     isAdmin,
     isUser,
+
+    // Process Stage Utilities (NEW)
+    getStageAccesses,
+    getFirstStageAccess,
+    hasStageAccess,
+    getStageName,
+
+    // Category Utilities (OLD - backward compatibility)
     getCategories,
     getCategoryNames,
     hasCategory,

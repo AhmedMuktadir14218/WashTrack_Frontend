@@ -1,3 +1,4 @@
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\auth\Register.jsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
@@ -19,11 +20,13 @@ const ROLES = [
   { id: 2, name: 'User' }
 ];
 
-const CATEGORIES = [
+// ✅ CHANGED: Process Stages instead of Categories
+const PROCESS_STAGES = [
   { id: 1, name: '1st Dry' },
-  { id: 2, name: '2nd Dry' },
-  { id: 3, name: '1st Wash' },
-  { id: 4, name: 'Final Wash' }
+  { id: 2, name: 'Unwash' },
+  { id: 3, name: '2nd Dry' },
+  { id: 4, name: '1st Wash' },
+  { id: 5, name: 'Final Wash' }
 ];
 
 const Register = () => {
@@ -37,7 +40,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     roleIds: [],
-    categoryIds: []
+    stageIds: [] // ✅ Changed from categoryIds
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -70,23 +73,29 @@ const Register = () => {
         ? prev.roleIds.filter(id => id !== roleId)
         : [...prev.roleIds, roleId];
       
-      // Clear categories if Admin is selected
+      // Clear process stages if Admin is selected
       return {
         ...prev,
         roleIds: newRoleIds,
-        categoryIds: newRoleIds.includes(1) ? [] : prev.categoryIds
+        stageIds: newRoleIds.includes(1) ? [] : prev.stageIds
       };
     });
   };
 
-  const handleCategoryToggle = (categoryId) => {
-    setFormData(prev => ({
-      ...prev,
-      categoryIds: prev.categoryIds.includes(categoryId)
-        ? prev.categoryIds.filter(id => id !== categoryId)
-        : [...prev.categoryIds, categoryId]
-    }));
-  };
+  // const handleStageToggle = (stageId) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     stageIds: prev.stageIds.includes(stageId)
+  //       ? prev.stageIds.filter(id => id !== stageId)
+  //       : [...prev.stageIds, stageId]
+  //   }));
+  // };
+const handleStageToggle = (stageId) => {
+  setFormData(prev => ({
+    ...prev,
+    stageIds: [stageId] // replace with only the clicked stage
+  }));
+};
 
   const validate = () => {
     const newErrors = {};
@@ -123,9 +132,10 @@ const Register = () => {
       newErrors.roleIds = 'Please select at least one role';
     }
 
+    // ✅ Check process stages for User role
     if (formData.roleIds.includes(2) && !formData.roleIds.includes(1)) {
-      if (formData.categoryIds.length === 0) {
-        newErrors.categoryIds = 'Please select at least one category for User role';
+      if (formData.stageIds.length === 0) {
+        newErrors.stageIds = 'Please select at least one process stage for User role';
       }
     }
 
@@ -363,31 +373,31 @@ const Register = () => {
               )}
             </div>
 
-            {/* Categories (only for User role) */}
+            {/* ✅ Process Stages (only for User role) */}
             {formData.roleIds.includes(2) && !isAdmin && (
               <div>
                 <label className="block text-gray-800 font-semibold text-sm mb-3">
-                  Select Categories (User Access)
+                  Select Process Stages (User Access)
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((category) => (
+                  {PROCESS_STAGES.map((stage) => (
                     <button
-                      key={category.id}
+                      key={stage.id}
                       type="button"
-                      onClick={() => handleCategoryToggle(category.id)}
+                      onClick={() => handleStageToggle(stage.id)}
                       disabled={isLoading}
                       className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 ${
-                        formData.categoryIds.includes(category.id)
+                        formData.stageIds.includes(stage.id)
                           ? 'bg-green-700 text-white shadow-md transform scale-105'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {category.name}
+                      {stage.name}
                     </button>
                   ))}
                 </div>
-                {errors.categoryIds && (
-                  <p className="text-red-600 text-xs font-medium mt-1">{errors.categoryIds}</p>
+                {errors.stageIds && (
+                  <p className="text-red-600 text-xs font-medium mt-1">{errors.stageIds}</p>
                 )}
               </div>
             )}
@@ -397,7 +407,7 @@ const Register = () => {
               <div className="p-3 bg-blue-100 border border-blue-400 rounded-md flex items-start gap-2">
                 <Info className="text-blue-700 flex-shrink-0 mt-0.5" style={{ fontSize: '18px' }} />
                 <p className="text-sm text-blue-900 font-medium">
-                  Admin users have access to all categories automatically.
+                  Admin users have access to all process stages automatically.
                 </p>
               </div>
             )}

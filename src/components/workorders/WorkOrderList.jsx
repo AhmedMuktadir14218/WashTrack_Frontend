@@ -188,7 +188,7 @@ const WorkOrderList = () => {
           <Tooltip title="View Details">
             <IconButton
               size="small"
-              onClick={() => navigate(`/work-orders/${params.row.id}`)}
+              onClick={() => navigate(`/admin/work-orders/${params.row.id}`)}
               className="text-blue-600 hover:bg-blue-50"
             >
               <Visibility fontSize="small" />
@@ -200,7 +200,7 @@ const WorkOrderList = () => {
               <Tooltip title="Edit">
                 <IconButton
                   size="small"
-                  onClick={() => navigate(`/work-orders/edit/${params.row.id}`)}
+                  onClick={() => navigate(`/admin/work-orders/edit/${params.row.id}`)}
                   className="text-green-600 hover:bg-green-50"
                 >
                   <Edit fontSize="small" />
@@ -249,7 +249,7 @@ const WorkOrderList = () => {
             <>
               <Tooltip title="Bulk Upload">
                 <button
-                  onClick={() => navigate('/work-orders/bulk-upload')}
+                  onClick={() => navigate('/admin/work-orders/bulk-upload')}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition duration-200 shadow-md hover:shadow-lg"
                 >
                   <Upload fontSize="small" />
@@ -259,7 +259,7 @@ const WorkOrderList = () => {
 
               <Tooltip title="Add New Work Order">
                 <button
-                  onClick={() => navigate('/work-orders/create')}
+                  onClick={() => navigate('/admin/work-orders/create') }
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2 transition duration-200 shadow-md hover:shadow-lg"
                 >
                   <Add fontSize="small" />

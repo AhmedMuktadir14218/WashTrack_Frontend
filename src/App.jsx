@@ -88,13 +88,25 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="dashboard" replace />} />
+        {/* <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard key="dashboard" />} />
         <Route path="work-orders" element={<WorkOrderList key="work-orders" />} />
         <Route path="work-orders/create" element={<WorkOrderForm key="work-orders-create" />} />
         <Route path="work-orders/edit/:id" element={<WorkOrderForm key="work-orders-edit" />} />
         <Route path="work-orders/:id" element={<WorkOrderDetail key="work-orders-detail" />} />
         <Route path="work-orders/bulk-upload" element={<BulkUpload key="work-orders-bulk" />} />
+        <Route path="transactions" element={<TransactionList key="transactions" />} />
+        <Route path="transactions/filter" element={<TransactionFilter key="transactions-filter" />} />
+        <Route path="wash-status/:workOrderId" element={<WashStatus key="wash-status" />} />
+        <Route path="reports" element={<Reports key="reports" />} />
+        <Route path="*" element={<Navigate to="dashboard" replace />} /> */}
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard key="dashboard" />} />
+        <Route path="work-orders" element={<WorkOrderList key="work-orders" />} />
+        <Route path="work-orders/create" element={<WorkOrderForm key="work-orders-create" />} />
+        <Route path="work-orders/bulk-upload" element={<BulkUpload key="work-orders-bulk" />} />
+        <Route path="work-orders/edit/:id" element={<WorkOrderForm key="work-orders-edit" />} />
+        <Route path="work-orders/:id" element={<WorkOrderDetail key="work-orders-detail" />} />
         <Route path="transactions" element={<TransactionList key="transactions" />} />
         <Route path="transactions/filter" element={<TransactionFilter key="transactions-filter" />} />
         <Route path="wash-status/:workOrderId" element={<WashStatus key="wash-status" />} />
