@@ -1,0 +1,1106 @@
+now this api i want to connect in my separate react project for your undestanding i show some code from react project for better understanding
+{
+  "name": "washrecievedelivary-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.2.2",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
+    "@mui/x-data-grid": "^8.17.0",
+    "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.66.0",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.9.5",
+    "yup": "^1.7.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "vite": "^7.1.7"
+  }
+}
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { AuthProvider } from './context/AuthProvider';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+
+// Admin Components
+import Layout from './components/layout/Layout';
+import Dashboard from './components/dashboard/Dashboard';
+import WorkOrderList from './components/workorders/WorkOrderList';
+import WorkOrderForm from './components/workorders/WorkOrderForm';
+import WorkOrderDetail from './components/workorders/WorkOrderDetail';
+import BulkUpload from './components/workorders/BulkUpload';
+import TransactionList from './components/transactions/TransactionList';
+import TransactionFilter from './components/transactions/TransactionFilter';
+import WashStatus from './components/transactions/WashStatus';
+import Reports from './components/reports/Reports';
+
+// User Components
+import UserLayout from './components/layout/UserLayout';
+import UserTransactionPage from './components/user/UserTransactionPage';
+import WorkHistory from './components/user/WorkHistory';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark: '#1565c0',
+    },
+    secondary: {
+      main: '#dc004e',
+      light: '#f73378',
+      dark: '#9a0036',
+    },
+    background: {
+      default: '#f5f5f5',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        },
+      },
+    },
+  },
+});
+
+// Wrapper component to get location
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="Admin">
+            <Layout key={location.pathname} />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard key="dashboard" />} />
+        <Route path="work-orders" element={<WorkOrderList key="work-orders" />} />
+        <Route path="work-orders/create" element={<WorkOrderForm key="work-orders-create" />} />
+        <Route path="work-orders/bulk-upload" element={<BulkUpload key="work-orders-bulk" />} />
+        <Route path="work-orders/edit/:id" element={<WorkOrderForm key="work-orders-edit" />} />
+        <Route path="work-orders/:id" element={<WorkOrderDetail key="work-orders-detail" />} />
+        <Route path="transactions" element={<TransactionList key="transactions" />} />
+        <Route path="transactions/filter" element={<TransactionFilter key="transactions-filter" />} />
+        <Route path="wash-status/:workOrderId" element={<WashStatus key="wash-status" />} />
+        <Route path="reports" element={<Reports key="reports" />} />
+        <Route path="tfilter" element={<TransactionFilter></TransactionFilter>} />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
+      </Route>
+
+      {/* User Routes */}
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute requiredRole="User">
+            <UserLayout key={location.pathname} />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="transactions" replace />} />
+        <Route path="transactions" element={<UserTransactionPage key="user-transactions" />} />
+        <Route path="work-history" element={<WorkHistory key="user-work-history" />} />
+        <Route path="*" element={<Navigate to="transactions" replace />} />
+      </Route>
+
+      {/* Root redirect */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Global 404 fallback */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+
+          {/* Toast Notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: '#333',
+                color: '#fff',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#4caf50',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#f44336',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\main.jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
+
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\hooks\useAuth.js
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (context === undefined || context === null) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+
+  return context;
+};
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\api\authApi.js
+import axiosInstance from './axiosConfig';
+
+export const authApi = {
+  // Login
+  login: (credentials) => {
+    return axiosInstance.post('/auth/login', credentials);
+  },
+
+  // Register
+  register: (userData) => {
+    return axiosInstance.post('/auth/register', userData);
+  },
+
+  // Get Profile
+  getProfile: () => {
+    return axiosInstance.get('/auth/profile');
+  },
+
+  // Logout (clear local data)
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+};
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\api\axiosConfig.js
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7203/api';
+
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request Interceptor
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Handle errors globally
+    if (error.response) {
+      // Server responded with error status
+      const { status, data } = error.response;
+      
+      switch (status) {
+        case 401:
+          // Unauthorized - clear token and redirect to login
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          toast.error('Session expired. Please login again.');
+          break;
+          
+        case 403:
+          toast.error('You do not have permission to access this resource.');
+          break;
+          
+        case 404:
+          toast.error(data.message || 'Resource not found.');
+          break;
+          
+        case 500:
+          toast.error('Server error. Please try again later.');
+          break;
+          
+        default:
+          toast.error(data.message || 'An error occurred.');
+      }
+    } else if (error.request) {
+      // Request made but no response
+      toast.error('Network error. Please check your connection.');
+    } else {
+      // Something else happened
+      toast.error('An unexpected error occurred.');
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+export default axiosInstance;
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\auth\Register.jsx
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CircularProgress } from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Person,
+  Mail,
+  Lock,
+  Info,
+  ArrowRight
+} from '@mui/icons-material';
+import { useAuth } from '../../hooks/useAuth';
+import backgroundImage from '../../assets/Tusuka Washing Ltd 04.png';
+import logo from '../../assets/logotusuka-removebg-preview.png';
+
+const ROLES = [
+  { id: 1, name: 'Admin' },
+  { id: 2, name: 'User' }
+];
+
+// ✅ CHANGED: Process Stages instead of Categories
+const PROCESS_STAGES = [
+  { id: 1, name: '1st Dry' },
+  { id: 2, name: 'Unwash' },
+  { id: 3, name: '2nd Dry' },
+  { id: 4, name: '1st Wash' },
+  { id: 5, name: 'Final Wash' }
+];
+
+const Register = () => {
+  const navigate = useNavigate();
+  const { register, isLoading, isAuthenticated } = useAuth();
+
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    roleIds: [],
+    stageIds: [] // ✅ Changed from categoryIds
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleRoleToggle = (roleId) => {
+    setFormData(prev => {
+      const newRoleIds = prev.roleIds.includes(roleId)
+        ? prev.roleIds.filter(id => id !== roleId)
+        : [...prev.roleIds, roleId];
+      
+      // Clear process stages if Admin is selected
+      return {
+        ...prev,
+        roleIds: newRoleIds,
+        stageIds: newRoleIds.includes(1) ? [] : prev.stageIds
+      };
+    });
+  };
+
+  // const handleStageToggle = (stageId) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     stageIds: prev.stageIds.includes(stageId)
+  //       ? prev.stageIds.filter(id => id !== stageId)
+  //       : [...prev.stageIds, stageId]
+  //   }));
+  // };
+const handleStageToggle = (stageId) => {
+  setFormData(prev => ({
+    ...prev,
+    stageIds: [stageId] // replace with only the clicked stage
+  }));
+};
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (formData.roleIds.length === 0) {
+      newErrors.roleIds = 'Please select at least one role';
+    }
+
+    // ✅ Check process stages for User role
+    if (formData.roleIds.includes(2) && !formData.roleIds.includes(1)) {
+      if (formData.stageIds.length === 0) {
+        newErrors.stageIds = 'Please select at least one process stage for User role';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    const { confirmPassword, ...dataToSubmit } = formData;
+
+    const result = await register(dataToSubmit);
+
+    if (result.success) {
+      navigate('/login');
+    }
+  };
+
+  const isAdmin = formData.roleIds.includes(1);
+
+  return (
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden py-8"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
+
+      {/* Register Card Container */}
+      <div className="relative z-10 w-full max-w-lg">
+        <div className="bg-gray-300 bg-opacity-60 backdrop-blur-sm rounded-lg shadow-2xl p-8 md:p-10">
+          
+          {/* Logo Header */}
+          <div className="text-center mb-6">
+            <img 
+              src={logo} 
+              alt="Tusuka Logo" 
+              className="h-14 md:h-16 w-auto max-w-xs mx-auto object-contain hover:scale-105 transition-transform duration-300 mb-2"
+            />
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Create Account</h1>
+            <p className="text-gray-700 text-sm mt-1">Register for the system</p>
+          </div>
+
+          {/* Register Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Full Name */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <Person className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" style={{ fontSize: '18px' }} />
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  autoFocus
+                  placeholder="Enter your full name"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-100 border-2 rounded-md transition-all duration-200 text-gray-900 placeholder-gray-600 font-medium ${
+                    errors.fullName 
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-300 focus:bg-white' 
+                      : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
+                  } disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                />
+              </div>
+              {errors.fullName && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.fullName}</p>
+              )}
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <Person className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" style={{ fontSize: '18px' }} />
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  placeholder="Choose a username"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-100 border-2 rounded-md transition-all duration-200 text-gray-900 placeholder-gray-600 font-medium ${
+                    errors.username 
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-300 focus:bg-white' 
+                      : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
+                  } disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                />
+              </div>
+              {errors.username && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.username}</p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" style={{ fontSize: '18px' }} />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  placeholder="Enter your email"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-100 border-2 rounded-md transition-all duration-200 text-gray-900 placeholder-gray-600 font-medium ${
+                    errors.email 
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-300 focus:bg-white' 
+                      : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
+                  } disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" style={{ fontSize: '18px' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  placeholder="Create password (min 6 characters)"
+                  className={`w-full pl-10 pr-12 py-2.5 bg-gray-100 border-2 rounded-md transition-all duration-200 text-gray-900 placeholder-gray-600 font-medium ${
+                    errors.password 
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-300 focus:bg-white' 
+                      : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
+                  } disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-gray-900 transition-colors disabled:cursor-not-allowed"
+                >
+                  {showPassword ? (
+                    <VisibilityOff style={{ fontSize: '18px' }} />
+                  ) : (
+                    <Visibility style={{ fontSize: '18px' }} />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" style={{ fontSize: '18px' }} />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  placeholder="Confirm password"
+                  className={`w-full pl-10 pr-12 py-2.5 bg-gray-100 border-2 rounded-md transition-all duration-200 text-gray-900 placeholder-gray-600 font-medium ${
+                    errors.confirmPassword 
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-300 focus:bg-white' 
+                      : 'border-transparent focus:border-gray-800 focus:ring-2 focus:ring-gray-300 focus:bg-white'
+                  } disabled:bg-gray-200 disabled:cursor-not-allowed`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-gray-900 transition-colors disabled:cursor-not-allowed"
+                >
+                  {showConfirmPassword ? (
+                    <VisibilityOff style={{ fontSize: '18px' }} />
+                  ) : (
+                    <Visibility style={{ fontSize: '18px' }} />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.confirmPassword}</p>
+              )}
+            </div>
+
+            {/* Roles */}
+            <div>
+              <label className="block text-gray-800 font-semibold text-sm mb-3">
+                Select Role
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ROLES.map((role) => (
+                  <button
+                    key={role.id}
+                    type="button"
+                    onClick={() => handleRoleToggle(role.id)}
+                    disabled={isLoading}
+                    className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 ${
+                      formData.roleIds.includes(role.id)
+                        ? 'bg-gray-800 text-white shadow-md transform scale-105'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {role.name}
+                  </button>
+                ))}
+              </div>
+              {errors.roleIds && (
+                <p className="text-red-600 text-xs font-medium mt-1">{errors.roleIds}</p>
+              )}
+            </div>
+
+            {/* ✅ Process Stages (only for User role) */}
+            {formData.roleIds.includes(2) && !isAdmin && (
+              <div>
+                <label className="block text-gray-800 font-semibold text-sm mb-3">
+                  Select Process Stages (User Access)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PROCESS_STAGES.map((stage) => (
+                    <button
+                      key={stage.id}
+                      type="button"
+                      onClick={() => handleStageToggle(stage.id)}
+                      disabled={isLoading}
+                      className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 ${
+                        formData.stageIds.includes(stage.id)
+                          ? 'bg-green-700 text-white shadow-md transform scale-105'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {stage.name}
+                    </button>
+                  ))}
+                </div>
+                {errors.stageIds && (
+                  <p className="text-red-600 text-xs font-medium mt-1">{errors.stageIds}</p>
+                )}
+              </div>
+            )}
+
+            {/* Admin Info */}
+            {isAdmin && (
+              <div className="p-3 bg-blue-100 border border-blue-400 rounded-md flex items-start gap-2">
+                <Info className="text-blue-700 flex-shrink-0 mt-0.5" style={{ fontSize: '18px' }} />
+                <p className="text-sm text-blue-900 font-medium">
+                  Admin users have access to all process stages automatically.
+                </p>
+              </div>
+            )}
+
+            {/* Register Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-md shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <CircularProgress size={20} color="inherit" />
+                  <span>Registering...</span>
+                </>
+              ) : (
+                <>
+                  <span>Register</span>
+                  <ArrowRight style={{ fontSize: '20px' }} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Login Link */}
+          <div className="text-center mt-6">
+            <p className="text-gray-800 text-sm font-medium">
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="text-gray-900 hover:text-gray-950 font-bold hover:underline transition-colors"
+              >
+                Login here
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
+D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\layout\Sidebar.jsx
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Drawer,
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Typography,
+  useTheme,
+  useMediaQuery,
+  Collapse
+} from '@mui/material';
+import {
+  Dashboard,
+  Assignment,
+  SwapHoriz,
+  Assessment,
+  Settings,
+  LocalLaundryService,
+  ExpandLess,
+  ExpandMore,
+  TrendingUp,
+  FilterAlt,
+  AddCircle
+} from '@mui/icons-material';
+import { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+
+const menuItems = [
+  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'User'] },
+  { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin', 'User'] },
+  { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin', 'User'] },
+  // {
+  //   text: 'Transactions',
+  //   icon: <SwapHoriz />,
+  //   roles: ['Admin', 'User'],
+  //   submenu: [
+  //     { text: 'All Transactions', path: '/admin/transactions', icon: <SwapHoriz /> },
+  //     { text: 'Advanced Filter', path: '/admin/transactions/filter', icon: <FilterAlt /> },
+  //   ]
+  // },
+  { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },  // ✅ Add this
+  // { text: 'Settings', icon: <Settings />, path: '/admin/settings', roles: ['Admin'] },
+];
+
+const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { hasRole } = useAuth();
+
+  const [expandedMenu, setExpandedMenu] = useState(null);
+
+  const handleNavigation = (path) => {
+    console.log('Navigating to:', path);
+    navigate(path);
+    if (isMobile) {
+      handleDrawerToggle();
+    }
+  };
+
+  const toggleSubmenu = (index) => {
+    setExpandedMenu(expandedMenu === index ? null : index);
+  };
+
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Logo Section */}
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          bgcolor: 'primary.main',
+          color: 'white',
+        }}
+      >
+        <LocalLaundryService sx={{ fontSize: 40 }} />
+        <Box>
+          <Typography variant="h6" fontWeight="bold">
+            WRD System
+          </Typography>
+          <Typography variant="caption">
+            Wash Receive Delivery
+          </Typography>
+        </Box>
+      </Box>
+
+      <Divider />
+
+      {/* Menu Items */}
+      <List sx={{ flexGrow: 1, px: 2, py: 2 }}>
+        {menuItems.map((item, index) => {
+          const hasAccess = item.roles.some(role => hasRole(role));
+          if (!hasAccess) return null;
+
+          const isActive = location.pathname === item.path;
+          const isSubmenuOpen = expandedMenu === index;
+
+          // Menu item with submenu
+          if (item.submenu) {
+            return (
+              <Box key={item.text}>
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => toggleSubmenu(index)}
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: isSubmenuOpen ? 'primary.light' : 'transparent',
+                      color: isSubmenuOpen ? 'primary.contrastText' : 'text.primary',
+                      '&:hover': {
+                        bgcolor: isSubmenuOpen ? 'primary.main' : 'action.hover',
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ color: isSubmenuOpen ? 'primary.contrastText' : 'inherit', minWidth: 40 }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontWeight: isSubmenuOpen ? 600 : 400,
+                      }}
+                    />
+                    {isSubmenuOpen ? <ExpandLess /> : <ExpandMore />}
+                  </ListItemButton>
+                </ListItem>
+
+                {/* Submenu Items */}
+                <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding sx={{ pl: 4 }}>
+                    {item.submenu.map(subitem => {
+                      const isSubActive = location.pathname === subitem.path;
+                      return (
+                        <ListItem key={subitem.text} disablePadding sx={{ mb: 0.5 }}>
+                          <ListItemButton
+                            onClick={() => handleNavigation(subitem.path)}
+                            sx={{
+                              borderRadius: 2,
+                              bgcolor: isSubActive ? 'primary.light' : 'transparent',
+                              color: isSubActive ? 'primary.contrastText' : 'text.primary',
+                              '&:hover': {
+                                bgcolor: isSubActive ? 'primary.main' : 'action.hover',
+                              },
+                            }}
+                          >
+                            <ListItemIcon sx={{ color: isSubActive ? 'primary.contrastText' : 'inherit', minWidth: 40, fontSize: '0.85rem' }}>
+                              {subitem.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={subitem.text}
+                              primaryTypographyProps={{
+                                fontWeight: isSubActive ? 600 : 400,
+                                fontSize: '0.9rem',
+                              }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Collapse>
+              </Box>
+            );
+          }
+
+          // Regular menu item
+          return (
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => handleNavigation(item.path)}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: isActive ? 'primary.light' : 'transparent',
+                  color: isActive ? 'primary.contrastText' : 'text.primary',
+                  '&:hover': {
+                    bgcolor: isActive ? 'primary.main' : 'action.hover',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: isActive ? 'primary.contrastText' : 'inherit', minWidth: 40 }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    fontWeight: isActive ? 600 : 400,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      {/* Footer */}
+      <Box sx={{ p: 2, bgcolor: 'grey.100' }}>
+        <Typography variant="caption" color="text.secondary" align="center" display="block">
+          © 2025 WRD System
+        </Typography>
+        <Typography variant="caption" color="text.secondary" align="center" display="block">
+          Version 1.0.0
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Box
+      component="nav"
+      sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+    >
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Desktop Drawer */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          },
+        }}
+        open
+      >
+        {drawerContent}
+      </Drawer>
+    </Box>
+  );
+};
+
+export default Sidebar;
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\utils\constants.js
+// API Base URL
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7001/api';
+
+// Process Stages
+export const PROCESS_STAGES = {
+  FIRST_DRY: { value: 1, label: '1st Dry' },
+  SECOND_DRY: { value: 2, label: '2nd Dry' },
+  FIRST_WASH: { value: 3, label: '1st Wash' },
+  FINAL_WASH: { value: 4, label: 'Final Wash' }
+};
+
+// Transaction Types
+export const TRANSACTION_TYPES = {
+  RECEIVE: { value: 1, label: 'Receive' },
+  DELIVERY: { value: 2, label: 'Delivery' }
+};
+
+// Roles
+export const ROLES = {
+  ADMIN: 'Admin',
+  USER: 'User'
+};
+
+// Categories
+export const CATEGORIES = [
+  { id: 1, name: '1st Dry' },
+  { id: 2, name: '2nd Dry' },
+  { id: 3, name: '1st Wash' },
+  { id: 4, name: 'Final Wash' }
+];
+
+// Date Format
+export const DATE_FORMAT = 'yyyy-MM-dd';
+export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
+
+// Toast Messages
+export const TOAST_MESSAGES = {
+  LOGIN_SUCCESS: 'Login successful!',
+  LOGIN_FAILED: 'Login failed',
+  REGISTER_SUCCESS: 'Registration successful!',
+  REGISTER_FAILED: 'Registration failed',
+  LOGOUT_SUCCESS: 'Logged out successfully',
+  UNAUTHORIZED: 'You are not authorized to access this resource',
+  NETWORK_ERROR: 'Network error. Please check your connection.',
+  SERVER_ERROR: 'Server error. Please try again later.',
+};
+
+// Local Storage Keys
+export const STORAGE_KEYS = {
+  TOKEN: 'token',
+  USER: 'user'
+};
+
+so after admin login show a sidebar and in this sidebar add Manage User menu after click this menu show the list of user as a table and in this table 2 action button all row delete and edit icon if delete icon show a confirmation modal and and cofirm to delete same way edit icon show a modal and change ther the username password and access role evry thing. top of the table right side corner add a Create User button this button click show a modal for all field you can take idea from register component 
+

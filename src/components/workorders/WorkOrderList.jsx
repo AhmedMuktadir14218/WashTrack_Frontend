@@ -26,7 +26,7 @@ const WorkOrderList = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-
+// console.log('Render WorkOrderList Component',workOrders);
   // Fetch work orders
   const fetchWorkOrders = async () => {
     try {

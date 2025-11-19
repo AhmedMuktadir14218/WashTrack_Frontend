@@ -28,24 +28,15 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-
+import { People } from '@mui/icons-material';
+// Update the menuItems array in Sidebar.jsx
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'User'] },
   { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin', 'User'] },
   { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin', 'User'] },
-  // {
-  //   text: 'Transactions',
-  //   icon: <SwapHoriz />,
-  //   roles: ['Admin', 'User'],
-  //   submenu: [
-  //     { text: 'All Transactions', path: '/admin/transactions', icon: <SwapHoriz /> },
-  //     { text: 'Advanced Filter', path: '/admin/transactions/filter', icon: <FilterAlt /> },
-  //   ]
-  // },
-  { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },  // ✅ Add this
-  // { text: 'Settings', icon: <Settings />, path: '/admin/settings', roles: ['Admin'] },
+  { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },
+  { text: 'Manage Users', icon: <People />, path: '/admin/users', roles: ['Admin'] },   
 ];
-
 const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();

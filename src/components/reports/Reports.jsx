@@ -12,7 +12,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-
+// console.log('Render Reports Component',workOrders);
   useEffect(() => {
     loadData();
   }, []);
@@ -40,49 +40,44 @@ const Reports = () => {
     }
   };
 
-  // ✅ FIXED: Use useMemo to prevent recreating reportData on every render
-  const reportData = useMemo(() => {
-    return workOrders.map(wo => {
-      const woTransactions = transactions.filter(t => t.workOrderId === wo.id);
+const reportData = useMemo(() => {
+  return workOrders.map(wo => {
+    const woTransactions = transactions.filter(t => t.workOrderId === wo.id);
 
-      const getStageQuantity = (stageName, type) => {
-        const stageTransactions = woTransactions.filter(
-          t => t.processStageName === stageName && t.transactionType === type
-        );
-        return stageTransactions.reduce((sum, t) => sum + t.quantity, 0);
-      };
+    const getStageQuantity = (stageName, type) => {
+      const stageTransactions = woTransactions.filter(
+        t => t.processStageName === stageName && t.transactionType === type
+      );
+      return stageTransactions.reduce((sum, t) => sum + t.quantity, 0);
+    };
 
-      return {
-        id: wo.id,
-        workOrderNo: wo.workOrderNo,
-        fastReactNo: wo.fastReactNo || '-',
-        buyer: wo.buyer,
-        styleName: wo.styleName,
-        marks: wo.marks || '-',
-        orderQuantity: wo.orderQuantity,
+    return {
+      id: wo.id,
+      workOrderNo: wo.workOrderNo,
+      fastReactNo: wo.fastReactNo || '-',
+      buyer: wo.buyer,
+      styleName: wo.styleName,
+      marks: wo.marks || '-',
+      orderQuantity: wo.orderQuantity,
+      WashTargetDate: wo.washTargetDate ? new Date(wo.washTargetDate).toLocaleDateString('en-GB') : '-', 
+      TotalWashReceived: wo.totalWashReceived || 0,
+      TotalWashDelivery: wo.totalWashDelivery || 0,
+      firstDryReceive: getStageQuantity('1st Dry', 1),
+      firstDryDelivery: getStageQuantity('1st Dry', 2),
+      unwashReceive: getStageQuantity('Unwash', 1),
+      unwashDelivery: getStageQuantity('Unwash', 2),
+      firstWashReceive: getStageQuantity('1st Wash', 1),
+      firstWashDelivery: getStageQuantity('1st Wash', 2),
+      secondDryReceive: getStageQuantity('2nd Dry', 1),
+      secondDryDelivery: getStageQuantity('2nd Dry', 2),
+      // secondWashReceive: getStageQuantity('2nd Wash', 1),
+      // secondWashDelivery: getStageQuantity('2nd Wash', 2),
+      finalWashReceive: getStageQuantity('Final Wash', 1),
+      finalWashDelivery: getStageQuantity('Final Wash', 2),
+    };
+  });
+}, [workOrders, transactions]);
 
-        firstDryReceive: getStageQuantity('1st Dry', 1),
-        firstDryDelivery: getStageQuantity('1st Dry', 2),
-
-        unwashReceive: getStageQuantity('Unwash', 1),
-        unwashDelivery: getStageQuantity('Unwash', 2),
-
-        firstWashReceive: getStageQuantity('1st Wash', 1),
-        firstWashDelivery: getStageQuantity('1st Wash', 2),
-
-        secondDryReceive: getStageQuantity('2nd Dry', 1),
-        secondDryDelivery: getStageQuantity('2nd Dry', 2),
-
-        secondWashReceive: getStageQuantity('2nd Wash', 1),
-        secondWashDelivery: getStageQuantity('2nd Wash', 2),
-
-        finalWashReceive: getStageQuantity('Final Wash', 1),
-        finalWashDelivery: getStageQuantity('Final Wash', 2),
-      };
-    });
-  }, [workOrders, transactions]); // ✅ Only recalculate when these change
-
-  // ✅ FIXED: Separate useEffect for filtering with proper dependency array
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredData(reportData);
@@ -97,7 +92,7 @@ const Reports = () => {
       );
       setFilteredData(filtered);
     }
-  }, [searchQuery, reportData]); // ✅ Now this won't cause infinite loop
+  }, [searchQuery, reportData]);
 
   const handleExportExcel = () => {
     const headers = [
@@ -105,8 +100,11 @@ const Reports = () => {
       'FastReact No',
       'Buyer',
       'Style Name',
-      'Marks',
       'Order Qty',
+      'Wash Target Date',
+      'Marks',
+      'Total Wash Received',
+      'Total Wash Delivery',
       '1st Dry Receive',
       '1st Dry Delivery',
       'Unwash Receive',
@@ -115,8 +113,8 @@ const Reports = () => {
       '1st Wash Delivery',
       '2nd Dry Receive',
       '2nd Dry Delivery',
-      '2nd Wash Receive',
-      '2nd Wash Delivery',
+      // '2nd Wash Receive',
+      // '2nd Wash Delivery',
       'Final Wash Receive',
       'Final Wash Delivery',
     ];
@@ -126,8 +124,11 @@ const Reports = () => {
       item.fastReactNo,
       item.buyer,
       item.styleName,
-      item.marks,
       item.orderQuantity,
+      item.WashTargetDate,
+      item.marks,
+      item.TotalWashReceived,
+      item.TotalWashDelivery,
       item.firstDryReceive,
       item.firstDryDelivery,
       item.unwashReceive,
@@ -136,8 +137,8 @@ const Reports = () => {
       item.firstWashDelivery,
       item.secondDryReceive,
       item.secondDryDelivery,
-      item.secondWashReceive,
-      item.secondWashDelivery,
+      // item.secondWashReceive,
+      // item.secondWashDelivery,
       item.finalWashReceive,
       item.finalWashDelivery,
     ]);
@@ -256,10 +257,24 @@ const Reports = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm print:text-xs">
-              {/* FIXED HEADER */}
+              {/* FIXED HEADER STRUCTURE */}
               <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
+                {/* Main Header Row */}
                 <tr>
-                  {/* Basic Info */}
+                  <th colSpan="7" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50">
+                    Basic Information
+                  </th>
+                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-50 border-l-2 border-gray-300">
+                    Total Wash
+                  </th>
+                  <th colSpan="12" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-50 border-l-2 border-gray-300">
+                    Process Stages
+                  </th>
+                </tr>
+
+                {/* Secondary Header Row */}
+                <tr>
+                  {/* Basic Info Columns */}
                   <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[120px]">
                     Work Order No
                   </th>
@@ -276,63 +291,72 @@ const Reports = () => {
                     Order Qty
                   </th>
                   <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[120px]">
+                    Wash Target Date
+                  </th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[100px]">
                     Marks
                   </th>
 
-                  {/* 1st Dry */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-yellow-50 border-l-2 border-yellow-200">
+                  {/* Total Wash Columns */}
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-l-2 border-gray-300">
+                    Received
+                  </th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs">
+                    Delivered
+                  </th>
+
+                  {/* Process Stage Headers */}
+                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-yellow-50 border-l-2 border-yellow-200">
                     1st Dry
                   </th>
-
-                  {/* Unwash */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-blue-50 border-l-2 border-blue-200">
+                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-blue-50 border-l-2 border-blue-200">
                     Unwash
                   </th>
-
-                  {/* 1st Wash */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-green-50 border-l-2 border-green-200">
+                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-green-50 border-l-2 border-green-200">
                     1st Wash
                   </th>
-
-                  {/* 2nd Dry */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-orange-50 border-l-2 border-orange-200">
+                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-orange-50 border-l-2 border-orange-200">
                     2nd Dry
                   </th>
-
-                  {/* 2nd Wash */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-pink-50 border-l-2 border-pink-200">
+                    {/*  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-pink-50 border-l-2 border-pink-200">
                     2nd Wash
-                  </th>
-
-                  {/* Final Wash */}
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-purple-50 border-l-2 border-purple-200">
+                  </th>*/}
+                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-purple-50 border-l-2 border-purple-200">
                     Final Wash
                   </th>
                 </tr>
 
-                {/* Sub-headers */}
+                {/* Sub-headers for Process Stages */}
                 <tr>
-                  <th colSpan="6"></th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs border-r border-yellow-200">Rcv</th>
+                  <th colSpan="7"></th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-l-2 border-gray-300">
+                    Rcv
+                  </th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs">
+                    Del
+                  </th>
+                  
+                  {/* Process Stage Sub-headers */}
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs border-l-2 border-yellow-200">Rcv</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs border-r border-blue-200">Rcv</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs border-l-2 border-blue-200">Rcv</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs border-r border-green-200">Rcv</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs border-l-2 border-green-200">Rcv</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs border-r border-orange-200">Rcv</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs border-l-2 border-orange-200">Rcv</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs border-r border-pink-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs border-r border-purple-200">Rcv</th>
+                  {/* <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs border-l-2 border-pink-200">Rcv</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs">Del</th> */}
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs border-l-2 border-purple-200">Rcv</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs">Del</th>
                 </tr>
               </thead>
 
-              {/* BODY - SCROLLABLE */}
+              {/* TABLE BODY */}
               <tbody className="divide-y divide-gray-200">
                 {filteredData.map((item, index) => (
                   <tr key={item.id} className={`hover:bg-gray-50 transition duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                    {/* Basic Info */}
+                    {/* Basic Information */}
                     <td className="px-4 py-3 font-bold text-primary-600">{item.workOrderNo}</td>
                     <td className="px-4 py-3 text-gray-700 text-sm">{item.fastReactNo}</td>
                     <td className="px-4 py-3 text-gray-700 font-medium">{item.buyer}</td>
@@ -340,52 +364,58 @@ const Reports = () => {
                     <td className="px-4 py-3 font-semibold text-gray-800">
                       {item.orderQuantity.toLocaleString()}
                     </td>
+                    <td className="px-4 py-3 text-gray-600 text-xs" title={item.WashTargetDate}>
+                      {item.WashTargetDate}
+                    </td>
                     <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[120px]" title={item.marks}>
                       {item.marks}
                     </td>
+                    
+                    {/* Total Wash */}
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-gray-100 border-l-2 border-gray-300">
+                      {item.TotalWashReceived.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-gray-100">
+                      {item.TotalWashDelivery.toLocaleString()}
+                    </td>
 
-                    {/* 1st Dry */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-yellow-50 border-r border-yellow-200">
+                    {/* Process Stages */}
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-yellow-50 border-l-2 border-yellow-200">
                       {item.firstDryReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-yellow-50">
                       {item.firstDryDelivery.toLocaleString()}
                     </td>
 
-                    {/* Unwash */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-blue-50 border-r border-blue-200">
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-blue-50 border-l-2 border-blue-200">
                       {item.unwashReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-blue-50">
                       {item.unwashDelivery.toLocaleString()}
                     </td>
 
-                    {/* 1st Wash */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-green-50 border-r border-green-200">
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-green-50 border-l-2 border-green-200">
                       {item.firstWashReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-green-50">
                       {item.firstWashDelivery.toLocaleString()}
                     </td>
 
-                    {/* 2nd Dry */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-orange-50 border-r border-orange-200">
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-orange-50 border-l-2 border-orange-200">
                       {item.secondDryReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-orange-50">
                       {item.secondDryDelivery.toLocaleString()}
                     </td>
 
-                    {/* 2nd Wash */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-pink-50 border-r border-pink-200">
+                    {/* <td className="px-3 py-3 text-center font-bold text-gray-800 bg-pink-50 border-l-2 border-pink-200">
                       {item.secondWashReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-pink-50">
                       {item.secondWashDelivery.toLocaleString()}
-                    </td>
+                    </td> */}
 
-                    {/* Final Wash */}
-                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-purple-50 border-r border-purple-200">
+                    <td className="px-3 py-3 text-center font-bold text-gray-800 bg-purple-50 border-l-2 border-purple-200">
                       {item.finalWashReceive.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-gray-800 bg-purple-50">
@@ -395,43 +425,53 @@ const Reports = () => {
                 ))}
               </tbody>
 
-              {/* TOTALS ROW */}
+              {/* TOTALS FOOTER */}
               <tfoot className="bg-gray-100 border-t-2 border-gray-300 font-bold">
                 <tr>
-                  <td colSpan="6" className="px-4 py-3 text-right">
+                  <td colSpan="7" className="px-4 py-3 text-right">
                     TOTAL:
                   </td>
-                  <td className="px-3 py-3 text-center bg-yellow-100 border-r border-yellow-200">
+                  
+                  {/* Total Wash Totals */}
+                  <td className="px-3 py-3 text-center bg-gray-200 border-l-2 border-gray-300">
+                    {filteredData.reduce((sum, item) => sum + item.TotalWashReceived, 0).toLocaleString()}
+                  </td>
+                  <td className="px-3 py-3 text-center bg-gray-200">
+                    {filteredData.reduce((sum, item) => sum + item.TotalWashDelivery, 0).toLocaleString()}
+                  </td>
+
+                  {/* Process Stage Totals */}
+                  <td className="px-3 py-3 text-center bg-yellow-100 border-l-2 border-yellow-200">
                     {filteredData.reduce((sum, item) => sum + item.firstDryReceive, 0).toLocaleString()}
                   </td>
                   <td className="px-3 py-3 text-center bg-yellow-100">
                     {filteredData.reduce((sum, item) => sum + item.firstDryDelivery, 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-center bg-blue-100 border-r border-blue-200">
+                  <td className="px-3 py-3 text-center bg-blue-100 border-l-2 border-blue-200">
                     {filteredData.reduce((sum, item) => sum + item.unwashReceive, 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-center bg-blue-100">
+                                  <td className="px-3 py-3 text-center bg-blue-100">
                     {filteredData.reduce((sum, item) => sum + item.unwashDelivery, 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-center bg-green-100 border-r border-green-200">
+                  <td className="px-3 py-3 text-center bg-green-100 border-l-2 border-green-200">
                     {filteredData.reduce((sum, item) => sum + item.firstWashReceive, 0).toLocaleString()}
                   </td>
                   <td className="px-3 py-3 text-center bg-green-100">
                     {filteredData.reduce((sum, item) => sum + item.firstWashDelivery, 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-center bg-orange-100 border-r border-orange-200">
+                  <td className="px-3 py-3 text-center bg-orange-100 border-l-2 border-orange-200">
                     {filteredData.reduce((sum, item) => sum + item.secondDryReceive, 0).toLocaleString()}
                   </td>
                   <td className="px-3 py-3 text-center bg-orange-100">
                     {filteredData.reduce((sum, item) => sum + item.secondDryDelivery, 0).toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-center bg-pink-100 border-r border-pink-200">
+                  {/* <td className="px-3 py-3 text-center bg-pink-100 border-l-2 border-pink-200">
                     {filteredData.reduce((sum, item) => sum + item.secondWashReceive, 0).toLocaleString()}
                   </td>
                   <td className="px-3 py-3 text-center bg-pink-100">
                     {filteredData.reduce((sum, item) => sum + item.secondWashDelivery, 0).toLocaleString()}
-                  </td>
-                  <td className="px-3 py-3 text-center bg-purple-100 border-r border-purple-200">
+                  </td> */}
+                  <td className="px-3 py-3 text-center bg-purple-100 border-l-2 border-purple-200">
                     {filteredData.reduce((sum, item) => sum + item.finalWashReceive, 0).toLocaleString()}
                   </td>
                   <td className="px-3 py-3 text-center bg-purple-100">
