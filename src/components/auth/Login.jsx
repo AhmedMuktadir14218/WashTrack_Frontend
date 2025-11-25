@@ -151,12 +151,13 @@ const Login = () => {
         <div className="bg-gray-300 bg-opacity-60 backdrop-blur-sm rounded-lg shadow-2xl p-8 md:p-10">
           
           {/* Logo Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-2">
             <img 
               src={logo} 
               alt="Tusuka Logo" 
               className="h-16 md:h-20 w-auto max-w-xs mx-auto object-contain hover:scale-105 transition-transform duration-300"
             />
+            <h1 className="text-center text-xl font-bold p-0">Wash Track</h1>
           </div>
 
           {/* Error Alert */}
@@ -166,6 +167,7 @@ const Login = () => {
               <p className="text-red-900 text-sm font-medium">{apiError}</p>
             </div>
           )}
+          
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -271,7 +273,7 @@ const Login = () => {
           </form>
 
           {/* Register Link */}
-          <div className="text-center mt-6">
+          {/* <div className="text-center mt-6">
             <p className="text-gray-800 text-sm font-medium">
               Don't have an account?{' '}
               <Link
@@ -281,7 +283,7 @@ const Login = () => {
                 Register here
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

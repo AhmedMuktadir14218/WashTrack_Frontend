@@ -6,7 +6,9 @@ export const workOrderApi = {
   getAll: () => {
     return axiosInstance.get('/workorder');
   },
-
+  getPaginated: (params) => {
+    return axiosInstance.get('/workorder/paginated', { params });
+  },
   // Get work order by ID
   getById: (id) => {
     return axiosInstance.get(`/workorder/${id}`);

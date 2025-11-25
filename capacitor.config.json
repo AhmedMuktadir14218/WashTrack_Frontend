@@ -1,6 +1,6 @@
 {
   "appId": "com.example.app",
-  "appName": "washTrack_tusuka",
+  "appName": "WashTrack",
   "webDir": "dist",
   "server": {
     "androidScheme": "http"

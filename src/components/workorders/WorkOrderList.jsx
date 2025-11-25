@@ -47,7 +47,7 @@ const WorkOrderList = () => {
   useEffect(() => {
     fetchWorkOrders();
   }, []);
-
+  // console.log('WorkOrders:', workOrders);
   // Search filter
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -166,6 +166,18 @@ const WorkOrderList = () => {
         />
       ),
     },
+    {
+  field: 'washTargetDate',
+  headerName: 'Wash Target',
+  width: 150,
+  headerClassName: 'bg-gray-100 font-bold',
+  renderCell: (params) => (
+    <span className="text-gray-600 text-sm">
+      {params.value ? format(new Date(params.value), 'dd MMM yyyy') : 'N/A'}
+    </span>
+  ),
+},
+
     {
       field: 'createdAt',
       headerName: 'Created Date',

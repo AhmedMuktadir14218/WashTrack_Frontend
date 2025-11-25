@@ -1,19 +1,57 @@
 const LoadingSpinner = ({ size = 'md', fullScreen = false }) => {
-  const sizeClass = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12',
-  }[size];
+  // Define sizes in pixels
+  const sizes = {
+    sm: 20,
+    md: 40,
+    lg: 60
+  };
+  
+  const spinnerSize = sizes[size] || sizes.md;
+  const borderWidth = Math.max(2, Math.floor(spinnerSize / 10));
+  const spinnerStyle = {
+    width: `${spinnerSize}px`,
+    height: `${spinnerSize}px`,
+    border: `${borderWidth}px solid #e5e7eb`, // light gray
+    borderTop: `${borderWidth}px solid #3b82f6`, // blue
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  };
+
+  // Add keyframes to document if not already present
+  if (!document.querySelector('#spinner-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'spinner-keyframes';
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   const spinner = (
-    <div className="flex items-center justify-center">
-      <div className={`${sizeClass} border-4 border-gray-200 border-t-primary-600 rounded-full animate-spin`} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={spinnerStyle} />
     </div>
   );
 
   if (fullScreen) {
+    const fullScreenStyle = {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 50
+    };
+    
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div style={fullScreenStyle}>
         {spinner}
       </div>
     );

@@ -39,7 +39,7 @@ const Reports = () => {
       setLoading(false);
     }
   };
-
+// console.log('Render Reports Component',workOrders);
 const reportData = useMemo(() => {
   return workOrders.map(wo => {
     const woTransactions = transactions.filter(t => t.workOrderId === wo.id);
@@ -53,6 +53,8 @@ const reportData = useMemo(() => {
 
     return {
       id: wo.id,
+      factory: wo.factory,
+      unit: wo.unit,
       workOrderNo: wo.workOrderNo,
       fastReactNo: wo.fastReactNo || '-',
       buyer: wo.buyer,
@@ -96,6 +98,8 @@ const reportData = useMemo(() => {
 
   const handleExportExcel = () => {
     const headers = [
+      'Factory',
+      'Unit',
       'Work Order No',
       'FastReact No',
       'Buyer',
@@ -120,6 +124,8 @@ const reportData = useMemo(() => {
     ];
 
     const rows = filteredData.map(item => [
+      item.factory,
+      item.unit,
       item.workOrderNo,
       item.fastReactNo,
       item.buyer,
@@ -258,105 +264,98 @@ const reportData = useMemo(() => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm print:text-xs">
               {/* FIXED HEADER STRUCTURE */}
-              <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
-                {/* Main Header Row */}
-                <tr>
-                  <th colSpan="7" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50">
-                    Basic Information
-                  </th>
-                  <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-50 border-l-2 border-gray-300">
-                    Total Wash
-                  </th>
-                  <th colSpan="12" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-50 border-l-2 border-gray-300">
-                    Process Stages
-                  </th>
-                </tr>
+{/* FIXED HEADER STRUCTURE */}
+{/* FIXED HEADER STRUCTURE */}
+<thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
+  {/* Main Header Row - Level 1 */}
+  <tr>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Factory
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Unit
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Work Order No
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      FastReact No
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Buyer
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Style Name
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Order Qty
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
+      Wash Target Date
+    </th>
+    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r-2 border-gray-300">
+      Marks
+    </th>
+    <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-100 border-r-2 border-gray-300">
+      Total Wash
+    </th>
+    <th colSpan="10" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-50">
+      Process Stages
+    </th>
+  </tr>
 
-                {/* Secondary Header Row */}
-                <tr>
-                  {/* Basic Info Columns */}
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[120px]">
-                    Work Order No
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[120px]">
-                    FastReact No
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[100px]">
-                    Buyer
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[150px]">
-                    Style Name
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[100px]">
-                    Order Qty
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[120px]">
-                    Wash Target Date
-                  </th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 min-w-[100px]">
-                    Marks
-                  </th>
+  {/* Secondary Header Row - Level 2 */}
+  <tr>
+    {/* Total Wash - spans to next row */}
+    <th rowSpan="2" className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-r">
+      Rcv
+    </th>
+    <th rowSpan="2" className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-r-2 border-gray-300">
+      Del
+    </th>
 
-                  {/* Total Wash Columns */}
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-l-2 border-gray-300">
-                    Received
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs">
-                    Delivered
-                  </th>
+    {/* Process Stage Headers */}
+    <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-yellow-50 border-l border-yellow-200">
+      1st Dry
+    </th>
+    <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-blue-50 border-l border-blue-200">
+      Unwash
+    </th>
+    <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-green-50 border-l border-green-200">
+      1st Wash
+    </th>
+    <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-orange-50 border-l border-orange-200">
+      2nd Dry
+    </th>
+    <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-purple-50 border-l border-purple-200">
+      Final Wash
+    </th>
+  </tr>
 
-                  {/* Process Stage Headers */}
-                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-yellow-50 border-l-2 border-yellow-200">
-                    1st Dry
-                  </th>
-                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-blue-50 border-l-2 border-blue-200">
-                    Unwash
-                  </th>
-                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-green-50 border-l-2 border-green-200">
-                    1st Wash
-                  </th>
-                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-orange-50 border-l-2 border-orange-200">
-                    2nd Dry
-                  </th>
-                    {/*  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-pink-50 border-l-2 border-pink-200">
-                    2nd Wash
-                  </th>*/}
-                  <th colSpan="2" className="px-4 py-2 text-center font-bold text-gray-700 bg-purple-50 border-l-2 border-purple-200">
-                    Final Wash
-                  </th>
-                </tr>
-
-                {/* Sub-headers for Process Stages */}
-                <tr>
-                  <th colSpan="7"></th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs border-l-2 border-gray-300">
-                    Rcv
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs">
-                    Del
-                  </th>
-                  
-                  {/* Process Stage Sub-headers */}
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs border-l-2 border-yellow-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs border-l-2 border-blue-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs border-l-2 border-green-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs">Del</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs border-l-2 border-orange-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs">Del</th>
-                  {/* <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs border-l-2 border-pink-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-pink-50 text-xs">Del</th> */}
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs border-l-2 border-purple-200">Rcv</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs">Del</th>
-                </tr>
-              </thead>
+  {/* Sub-headers Row - Level 3 */}
+  <tr>
+    {/* Process Stage Sub-headers */}
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs border-l border-yellow-200">Rcv</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-yellow-50 text-xs">Del</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs border-l border-blue-200">Rcv</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-blue-50 text-xs">Del</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs border-l border-green-200">Rcv</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-green-50 text-xs">Del</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs border-l border-orange-200">Rcv</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-orange-50 text-xs">Del</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs border-l border-purple-200">Rcv</th>
+    <th className="px-3 py-2 text-center font-semibold text-gray-600 bg-purple-50 text-xs">Del</th>
+  </tr>
+</thead>
 
               {/* TABLE BODY */}
               <tbody className="divide-y divide-gray-200">
                 {filteredData.map((item, index) => (
                   <tr key={item.id} className={`hover:bg-gray-50 transition duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                     {/* Basic Information */}
+                    
+                    <td className="px-4 py-3 font-bold text-primary-600">{item.factory}</td>
+                    <td className="px-4 py-3 font-bold text-primary-600">{item.unit}</td>
                     <td className="px-4 py-3 font-bold text-primary-600">{item.workOrderNo}</td>
                     <td className="px-4 py-3 text-gray-700 text-sm">{item.fastReactNo}</td>
                     <td className="px-4 py-3 text-gray-700 font-medium">{item.buyer}</td>

@@ -47,7 +47,7 @@ const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle }) => {
   const [expandedMenu, setExpandedMenu] = useState(null);
 
   const handleNavigation = (path) => {
-    console.log('Navigating to:', path);
+    // console.log('Navigating to:', path);
     navigate(path);
     if (isMobile) {
       handleDrawerToggle();
