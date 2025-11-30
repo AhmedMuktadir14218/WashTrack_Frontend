@@ -296,14 +296,16 @@ const BulkTransactionModal = ({ isOpen, onClose, onSuccess }) => {
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
-                            <th className="px-4 py-3 text-left font-bold text-gray-700">WO ID</th>
+                            {/* <th className="px-4 py-3 text-left font-bold text-gray-700">WO ID</th> */}
                             <th className="px-4 py-3 text-left font-bold text-gray-700">Work Order No</th>
                             <th className="px-4 py-3 text-left font-bold text-gray-700">FastReact No</th>
                             <th className="px-4 py-3 text-left font-bold text-gray-700">Style Name</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-700">TOD</th>
+                            
+                            <th className="px-4 py-3 text-center font-bold text-gray-700">Quantity</th>
                             <th className="px-4 py-3 text-left font-bold text-gray-700">Order Qty</th>
                             <th className="px-4 py-3 text-left font-bold text-gray-700">Marks</th>
-                            <th className="px-4 py-3 text-center font-bold text-gray-700">Quantity</th>
+                            
+                            <th className="px-4 py-3 text-left font-bold text-gray-700">TOD</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -316,20 +318,11 @@ const BulkTransactionModal = ({ isOpen, onClose, onSuccess }) => {
                                   hasQuantity ? 'bg-green-50' : ''
                                 }`}
                               >
-                                <td className="px-4 py-3 font-bold text-primary-600">{wo.id}</td>
+                                {/* <td className="px-4 py-3 font-bold text-primary-600">{wo.id}</td> */}
                                 <td className="px-4 py-3 font-semibold text-gray-700">{wo.workOrderNo}</td>
                                 <td className="px-4 py-3 text-gray-600 text-xs">{wo.fastReactNo || '-'}</td>
                                 <td className="px-4 py-3 text-gray-600 font-medium">{wo.styleName}</td>
-                                <td className="px-4 py-3 text-gray-600">
-                                  {wo.tod ? format(new Date(wo.tod), 'dd MMM') : '-'}
-                                </td>
-                                <td className="px-4 py-3 font-semibold text-gray-700">
-                                  {wo.orderQuantity.toLocaleString()}
-                                </td>
-                                <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[150px]" title={wo.marks}>
-                                  {wo.marks ? wo.marks.substring(0, 25) + '...' : '-'}
-                                </td>
-                                <td className="px-4 py-3 text-center">
+                                  <td className="px-4 py-3 text-center">
                                   <input
                                     type="number"
                                     value={selectedRows[wo.id] || ''}
@@ -340,6 +333,17 @@ const BulkTransactionModal = ({ isOpen, onClose, onSuccess }) => {
                                     className="w-20 px-2 py-1 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 text-center font-semibold"
                                   />
                                 </td>
+                                
+                                <td className="px-4 py-3 font-semibold text-gray-700">
+                                  {wo.orderQuantity.toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[150px]" title={wo.marks}>
+                                  {wo.marks ? wo.marks.substring(0, 25) + '...' : '-'}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600">
+                                  {wo.tod ? format(new Date(wo.tod), 'dd MMM') : '-'}
+                                </td>
+                              
                               </tr>
                             );
                           })}

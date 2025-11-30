@@ -142,7 +142,7 @@ const UserTransactionPage = () => {
       setSearchQuery('');
       setSelectedRows({});
       setActiveTab('workOrders');
-      setCurrentPage(1); // ✅ Reset to first page
+      setCurrentPage(1);  
       setIsLoadingStep2(false);
     }, 800);
   };
