@@ -83,6 +83,7 @@ getPaginated: (params) => {
   if (params.endDate) cleanParams.endDate = params.endDate;
   if (params.sortBy) cleanParams.sortBy = params.sortBy;
   if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
+  if (params.userId) cleanParams.userId = params.userId; // ✅ ADDED: userId filter
 
   //console.log('📤 Clean params being sent:', cleanParams);
 

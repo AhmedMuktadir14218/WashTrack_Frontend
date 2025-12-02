@@ -38,17 +38,21 @@ const WorkHistory = () => {
 
   // Load data on mount and when filters change
   useEffect(() => {
-    loadData(1);
+    if (user) { // Ensure user is loaded before fetching data
+      loadData(1);
+    }
   }, [user]);
 
   // Load data with debounce on search
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadData(1);
+      if (user) { // Ensure user is loaded before fetching data
+        loadData(1);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, filterType]);
+  }, [searchQuery, filterType, user]);
 
   // Load transactions
   const loadData = async (page = 1) => {
@@ -61,6 +65,11 @@ const WorkHistory = () => {
         sortBy: 'transactionDate',
         sortOrder: 'desc',
       };
+
+      // Add user ID filter if not an admin
+      if (user && !isAdmin()) {
+        filterParams.userId = user.id; // Assuming user.id holds the user's ID
+      }
 
       // Add transaction type filter if not 'all'
       if (filterType !== 'all') {
