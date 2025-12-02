@@ -15,7 +15,7 @@ export const washTransactionApi = {
 // EXPORT TO CSV (SERVER-SIDE)
 // ==========================================
 exportToCSV: (filters = {}) => {
-  console.log('📥 exportToCSV called with filters:', filters);
+  //console.log('📥 exportToCSV called with filters:', filters);
 
   // ✅ Build URL params only with non-empty values
   const params = {};
@@ -30,7 +30,7 @@ exportToCSV: (filters = {}) => {
   if (filters.startDate) params.startDate = filters.startDate;
   if (filters.endDate) params.endDate = filters.endDate;
 
-  console.log('📤 CSV Export params:', params);
+  //console.log('📤 CSV Export params:', params);
 
   return axiosInstance.get('/washtransaction/export/csv', {
     params,
@@ -52,19 +52,19 @@ exportToCSV: (filters = {}) => {
 // PAGINATED WITH SEARCH & FILTERS
 // ==========================================
 getPaginated: (params) => {
-  console.log('📄 getPaginated called with params:');
-  console.log('   Page:', params.page);
-  console.log('   PageSize:', params.pageSize);
-  console.log('   SearchTerm:', params.searchTerm);
-  console.log('   Buyer:', params.buyer);
-  console.log('   Factory:', params.factory);
-  console.log('   Unit:', params.unit);
-  console.log('   ProcessStageId:', params.processStageId);
-  console.log('   TransactionTypeId:', params.transactionTypeId);
-  console.log('   StartDate:', params.startDate);
-  console.log('   EndDate:', params.endDate);
-  console.log('   SortBy:', params.sortBy);
-  console.log('   SortOrder:', params.sortOrder);
+  //console.log('📄 getPaginated called with params:');
+  //console.log('   Page:', params.page);
+  //console.log('   PageSize:', params.pageSize);
+  //console.log('   SearchTerm:', params.searchTerm);
+  //console.log('   Buyer:', params.buyer);
+  //console.log('   Factory:', params.factory);
+  //  console.log('   Unit:', params.unit);
+  //console.log('   ProcessStageId:', params.processStageId);
+  //console.log('   TransactionTypeId:', params.transactionTypeId);
+  //console.log('   StartDate:', params.startDate);
+  //console.log('   EndDate:', params.endDate);
+  //console.log('   SortBy:', params.sortBy);
+  //console.log('   SortOrder:', params.sortOrder);
 
   // ✅ Build clean params object - only non-null values
   const cleanParams = {};
@@ -84,7 +84,7 @@ getPaginated: (params) => {
   if (params.sortBy) cleanParams.sortBy = params.sortBy;
   if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
 
-  console.log('📤 Clean params being sent:', cleanParams);
+  //console.log('📤 Clean params being sent:', cleanParams);
 
   return axiosInstance.get('/washtransaction/paginated', { params: cleanParams });
 },
@@ -92,7 +92,7 @@ getPaginated: (params) => {
   // CREATE RECEIVE TRANSACTION
   // ==========================================
   createReceive: (data) => {
-    console.log('➕ Creating receive transaction:', data);
+    //console.log('➕ Creating receive transaction:', data);
     return axiosInstance.post('/washtransaction/receive', data);
   },
 
@@ -100,7 +100,7 @@ getPaginated: (params) => {
   // CREATE DELIVERY TRANSACTION
   // ==========================================
   createDelivery: (data) => {
-    console.log('➕ Creating delivery transaction:', data);
+    //console.log('➕ Creating delivery transaction:', data);
     return axiosInstance.post('/washtransaction/delivery', data);
   },
 
@@ -108,7 +108,7 @@ getPaginated: (params) => {
   // GET ALL TRANSACTIONS (without pagination)
   // ==========================================
   getAll: () => {
-    console.log('📋 Fetching all transactions');
+    //console.log('📋 Fetching all transactions');
     return axiosInstance.get('/washtransaction');
   },
 
@@ -116,7 +116,7 @@ getPaginated: (params) => {
   // GET TRANSACTION BY ID
   // ==========================================
   getById: (id) => {
-    console.log(`📋 Fetching transaction ${id}`);
+    //console.log(`📋 Fetching transaction ${id}`);
     return axiosInstance.get(`/washtransaction/${id}`);
   },
 
@@ -124,7 +124,7 @@ getPaginated: (params) => {
   // GET TRANSACTIONS BY WORK ORDER
   // ==========================================
   getByWorkOrder: (workOrderId) => {
-    console.log(`📋 Fetching transactions for work order ${workOrderId}`);
+    //console.log(`📋 Fetching transactions for work order ${workOrderId}`);
     return axiosInstance.get(`/washtransaction/workorder/${workOrderId}`);
   },
 
@@ -132,7 +132,7 @@ getPaginated: (params) => {
   // GET TRANSACTIONS BY STAGE
   // ==========================================
   getByStage: (processStageId) => {
-    console.log(`📋 Fetching transactions for stage ${processStageId}`);
+    //console.log(`📋 Fetching transactions for stage ${processStageId}`);
     return axiosInstance.get(`/washtransaction/stage/${processStageId}`);
   },
 
@@ -140,7 +140,7 @@ getPaginated: (params) => {
   // FILTER TRANSACTIONS (POST)
   // ==========================================
   filter: (filterParams) => {
-    console.log('🔍 Filtering transactions:', filterParams);
+    //console.log('🔍 Filtering transactions:', filterParams);
     return axiosInstance.post('/washtransaction/filter', filterParams);
   },
 
@@ -148,7 +148,7 @@ getPaginated: (params) => {
   // UPDATE TRANSACTION (Admin only)
   // ==========================================
   update: (id, data) => {
-    console.log(`✏️ Updating transaction ${id}:`, data);
+    //console.log(`✏️ Updating transaction ${id}:`, data);
     return axiosInstance.put(`/washtransaction/${id}`, data);
   },
 
@@ -156,7 +156,7 @@ getPaginated: (params) => {
   // DELETE TRANSACTION (Admin only)
   // ==========================================
   delete: (id) => {
-    console.log(`🗑️ Deleting transaction ${id}`);
+    //console.log(`🗑️ Deleting transaction ${id}`);
     return axiosInstance.delete(`/washtransaction/${id}`);
   },
 
@@ -164,17 +164,17 @@ getPaginated: (params) => {
   // BALANCE & STATUS
   // ==========================================
   getBalance: (workOrderId) => {
-    console.log(`💰 Fetching balance for work order ${workOrderId}`);
+    //console.log(`💰 Fetching balance for work order ${workOrderId}`);
     return axiosInstance.get(`/washtransaction/balance/workorder/${workOrderId}`);
   },
 
   getStatus: (workOrderId) => {
-    console.log(`📊 Fetching status for work order ${workOrderId}`);
+    //console.log(`📊 Fetching status for work order ${workOrderId}`);
     return axiosInstance.get(`/washtransaction/status/workorder/${workOrderId}`);
   },
 
   getAllStatus: () => {
-    console.log('📊 Fetching all wash statuses');
+    //console.log('📊 Fetching all wash statuses');
     return axiosInstance.get('/washtransaction/status/all');
   },
 
@@ -182,12 +182,12 @@ getPaginated: (params) => {
   // REPORTS
   // ==========================================
   getStageSummary: () => {
-    console.log('📈 Fetching stage summary');
+    //console.log('📈 Fetching stage summary');
     return axiosInstance.get('/washtransaction/summary/stages');
   },
 
   getReceivesByStage: (processStageId, params = {}) => {
-    console.log(`📥 Fetching receives for stage ${processStageId}:`, params);
+    //console.log(`📥 Fetching receives for stage ${processStageId}:`, params);
     return axiosInstance.get(
       `/washtransaction/receives/stage/${processStageId}`,
       { params }
@@ -195,7 +195,7 @@ getPaginated: (params) => {
   },
 
   getDeliveriesByStage: (processStageId, params = {}) => {
-    console.log(`📤 Fetching deliveries for stage ${processStageId}:`, params);
+    //console.log(`📤 Fetching deliveries for stage ${processStageId}:`, params);
     return axiosInstance.get(
       `/washtransaction/deliveries/stage/${processStageId}`,
       { params }
@@ -210,7 +210,7 @@ getPaginated: (params) => {
   /// Uses paginated endpoint with high pageSize to get all records
   /// </summary>
   getAllForExport: (searchTerm = '', filters = {}) => {
-    console.log('📤 getAllForExport called with:', { searchTerm, filters });
+    //console.log('📤 getAllForExport called with:', { searchTerm, filters });
 
     // ✅ Build clean params object
     const params = {
@@ -235,7 +235,7 @@ getPaginated: (params) => {
     if (filters.startDate) params.startDate = filters.startDate;
     if (filters.endDate) params.endDate = filters.endDate;
 
-    console.log('📤 getAllForExport params:', params);
+      //console.log('📤 getAllForExport params:', params);
 
     return axiosInstance.get('/washtransaction/paginated', { params });
   },

@@ -41,7 +41,7 @@ const Login = () => {
           rememberMe: rememberMe || false
         }));
       } catch (error) {
-        console.error('Error loading saved credentials:', error);
+        //console.error('Error loading saved credentials:', error);
       }
     }
   }, []);

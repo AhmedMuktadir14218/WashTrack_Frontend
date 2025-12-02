@@ -76,7 +76,7 @@ const [filterParams, setFilterParams] = useState({
     if (workOrders.length > 0) {
       const units = [...new Set(workOrders.map(wo => wo.unit).filter(Boolean))].sort();
       setUniqueUnits(units);
-      console.log('📦 Unique units loaded:', units);
+     // console.log('📦 Unique units loaded:', units);
     }
   }, [workOrders]);
 
@@ -88,7 +88,7 @@ const [filterParams, setFilterParams] = useState({
 // ==========================================
 const loadTransactions = async (page = 1, search = '', filters = {}) => {
   try {
-    console.log('🔄 Loading transactions...', { page, search, filters });
+    //console.log('🔄 Loading transactions...', { page, search, filters });
 
     // ✅ Build params object
     const params = {
@@ -115,11 +115,11 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
     if (filters.startDate) params.startDate = filters.startDate;
     if (filters.endDate) params.endDate = filters.endDate;
 
-    console.log('📤 Request params:', params);
+   // console.log('📤 Request params:', params);
 
     await getPaginated(params);
     setCurrentPage(page);
-    console.log('✅ Transactions loaded');
+   // console.log('✅ Transactions loaded');
   } catch (error) {
     console.error('❌ Failed to load transactions:', error);
     toast.error('Failed to load transactions');
@@ -132,13 +132,13 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
   const loadWorkOrders = async () => {
     try {
       setWorkOrdersLoading(true);
-      console.log('🔄 Loading work orders...');
+      //console.log('🔄 Loading work orders...');
       const response = await workOrderApi.getAll();
       
       if (response.data.success) {
         const woData = response.data.data || [];
         setWorkOrders(woData);
-        console.log('✅ Loaded', woData.length, 'work orders');
+       // console.log('✅ Loaded', woData.length, 'work orders');
       }
     } catch (error) {
       console.error('❌ Failed to load work orders:', error);
@@ -154,7 +154,7 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
   // ==========================================
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('🔍 Search triggered:', searchQuery);
+     // console.log('🔍 Search triggered:', searchQuery);
       loadTransactions(1, searchQuery, filterParams);
     }, 500);
 
@@ -166,7 +166,7 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
   // ==========================================
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    console.log(`🎛️ Filter changed: ${name} = ${value}`);
+   // console.log(`🎛️ Filter changed: ${name} = ${value}`);
     
     setFilterParams(prev => ({
       ...prev,
@@ -178,7 +178,7 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
   // APPLY FILTERS
   // ==========================================
   const handleApplyFilters = async () => {
-    console.log('✅ Applying filters:', filterParams);
+   // console.log('✅ Applying filters:', filterParams);
     setCurrentPage(1);
     await loadTransactions(1, searchQuery, filterParams);
     setShowFilters(false);
@@ -192,7 +192,7 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
 // RESET FILTERS (FIXED)
 // ==========================================
 const handleResetFilters = async () => {
-  console.log('🔄 Resetting filters...');
+ // console.log('🔄 Resetting filters...');
   setFilterParams({
     buyer: '',
     factory: '',
@@ -212,7 +212,7 @@ const handleResetFilters = async () => {
   // HANDLE PAGE CHANGE
   // ==========================================
   const handlePageChange = (newPage) => {
-    console.log(`📄 Page changed to: ${newPage}`);
+   // console.log(`📄 Page changed to: ${newPage}`);
     if (newPage > 0 && newPage <= (pagination?.totalPages || 1)) {
       loadTransactions(newPage, searchQuery, filterParams);
     }
@@ -222,7 +222,7 @@ const handleResetFilters = async () => {
   // HANDLE PAGE SIZE CHANGE
   // ==========================================
   const handlePageSizeChange = (newSize) => {
-    console.log(`📊 Page size changed to: ${newSize}`);
+    //console.log(`📊 Page size changed to: ${newSize}`);
     setPageSize(newSize);
     setCurrentPage(1);
     loadTransactions(1, searchQuery, filterParams);
@@ -279,53 +279,53 @@ const handleResetFilters = async () => {
         `Downloading ${pagination.totalRecords} record${pagination.totalRecords !== 1 ? 's' : ''}...`
       );
 
-      console.log('📥 CSV Export initiated');
-      console.log('📊 Total records to export:', pagination.totalRecords);
+     // console.log('📥 CSV Export initiated');
+      // console.log('📊 Total records to export:', pagination.totalRecords);
 
       // ✅ BUILD EXPORT FILTERS - ONLY NON-EMPTY VALUES
       const exportFilters = {};
       
       if (searchQuery && searchQuery.trim()) {
         exportFilters.searchTerm = searchQuery.trim();
-        console.log('🔍 Search term added:', searchQuery);
+       // console.log('🔍 Search term added:', searchQuery);
       }
       
       if (filterParams.buyer) {
         exportFilters.buyer = filterParams.buyer;
-        console.log('🏢 Buyer filter added:', filterParams.buyer);
+        // console.log('🏢 Buyer filter added:', filterParams.buyer);
       }
       
       if (filterParams.factory) {
         exportFilters.factory = filterParams.factory;
-        console.log('🏭 Factory filter added:', filterParams.factory);
+        // console.log('🏭 Factory filter added:', filterParams.factory);
       }
 
       if (filterParams.unit) { // ✅ ADDED: Unit filter
         exportFilters.unit = filterParams.unit;
-        console.log('📦 Unit filter added:', filterParams.unit);
+        // console.log('📦 Unit filter added:', filterParams.unit);
       }
       
       if (filterParams.processStageId) {
         exportFilters.processStageId = parseInt(filterParams.processStageId);
-        console.log('📍 Stage filter added:', filterParams.processStageId);
+        // console.log('📍 Stage filter added:', filterParams.processStageId);
       }
       
       if (filterParams.transactionTypeId !== '' && filterParams.transactionTypeId !== undefined) {
         exportFilters.transactionTypeId = parseInt(filterParams.transactionTypeId);
-        console.log('📋 Transaction type filter added:', filterParams.transactionTypeId);
+        // console.log('📋 Transaction type filter added:', filterParams.transactionTypeId);
       }
       
       if (filterParams.startDate) {
         exportFilters.startDate = filterParams.startDate;
-        console.log('📅 Start date filter added:', filterParams.startDate);
+        // console.log('📅 Start date filter added:', filterParams.startDate);
       }
       
       if (filterParams.endDate) {
         exportFilters.endDate = filterParams.endDate;
-        console.log('📅 End date filter added:', filterParams.endDate);
+        // console.log('📅 End date filter added:', filterParams.endDate);
       }
 
-      console.log('📤 Final export filters:', exportFilters);
+      // console.log('📤 Final export filters:', exportFilters);
 
       // ✅ Call export API
       const result = await exportToCSV(exportFilters);
@@ -339,8 +339,8 @@ const handleResetFilters = async () => {
           `✅ CSV downloaded (${pagination.totalRecords} records)${filterText}`
         );
         
-        console.log('✅ CSV export successful');
-        console.log('📥 Downloaded file:', result.fileName);
+       // console.log('✅ CSV export successful');
+        //  console.log('📥 Downloaded file:', result.fileName);
       } else {
         toast.dismiss(loadingToast);
         toast.error(result.message || 'Download failed');
@@ -362,7 +362,7 @@ const handleResetFilters = async () => {
       return;
     }
 
-    console.log('🗑️ Deleting transaction:', id);
+    // console.log('🗑️ Deleting transaction:', id);
     const result = await deleteTransaction(id);
     
     if (result.success) {
@@ -712,9 +712,9 @@ const handleResetFilters = async () => {
                         {/* ==================== WORK ORDER COLUMN ==================== */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">
+                            {/* <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">
                               {transaction.workOrderNo?.charAt(0).toUpperCase()}
-                            </div>
+                            </div> */}
                             <div>
                               <p className="font-semibold text-gray-800 text-sm">{transaction.workOrderNo}</p>
                               <p className="text-xs text-gray-500">{transaction.styleName}</p>
