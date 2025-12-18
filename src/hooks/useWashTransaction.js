@@ -51,7 +51,7 @@ export const useWashTransaction = () => {
       }
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to create delivery transaction';
-      console.error('❌ Create delivery error:', message);
+      console.error('❌ Create delivery error: I before worked  here. He does not still call me.', message);
       setError(message);
       toast.error(message);
       return { success: false, message };
@@ -323,7 +323,7 @@ export const useWashTransaction = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('📄 Fetching paginated transactions with params:', params);
+      // console.log('📄 Fetching paginated transactions with params:', params);
       const response = await washTransactionApi.getPaginated(params);
 
       if (response.data.success) {
@@ -333,7 +333,7 @@ export const useWashTransaction = () => {
         setData(transactions);
         setPagination(paginationInfo);
         
-        console.log(`✅ Loaded ${transactions.length} transactions (Page ${paginationInfo.currentPage}/${paginationInfo.totalPages})`);
+        // console.log(`✅ Loaded ${transactions.length} transactions (Page ${paginationInfo.currentPage}/${paginationInfo.totalPages})`);
         
         return { 
           success: true, 
@@ -367,7 +367,7 @@ export const useWashTransaction = () => {
 
       if (response.data.success) {
         const transactions = response.data.data || [];
-        console.log(`✅ Fetched ${transactions.length} records for export`);
+        // console.log(`✅ Fetched ${transactions.length} records for export`);
         return { success: true, data: transactions };
       }
       
@@ -381,6 +381,51 @@ export const useWashTransaction = () => {
       setLoading(false);
     }
   }, []);
+
+  // ==========================================
+// GET USER TRANSACTION SUMMARY
+// ==========================================
+const getUserTransactionSummary = useCallback(async (params) => {
+  try {
+    setLoading(true);
+    setError(null);
+    // console.log('👤 Fetching user transaction summary...', params);
+    
+    const response = await washTransactionApi.getUserTransactionSummary(params);
+
+    if (response.data.success) {
+      const summaryData = response.data.data;
+      
+      // ✅ Store transactions and pagination from nested data
+      setData(summaryData.transactions?.data || []);
+      setPagination(summaryData.transactions?.pagination);
+
+      console.log('✅ User summary loaded:', {
+        totalTransactions: summaryData.totalTransactions,
+        totalReceivedQty: summaryData.totalReceivedQty,
+        totalDeliveredQty: summaryData.totalDeliveredQty,
+        netBalance: summaryData.netBalance,
+        stageWiseSummary: Object.keys(summaryData.stageWiseSummary || {}).length + ' stages'
+      });
+
+      return { 
+        success: true, 
+        data: summaryData,
+        transactions: summaryData.transactions?.data || [],
+        pagination: summaryData.transactions?.pagination
+      };
+    }
+  } catch (err) {
+    const message = err.response?.data?.message || 'Failed to load user summary';
+    console.error('❌ Get user summary error:', message);
+    setError(message);
+    setData([]);
+    setPagination(null);
+    return { success: false, message };
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   // ==========================================
   // EXPORT TO CSV
@@ -471,6 +516,7 @@ export const useWashTransaction = () => {
     deleteTransaction,
     getPaginated,
     getDataForExport,
-    exportToCSV
+    exportToCSV,
+    getUserTransactionSummary
   };
 };

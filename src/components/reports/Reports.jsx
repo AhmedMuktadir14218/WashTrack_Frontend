@@ -1686,6 +1686,7 @@
 
 
 // D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\reports\Reports.jsx
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\reports\Reports.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { 
   Download, 
@@ -1832,7 +1833,7 @@ const Reports = () => {
     });
   }, [workOrders, transactions]);
 
-  // Apply filters to report data
+  // ✅ FIXED: Apply filters to report data with correct date comparison
   const applyFilters = (data, filters) => {
     let filtered = [...data];
 
@@ -1855,15 +1856,22 @@ const Reports = () => {
       filtered = filtered.filter(item => item.unit === filters.unit);
     }
 
-    // Date range filter (filter by transactions within date range)
+    // ✅ FIXED: Date range filter - Use timestamp comparison
     if (filters.startDate || filters.endDate) {
+      const startTime = filters.startDate 
+        ? new Date(filters.startDate + 'T00:00:00').getTime() 
+        : null;
+      const endTime = filters.endDate 
+        ? new Date(filters.endDate + 'T23:59:59').getTime() 
+        : null;
+
       filtered = filtered.filter(item => {
         const itemTransactions = item.transactions || [];
         
         return itemTransactions.some(transaction => {
-          const transDate = new Date(transaction.transactionDate);
-          const startMatch = !filters.startDate || transDate >= new Date(filters.startDate);
-          const endMatch = !filters.endDate || transDate <= new Date(filters.endDate + 'T23:59:59');
+          const transTime = new Date(transaction.transactionDate).getTime();
+          const startMatch = !startTime || transTime >= startTime;
+          const endMatch = !endTime || transTime <= endTime;
           return startMatch && endMatch;
         });
       });
@@ -1891,20 +1899,27 @@ const Reports = () => {
     return filtered;
   };
 
-  // Calculate summary statistics for filtered data
+  // ✅ FIXED: Calculate summary statistics for filtered data with correct date comparison
   const summaryStats = useMemo(() => {
     const filtered = applyFilters(reportData, appliedFilters);
     
     // Collect all transactions from filtered work orders
     const allTransactions = filtered.flatMap(item => item.transactions || []);
     
-    // Apply date filter to transactions
+    // ✅ FIXED: Apply date filter to transactions - Use timestamp comparison
     let filteredTransactions = allTransactions;
     if (appliedFilters.startDate || appliedFilters.endDate) {
+      const startTime = appliedFilters.startDate 
+        ? new Date(appliedFilters.startDate + 'T00:00:00').getTime() 
+        : null;
+      const endTime = appliedFilters.endDate 
+        ? new Date(appliedFilters.endDate + 'T23:59:59').getTime() 
+        : null;
+
       filteredTransactions = allTransactions.filter(transaction => {
-        const transDate = new Date(transaction.transactionDate);
-        const startMatch = !appliedFilters.startDate || transDate >= new Date(appliedFilters.startDate);
-        const endMatch = !appliedFilters.endDate || transDate <= new Date(appliedFilters.endDate + 'T23:59:59');
+        const transTime = new Date(transaction.transactionDate).getTime();
+        const startMatch = !startTime || transTime >= startTime;
+        const endMatch = !endTime || transTime <= endTime;
         return startMatch && endMatch;
       });
     }
@@ -2065,124 +2080,383 @@ const Reports = () => {
 
     return rangeWithDots;
   };
+const handleExportExcel = () => {
+  const headers = [
+    'Factory',
+    'Unit',
+    'Work Order No',
+    'FastReact No',
+    'Buyer',
+    'Style Name',
+    'Order Qty',
+    'Wash Target Date',
+    'Marks',
+    'Total Wash Received',
+    'Total Wash Delivery',
+    '1st Dry Receive',
+    '1st Dry Delivery',
+    'Unwash Receive',
+    'Unwash Delivery',
+    '1st Wash Receive',
+    '1st Wash Delivery',
+    '2nd Dry Receive',
+    '2nd Dry Delivery',
+    'Final Wash Receive',
+    'Final Wash Delivery',
+  ];
 
-  const handleExportExcel = () => {
-    const headers = [
-      'Factory',
-      'Unit',
-      'Work Order No',
-      'FastReact No',
-      'Buyer',
-      'Style Name',
-      'Order Qty',
-      'Wash Target Date',
-      'Marks',
-      'Total Wash Received',
-      'Total Wash Delivery',
-      '1st Dry Receive',
-      '1st Dry Delivery',
-      'Unwash Receive',
-      'Unwash Delivery',
-      '1st Wash Receive',
-      '1st Wash Delivery',
-      '2nd Dry Receive',
-      '2nd Dry Delivery',
-      'Final Wash Receive',
-      'Final Wash Delivery',
-    ];
-
-    // Add filter information header
-    const filterInfo = [];
-    if (hasActiveFilters) {
-      filterInfo.push(['FILTER CRITERIA']);
-      if (appliedFilters.startDate) filterInfo.push(['Start Date', appliedFilters.startDate]);
-      if (appliedFilters.endDate) filterInfo.push(['End Date', appliedFilters.endDate]);
-      if (appliedFilters.buyer) filterInfo.push(['Buyer', appliedFilters.buyer]);
-      if (appliedFilters.factory) filterInfo.push(['Factory', appliedFilters.factory]);
-      if (appliedFilters.unit) filterInfo.push(['Unit', appliedFilters.unit]);
-      if (appliedFilters.processStageId) {
-        const stage = stages.find(s => s.id === parseInt(appliedFilters.processStageId));
-        filterInfo.push(['Process Stage', stage?.name || appliedFilters.processStageId]);
-      }
-      if (appliedFilters.transactionTypeId !== '') {
-        filterInfo.push(['Transaction Type', appliedFilters.transactionTypeId === '1' ? 'Receive' : 'Delivery']);
-      }
-      filterInfo.push(['']); // Empty row
+  // ✅ Helper function to preserve leading zeros in Excel
+  const preserveLeadingZeros = (value) => {
+    if (value === null || value === undefined || value === '-') {
+      return value;
     }
-
-    // Add summary section
-    const summarySection = [
-      ['SUMMARY STATISTICS'],
-      ['Total Work Orders', summaryStats.totalWorkOrders],
-      ['Total Transactions', summaryStats.transactionCount],
-      ['Total Receive Quantity', summaryStats.totalReceive],
-      ['Total Delivery Quantity', summaryStats.totalDelivery],
-      ['Balance (Receive - Delivery)', summaryStats.balance],
-      ['Total Order Quantity', summaryStats.totalOrderQuantity],
-      ['Unique Process Stages', summaryStats.uniqueStagesCount],
-      [''], // Empty row
-    ];
-
-    // Add stage breakdown
-    if (Object.keys(summaryStats.stageBreakdown).length > 0) {
-      summarySection.push(['STAGE BREAKDOWN']);
-      summarySection.push(['Stage Name', 'Receive', 'Delivery', 'Balance']);
-      Object.entries(summaryStats.stageBreakdown).forEach(([stageName, data]) => {
-        summarySection.push([
-          stageName,
-          data.receive,
-          data.delivery,
-          data.receive - data.delivery
-        ]);
-      });
-      summarySection.push(['']); // Empty row
+    const strValue = String(value);
+    // Check if it's a numeric string that might have leading zeros
+    if (/^\d+$/.test(strValue) && strValue.startsWith('0') && strValue.length > 1) {
+      return `="${strValue}"`; // Excel formula format to force text
     }
-
-    // Export filtered data
-    const rows = filteredData.map(item => [
-      item.factory,
-      item.unit,
-      item.workOrderNo,
-      item.fastReactNo,
-      item.buyer,
-      item.styleName,
-      item.orderQuantity,
-      item.washTargetDate,
-      item.marks,
-      item.totalWashReceived,
-      item.totalWashDelivery,
-      item.firstDryReceive,
-      item.firstDryDelivery,
-      item.unwashReceive,
-      item.unwashDelivery,
-      item.firstWashReceive,
-      item.firstWashDelivery,
-      item.secondDryReceive,
-      item.secondDryDelivery,
-      item.finalWashReceive,
-      item.finalWashDelivery,
-    ]);
-
-    const csvContent = [
-      ...filterInfo.map(row => row.map(cell => `"${cell}"`).join(',')),
-      ...summarySection.map(row => row.map(cell => `"${cell}"`).join(',')),
-      ['DETAILED DATA'],
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-    ].join('\n');
-
-    const element = document.createElement('a');
-    const filterSuffix = hasActiveFilters ? '-filtered' : '';
-    const dateSuffix = appliedFilters.startDate ? `-${appliedFilters.startDate}` : '';
-    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
-    element.setAttribute('download', `transaction-report${filterSuffix}${dateSuffix}-${new Date().toISOString().split('T')[0]}.csv`);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-
-    toast.success(`Report exported successfully (${filteredData.length} records)`);
+    return strValue;
   };
+
+  // ✅ Helper function to format cell for CSV
+  const formatCell = (cell, forceText = false) => {
+    if (cell === null || cell === undefined) {
+      return '""';
+    }
+    const strValue = String(cell);
+    
+    // If forceText is true, use Excel formula format
+    if (forceText) {
+      // Already has the formula format
+      if (strValue.startsWith('="') && strValue.endsWith('"')) {
+        return strValue;
+      }
+      return `="${strValue}"`;
+    }
+    
+    // Regular escaping - escape quotes and wrap in quotes
+    return `"${strValue.replace(/"/g, '""')}"`;
+  };
+
+  // Add filter information header
+  const filterInfo = [];
+  if (hasActiveFilters) {
+    filterInfo.push(['FILTER CRITERIA']);
+    if (appliedFilters.startDate) filterInfo.push(['Start Date', appliedFilters.startDate]);
+    if (appliedFilters.endDate) filterInfo.push(['End Date', appliedFilters.endDate]);
+    if (appliedFilters.buyer) filterInfo.push(['Buyer', appliedFilters.buyer]);
+    if (appliedFilters.factory) filterInfo.push(['Factory', appliedFilters.factory]);
+    if (appliedFilters.unit) filterInfo.push(['Unit', appliedFilters.unit]);
+    if (appliedFilters.processStageId) {
+      const stage = stages.find(s => s.id === parseInt(appliedFilters.processStageId));
+      filterInfo.push(['Process Stage', stage?.name || appliedFilters.processStageId]);
+    }
+    if (appliedFilters.transactionTypeId !== '') {
+      filterInfo.push(['Transaction Type', appliedFilters.transactionTypeId === '1' ? 'Receive' : 'Delivery']);
+    }
+    filterInfo.push(['']); // Empty row
+  }
+
+  // Summary section
+  const summarySection = [
+    ['SUMMARY STATISTICS'],
+    ['Total Work Orders', summaryStats.totalWorkOrders],
+    ['Total Transactions', summaryStats.transactionCount],
+    ['Total Receive Quantity', summaryStats.totalReceive],
+    ['Total Delivery Quantity', summaryStats.totalDelivery],
+    ['Total Quantity', summaryStats.totalReceive + summaryStats.totalDelivery],
+    ['Total Order Quantity', summaryStats.totalOrderQuantity],
+    ['Unique Process Stages', summaryStats.uniqueStagesCount],
+    [''], 
+  ];
+
+  // Stage breakdown
+  if (Object.keys(summaryStats.stageBreakdown).length > 0) {
+    summarySection.push(['STAGE BREAKDOWN']);
+    summarySection.push(['Stage Name', 'Receive', 'Delivery']);
+    Object.entries(summaryStats.stageBreakdown).forEach(([stageName, data]) => {
+      summarySection.push([
+        stageName,
+        data.receive,
+        data.delivery
+      ]);
+    });
+    summarySection.push(['']); // Empty row
+  }
+
+  // Helper: Get stage quantity for work order with date filter
+  const getStageQuantityForWorkOrder = (workOrderTransactions, stageName, type) => {
+    let filteredTransactions = workOrderTransactions;
+    
+    if (appliedFilters.startDate || appliedFilters.endDate) {
+      const startTime = appliedFilters.startDate 
+        ? new Date(appliedFilters.startDate + 'T00:00:00').getTime() 
+        : null;
+      const endTime = appliedFilters.endDate 
+        ? new Date(appliedFilters.endDate + 'T23:59:59').getTime() 
+        : null;
+
+      filteredTransactions = workOrderTransactions.filter(transaction => {
+        const transTime = new Date(transaction.transactionDate).getTime();
+        const startMatch = !startTime || transTime >= startTime;
+        const endMatch = !endTime || transTime <= endTime;
+        return startMatch && endMatch;
+      });
+    }
+
+    const stageTransactions = filteredTransactions.filter(
+      t => t.processStageName === stageName && t.transactionType === type
+    );
+    
+    return stageTransactions.reduce((sum, t) => sum + t.quantity, 0);
+  };
+
+  // ✅ FIXED: Export filtered data with preserved leading zeros
+  const rows = filteredData.map(item => {
+    const workOrderTransactions = item.transactions || [];
+
+    return {
+      factory: item.factory,
+      unit: item.unit,
+      workOrderNo: item.workOrderNo,        // ✅ Will be formatted specially
+      fastReactNo: item.fastReactNo,        // ✅ Will be formatted specially
+      buyer: item.buyer,
+      styleName: item.styleName,
+      orderQuantity: item.orderQuantity,
+      washTargetDate: item.washTargetDate,
+      marks: item.marks,
+      totalWashReceived: item.totalWashReceived,
+      totalWashDelivery: item.totalWashDelivery,
+      firstDryReceive: getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 1),
+      firstDryDelivery: getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 2),
+      unwashReceive: getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 1),
+      unwashDelivery: getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 2),
+      firstWashReceive: getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 1),
+      firstWashDelivery: getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 2),
+      secondDryReceive: getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 1),
+      secondDryDelivery: getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 2),
+      finalWashReceive: getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 1),
+      finalWashDelivery: getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 2),
+    };
+  });
+
+  // ✅ Build CSV content with proper formatting
+  const csvRows = rows.map(row => {
+    return [
+      formatCell(row.factory),
+      formatCell(row.unit),
+      formatCell(row.workOrderNo, true),    // ✅ Force text to preserve leading zeros
+      formatCell(row.fastReactNo, true),    // ✅ Force text to preserve leading zeros
+      formatCell(row.buyer),
+      formatCell(row.styleName),
+      formatCell(row.orderQuantity),
+      formatCell(row.washTargetDate),
+      formatCell(row.marks),
+      formatCell(row.totalWashReceived),
+      formatCell(row.totalWashDelivery),
+      formatCell(row.firstDryReceive),
+      formatCell(row.firstDryDelivery),
+      formatCell(row.unwashReceive),
+      formatCell(row.unwashDelivery),
+      formatCell(row.firstWashReceive),
+      formatCell(row.firstWashDelivery),
+      formatCell(row.secondDryReceive),
+      formatCell(row.secondDryDelivery),
+      formatCell(row.finalWashReceive),
+      formatCell(row.finalWashDelivery),
+    ].join(',');
+  });
+
+  const csvContent = [
+    ...filterInfo.map(row => row.map(cell => formatCell(cell)).join(',')),
+    ...summarySection.map(row => row.map(cell => formatCell(cell)).join(',')),
+    ['DETAILED DATA'].map(cell => formatCell(cell)).join(','),
+    headers.map(h => formatCell(h)).join(','),
+    ...csvRows,
+  ].join('\n');
+
+  // Add BOM for proper UTF-8 encoding in Excel
+  const BOM = '\uFEFF';
+  const element = document.createElement('a');
+  const filterSuffix = hasActiveFilters ? '-filtered' : '';
+  const dateSuffix = appliedFilters.startDate ? `-${appliedFilters.startDate}` : '';
+  element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csvContent));
+  element.setAttribute('download', `transaction-report${filterSuffix}${dateSuffix}-${new Date().toISOString().split('T')[0]}.csv`);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+
+  toast.success(`Report exported successfully (${filteredData.length} records)`);
+};
+//   const handleExportExcel = () => {
+//   const headers = [
+//     'Factory',
+//     'Unit',
+//     'Work Order No',
+//     'FastReact No',
+//     'Buyer',
+//     'Style Name',
+//     'Order Qty',
+//     'Wash Target Date',
+//     'Marks',
+//     'Total Wash Received',
+//     'Total Wash Delivery',
+//     '1st Dry Receive',
+//     '1st Dry Delivery',
+//     'Unwash Receive',
+//     'Unwash Delivery',
+//     '1st Wash Receive',
+//     '1st Wash Delivery',
+//     '2nd Dry Receive',
+//     '2nd Dry Delivery',
+//     'Final Wash Receive',
+//     'Final Wash Delivery',
+//   ];
+
+//   // Add filter information header
+//   const filterInfo = [];
+//   if (hasActiveFilters) {
+//     filterInfo.push(['FILTER CRITERIA']);
+//     if (appliedFilters.startDate) filterInfo.push(['Start Date', appliedFilters.startDate]);
+//     if (appliedFilters.endDate) filterInfo.push(['End Date', appliedFilters.endDate]);
+//     if (appliedFilters.buyer) filterInfo.push(['Buyer', appliedFilters.buyer]);
+//     if (appliedFilters.factory) filterInfo.push(['Factory', appliedFilters.factory]);
+//     if (appliedFilters.unit) filterInfo.push(['Unit', appliedFilters.unit]);
+//     if (appliedFilters.processStageId) {
+//       const stage = stages.find(s => s.id === parseInt(appliedFilters.processStageId));
+//       filterInfo.push(['Process Stage', stage?.name || appliedFilters.processStageId]);
+//     }
+//     if (appliedFilters.transactionTypeId !== '') {
+//       filterInfo.push(['Transaction Type', appliedFilters.transactionTypeId === '1' ? 'Receive' : 'Delivery']);
+//     }
+//     filterInfo.push(['']); // Empty row
+//   }
+
+//   // ✅ FIXED: Add summary section - WITHOUT BALANCE
+//   const summarySection = [
+//     ['SUMMARY STATISTICS'],
+//     ['Total Work Orders', summaryStats.totalWorkOrders],
+//     ['Total Transactions', summaryStats.transactionCount],
+//     ['Total Receive Quantity', summaryStats.totalReceive],
+//     ['Total Delivery Quantity', summaryStats.totalDelivery],
+//     ['Total Quantity', summaryStats.totalReceive + summaryStats.totalDelivery],
+//     ['Total Order Quantity', summaryStats.totalOrderQuantity],
+//     ['Unique Process Stages', summaryStats.uniqueStagesCount],
+//     [''], 
+//   ];
+
+//   // ✅ FIXED: Add stage breakdown - WITHOUT BALANCE
+//   if (Object.keys(summaryStats.stageBreakdown).length > 0) {
+//     summarySection.push(['STAGE BREAKDOWN']);
+//     summarySection.push(['Stage Name', 'Receive', 'Delivery']);
+//     Object.entries(summaryStats.stageBreakdown).forEach(([stageName, data]) => {
+//       summarySection.push([
+//         stageName,
+//         data.receive,
+//         data.delivery
+//       ]);
+//     });
+//     summarySection.push(['']); // Empty row
+//   }
+
+//   // ✅ HELPER: Get stage quantity for PER WORK ORDER with date filter
+//   const getStageQuantityForWorkOrder = (workOrderTransactions, stageName, type) => {
+//     // Apply date filter to this work order's transactions only
+//     let filteredTransactions = workOrderTransactions;
+    
+//     if (appliedFilters.startDate || appliedFilters.endDate) {
+//       const startTime = appliedFilters.startDate 
+//         ? new Date(appliedFilters.startDate + 'T00:00:00').getTime() 
+//         : null;
+//       const endTime = appliedFilters.endDate 
+//         ? new Date(appliedFilters.endDate + 'T23:59:59').getTime() 
+//         : null;
+
+//       filteredTransactions = workOrderTransactions.filter(transaction => {
+//         const transTime = new Date(transaction.transactionDate).getTime();
+//         const startMatch = !startTime || transTime >= startTime;
+//         const endMatch = !endTime || transTime <= endTime;
+//         return startMatch && endMatch;
+//       });
+//     }
+
+//     // Filter by stage and type
+//     const stageTransactions = filteredTransactions.filter(
+//       t => t.processStageName === stageName && t.transactionType === type
+//     );
+    
+//     return stageTransactions.reduce((sum, t) => sum + t.quantity, 0);
+//   };
+
+//   // ✅ FIXED: Export filtered data - Calculate PER ROW
+//   const rows = filteredData.map(item => {
+//     // Get this work order's transactions
+//     const workOrderTransactions = item.transactions || [];
+
+//     // Calculate totals for THIS work order
+//     const totalReceived = 
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 1) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 1) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 1) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 1) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 1);
+
+//     const totalDelivered = 
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 2) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 2) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 2) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 2) +
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 2);
+
+//     return [
+//       item.factory,
+//       item.unit,
+//       item.workOrderNo,
+//       item.fastReactNo,
+//       item.buyer,
+//       item.styleName,
+//       item.orderQuantity,
+//       item.washTargetDate,
+//       item.marks,
+//       // totalReceived,   // ✅ Per work order total
+//       // totalDelivered,  // ✅ Per work order total
+
+//       item.totalWashReceived,  // Original totals from work order
+//       item.totalWashDelivery,  // Original totals from work order
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 1),
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Dry', 2),
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 1),
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Unwash', 2),
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 1),
+//       getStageQuantityForWorkOrder(workOrderTransactions, '1st Wash', 2),
+//       getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 1),
+//       getStageQuantityForWorkOrder(workOrderTransactions, '2nd Dry', 2),
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 1),
+//       getStageQuantityForWorkOrder(workOrderTransactions, 'Final Wash', 2),
+//     ];
+//   });
+
+//   const csvContent = [
+//     ...filterInfo.map(row => row.map(cell => `"${cell}"`).join(',')),
+//     ...summarySection.map(row => row.map(cell => `"${cell}"`).join(',')),
+//     ['DETAILED DATA'],
+//     headers.join(','),
+//     ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+//   ].join('\n');
+
+//   const element = document.createElement('a');
+//   const filterSuffix = hasActiveFilters ? '-filtered' : '';
+//   const dateSuffix = appliedFilters.startDate ? `-${appliedFilters.startDate}` : '';
+//   element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+//   element.setAttribute('download', `transaction-report${filterSuffix}${dateSuffix}-${new Date().toISOString().split('T')[0]}.csv`);
+//   element.style.display = 'none';
+//   document.body.appendChild(element);
+//   element.click();
+//   document.body.removeChild(element);
+
+//   toast.success(`Report exported successfully (${filteredData.length} records)`);
+// };
 
   const handlePrint = () => {
     window.print();
@@ -2190,8 +2464,7 @@ const Reports = () => {
 
   if (loading) {
     return <LoadingSpinner size="lg" fullScreen />;
-  }
-
+  } 
   return (
     <div className="fade-in">
       {/* Header */}
@@ -2540,17 +2813,18 @@ const Reports = () => {
               {/* Balance */}
               <div className={`bg-white rounded-xl p-6 shadow-md border ${summaryStats.balance >= 0 ? 'border-purple-200' : 'border-red-200'}`}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-gray-600">Balance</p>
+                  <p className="text-sm font-semibold text-gray-600">Total</p>
                   <ShowChart className={summaryStats.balance >= 0 ? 'text-purple-500' : 'text-red-500'} fontSize="small" />
                 </div>
                 <p className={`text-4xl font-bold ${summaryStats.balance >= 0 ? 'text-purple-700' : 'text-red-700'}`}>
-                  {summaryStats.balance.toLocaleString()}
+                  {(summaryStats.totalReceive + summaryStats.totalDelivery).toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">Receive - Delivery</p>
+                <p className="text-xs text-gray-500 mt-2">Receive + Delivery</p>
               </div>
             </div>
 
             {/* Stage Breakdown */}
+
             {Object.keys(summaryStats.stageBreakdown).length > 0 && (
               <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
                 <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -2564,13 +2838,13 @@ const Reports = () => {
                         <th className="px-4 py-3 text-left font-bold text-gray-700">Stage Name</th>
                         <th className="px-4 py-3 text-center font-bold text-green-700">Receive</th>
                         <th className="px-4 py-3 text-center font-bold text-orange-700">Delivery</th>
-                        <th className="px-4 py-3 text-center font-bold text-purple-700">Balance</th>
+                        <th className="px-4 py-3 text-center font-bold text-purple-700">Total QTY</th>
                         {/* <th className="px-4 py-3 text-center font-bold text-gray-700">% Completion</th> */}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {Object.entries(summaryStats.stageBreakdown).map(([stageName, data]) => {
-                        const balance = data.receive - data.delivery;
+                        const Total = data.receive + data.delivery;
                         const completion = data.receive > 0 ? ((data.delivery / data.receive) * 100).toFixed(1) : 0;
                         
                         return (
@@ -2582,8 +2856,8 @@ const Reports = () => {
                             <td className="px-4 py-3 text-center font-bold text-orange-600">
                               {data.delivery.toLocaleString()}
                             </td>
-                            <td className={`px-4 py-3 text-center font-bold ${balance >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                              {balance.toLocaleString()}
+                            <td className={`px-4 py-3 text-center font-bold ${Total >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                              {(data.receive + data.delivery).toLocaleString()}
                             </td>
                             {/* <td className="px-4 py-3 text-center">
                               <div className="flex items-center justify-center gap-2">
@@ -2609,8 +2883,8 @@ const Reports = () => {
                         <td className="px-4 py-3 text-center text-orange-700">
                           {summaryStats.totalDelivery.toLocaleString()}
                         </td>
-                        <td className={`px-4 py-3 text-center ${summaryStats.balance >= 0 ? 'text-purple-700' : 'text-red-700'}`}>
-                          {summaryStats.balance.toLocaleString()}
+                        <td className={'px-4 py-3 text-center  text-purple-700 '}>
+                          {(summaryStats.totalReceive + summaryStats.totalDelivery).toLocaleString()}
                         </td>
                         {/* <td className="px-4 py-3 text-center text-gray-700">
                           {summaryStats.uniqueStagesCount} Stages
@@ -2665,9 +2939,9 @@ const Reports = () => {
                     <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r">
                       Wash Target Date
                     </th>
-                    <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r-2 border-gray-300">
+                    {/* <th rowSpan="3" className="px-4 py-3 text-left font-bold text-gray-700 bg-gray-50 border-r-2 border-gray-300">
                       Marks
-                    </th>
+                    </th> */}
                     <th colSpan="2" className="px-4 py-3 text-center font-bold text-gray-700 bg-gray-100 border-r-2 border-gray-300">
                       Total Wash
                     </th>
@@ -2724,7 +2998,10 @@ const Reports = () => {
                       <td className="px-4 py-3 font-bold text-primary-600">{item.unit}</td>
                       <td className="px-4 py-3 font-bold text-primary-600">{item.workOrderNo}</td>
                       <td className="px-4 py-3 text-gray-700 text-sm">{item.fastReactNo}</td>
-                      <td className="px-4 py-3 text-gray-700 font-medium">{item.buyer}</td>
+                      <td className="px-4 py-3 text-gray-700 font-medium">
+                        <p>{item.buyer}</p>
+                        <p> {item.marks}</p>
+                        </td>
                       <td className="px-4 py-3 text-gray-700">{item.styleName}</td>
                       <td className="px-4 py-3 font-semibold text-gray-800">
                         {item.orderQuantity.toLocaleString()}
@@ -2732,9 +3009,9 @@ const Reports = () => {
                       <td className="px-4 py-3 text-gray-600 text-xs" title={item.washTargetDate}>
                         {item.washTargetDate}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[120px]" title={item.marks}>
+                      {/* <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[120px]" title={item.marks}>
                         {item.marks}
-                      </td>
+                      </td> */}
                       
                       {/* Total Wash */}
                       <td className="px-3 py-3 text-center font-bold text-gray-800 bg-gray-100 border-l-2 border-gray-300">
@@ -2782,7 +3059,7 @@ const Reports = () => {
                 {/* TOTALS FOOTER - Shows totals for current page */}
                 <tfoot className="bg-gray-100 border-t-2 border-gray-300 font-bold">
                   <tr>
-                    <td colSpan="9" className="px-4 py-3 text-right">
+                    <td colSpan="8" className="px-4 py-3 text-right">
                       Page Total:
                     </td>
                     <td className="px-3 py-3 text-center bg-gray-200 border-l-2 border-gray-300">

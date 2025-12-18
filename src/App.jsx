@@ -23,6 +23,7 @@ import UserManagement from './components/users/UserManagement';
 import UserLayout from './components/layout/UserLayout';
 import UserTransactionPage from './components/user/UserTransactionPage';
 import WorkHistory from './components/user/WorkHistory';
+import MachineTrack from './components/MachineTrack/MachineTrack';
 
 const theme = createTheme({
   palette: {
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="tfilter" element={<TransactionFilter></TransactionFilter>} />
         <Route path="*" element={<Navigate to="dashboard" replace />} />
         <Route path="users" element={<UserManagement key="users" />} />
+        <Route path="machine-track" element={<MachineTrack key="machine-track" />} />
       </Route>
 
       {/* User Routes */}

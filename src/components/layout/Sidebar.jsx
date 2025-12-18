@@ -35,6 +35,7 @@ const menuItems = [
   { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin', 'User'] },
   { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin', 'User'] },
   { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },
+  { text: 'Machine Track', icon: <Assessment />, path: '/admin/machine-track', roles: ['Admin'] },
   { text: 'Manage Users', icon: <People />, path: '/admin/users', roles: ['Admin'] },   
 ];
 const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle }) => {
@@ -195,7 +196,7 @@ const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle }) => {
           © 2025 WRD System
         </Typography>
         <Typography variant="caption" color="text.secondary" align="center" display="block">
-          Version 1.0.0
+          Version 1.3.0
         </Typography>
       </Box>
     </Box>

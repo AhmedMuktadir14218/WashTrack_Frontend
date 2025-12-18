@@ -1,19 +1,7 @@
 import axiosInstance from './axiosConfig';
 
 export const washTransactionApi = {
-  // ==========================================
-  // EXPORT TO CSV (SERVER-SIDE)
-  // ==========================================
-  /// <summary>
-  /// Download transactions as CSV file with filters
-  /// Supports: searchTerm, buyer, factory, processStageId, transactionTypeId, startDate, endDate
-  /// </summary>
-// ==========================================
-// EXPORT TO CSV (SERVER-SIDE)
-// ==========================================
-// ==========================================
-// EXPORT TO CSV (SERVER-SIDE)
-// ==========================================
+ 
 exportToCSV: (filters = {}) => {
   //console.log('📥 exportToCSV called with filters:', filters);
 
@@ -51,21 +39,31 @@ exportToCSV: (filters = {}) => {
 // ==========================================
 // PAGINATED WITH SEARCH & FILTERS
 // ==========================================
-getPaginated: (params) => {
-  //console.log('📄 getPaginated called with params:');
-  //console.log('   Page:', params.page);
-  //console.log('   PageSize:', params.pageSize);
-  //console.log('   SearchTerm:', params.searchTerm);
-  //console.log('   Buyer:', params.buyer);
-  //console.log('   Factory:', params.factory);
-  //  console.log('   Unit:', params.unit);
-  //console.log('   ProcessStageId:', params.processStageId);
-  //console.log('   TransactionTypeId:', params.transactionTypeId);
-  //console.log('   StartDate:', params.startDate);
-  //console.log('   EndDate:', params.endDate);
-  //console.log('   SortBy:', params.sortBy);
-  //console.log('   SortOrder:', params.sortOrder);
+// getPaginated: (params) => {
+//   const cleanParams = {};
+  
+//   if (params.page) cleanParams.page = params.page;
+//   if (params.pageSize) cleanParams.pageSize = params.pageSize;
+//   if (params.searchTerm) cleanParams.searchTerm = params.searchTerm;
+//   if (params.buyer) cleanParams.buyer = params.buyer;
+//   if (params.factory) cleanParams.factory = params.factory;
+//   if (params.unit) cleanParams.unit = params.unit;
+//   if (params.processStageId) cleanParams.processStageId = params.processStageId;
+//   if (params.transactionTypeId !== undefined && params.transactionTypeId !== '') {
+//     cleanParams.transactionTypeId = params.transactionTypeId;
+//   }
+//   if (params.startDate) cleanParams.startDate = params.startDate;
+//   if (params.endDate) cleanParams.endDate = params.endDate;
+//   if (params.sortBy) cleanParams.sortBy = params.sortBy;
+//   if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
+//   if (params.userId) cleanParams.userId = params.userId; // ✅ ADDED: userId filter
 
+//   //console.log('📤 Clean params being sent:', cleanParams);
+
+//   return axiosInstance.get('/washtransaction/paginated', { params: cleanParams });
+// },
+
+getPaginated: (params) => {
   // ✅ Build clean params object - only non-null values
   const cleanParams = {};
   
@@ -83,9 +81,11 @@ getPaginated: (params) => {
   if (params.endDate) cleanParams.endDate = params.endDate;
   if (params.sortBy) cleanParams.sortBy = params.sortBy;
   if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
-  if (params.userId) cleanParams.userId = params.userId; // ✅ ADDED: userId filter
+  
+  // ✅ FIXED: Use createdBy instead of userId
+  if (params.createdBy) cleanParams.createdBy = params.createdBy;
 
-  //console.log('📤 Clean params being sent:', cleanParams);
+  // console.log('📤 Clean params being sent:', cleanParams);
 
   return axiosInstance.get('/washtransaction/paginated', { params: cleanParams });
 },
@@ -202,6 +202,40 @@ getPaginated: (params) => {
       { params }
     );
   },
+
+  // Add this to your washTransactionApi object
+
+// ==========================================
+// GET USER TRANSACTION SUMMARY
+// ==========================================
+getUserTransactionSummary: (params) => {
+  // ✅ Build clean params object
+  const cleanParams = {};
+  
+  if (params.page) cleanParams.page = params.page;
+  if (params.pageSize) cleanParams.pageSize = params.pageSize;
+  if (params.searchTerm) cleanParams.searchTerm = params.searchTerm;
+  if (params.buyer) cleanParams.buyer = params.buyer;
+  if (params.factory) cleanParams.factory = params.factory;
+  if (params.unit) cleanParams.unit = params.unit;
+  if (params.processStageId) cleanParams.processStageId = params.processStageId;
+  if (params.transactionTypeId !== undefined && params.transactionTypeId !== '') {
+    cleanParams.transactionTypeId = params.transactionTypeId;
+  }
+  if (params.startDate) cleanParams.startDate = params.startDate;
+  if (params.endDate) cleanParams.endDate = params.endDate;
+  if (params.sortBy) cleanParams.sortBy = params.sortBy;
+  if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
+  
+  // ✅ NEW: Flag for day-wise breakdown
+  if (params.includeDayWiseBreakdown !== undefined) {
+    cleanParams.includeDayWiseBreakdown = params.includeDayWiseBreakdown;
+  }
+
+  console.log('📤 User Summary params being sent:', cleanParams);
+
+  return axiosInstance.get('/washtransaction/user/summary', { params: cleanParams });
+},
 
   // ==========================================
   // GET ALL DATA FOR EXPORT (Helper method)
