@@ -232,7 +232,7 @@ getUserTransactionSummary: (params) => {
     cleanParams.includeDayWiseBreakdown = params.includeDayWiseBreakdown;
   }
 
-  console.log('📤 User Summary params being sent:', cleanParams);
+  // console.log('📤 User Summary params being sent:', cleanParams);
 
   return axiosInstance.get('/washtransaction/user/summary', { params: cleanParams });
 },
@@ -274,4 +274,27 @@ getUserTransactionSummary: (params) => {
 
     return axiosInstance.get('/washtransaction/paginated', { params });
   },
+
+// washTransactionApi.js - ADD this helper
+getReportData: async (filters = {}) => {
+  const params = {
+    page: 1,
+    pageSize: 100000, // Backend থেকে সব data এক request এ
+    sortBy: 'transactionDate',
+    sortOrder: 'desc',
+  };
+
+  if (filters.buyer) params.buyer = filters.buyer;
+  if (filters.factory) params.factory = filters.factory;
+  if (filters.unit) params.unit = filters.unit;
+  if (filters.processStageId) params.processStageId = filters.processStageId;
+  if (filters.transactionTypeId !== undefined && filters.transactionTypeId !== '') {
+    params.transactionTypeId = filters.transactionTypeId;
+  }
+  if (filters.startDate) params.startDate = filters.startDate;
+  if (filters.endDate) params.endDate = filters.endDate;
+  if (filters.searchTerm) params.searchTerm = filters.searchTerm;
+
+  return axiosInstance.get('/washtransaction/paginated', { params });
+},
 };

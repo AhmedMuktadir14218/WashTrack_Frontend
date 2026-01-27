@@ -1176,7 +1176,8 @@ import {
   KeyboardArrowRight, 
   Refresh,
   AccessTime,
-  ArrowDropDown
+  ArrowDropDown,
+  Clear
 } from '@mui/icons-material';
 import { useWashTransaction } from '../../hooks/useWashTransaction';
 import { useAuth } from '../../hooks/useAuth';
@@ -1196,6 +1197,7 @@ const WorkHistory = () => {
   
   // Ref for the scrollable table container
   const tableContainerRef = useRef(null);
+  const dateInputRef = useRef(null);
 
   const { 
     getUserTransactionSummary, 
@@ -1253,21 +1255,16 @@ const formatDateTime = (dateString) => {
 
   const currentUserId = getUserId();
 
-  // Load data on mount
-  useEffect(() => {
-    if (currentUserId || isAdmin()) {
-      loadData();
-    }
-  }, [currentUserId]);
-
-  // Load data with debounce on search/filter
+  // Load data with debounce on search/filter/mount
   useEffect(() => {
     if (!currentUserId && !isAdmin()) return;
+
     const timer = setTimeout(() => {
       loadData();
-    }, 500);
+    }, 400); // Slightly shorter debounce
+
     return () => clearTimeout(timer);
-  }, [searchQuery, filterType]);
+  }, [currentUserId, searchQuery, filterType]);
 
   // Reset page when date changes
   useEffect(() => {
@@ -1291,39 +1288,58 @@ const formatDateTime = (dateString) => {
     try {
       setIsLoading(true);
 
-      let allTxns = [];
-      let page = 1;
-      let hasMore = true;
+      const PAGE_SIZE = 1000; // Increased page size for faster loading
+      
+      const filterParams = {
+        page: 1,
+        pageSize: PAGE_SIZE,
+        searchTerm: searchQuery || undefined,
+        sortBy: 'transactionDate',
+        sortOrder: 'desc',
+        includeDayWiseBreakdown: false,
+      };
 
-      while (hasMore) {
-        const filterParams = {
-          page,
-          pageSize: 100,
-          searchTerm: searchQuery || undefined,
-          sortBy: 'transactionDate',
-          sortOrder: 'desc',
-          includeDayWiseBreakdown: false,
-        };
+      if (filterType !== 'all') {
+        filterParams.transactionTypeId = parseInt(filterType);
+      }
 
-        if (filterType !== 'all') {
-          filterParams.transactionTypeId = parseInt(filterType);
-        }
+      // Fetch the first page
+      const firstResult = await getUserTransactionSummary(filterParams);
+      
+      if (!firstResult || !firstResult.success) {
+        toast.error(firstResult?.message || 'Failed to load work history');
+        setIsLoading(false);
+        return;
+      }
 
-        const result = await getUserTransactionSummary(filterParams);
+      let allTxns = firstResult.transactions || [];
+      const pagination = firstResult.pagination;
+
+      // If there are more pages, fetch them in parallel for speed
+      if (pagination && pagination.totalPages > 1) {
+        const totalPages = pagination.totalPages;
+        const remainingPages = [];
         
-        if (result && result.success) {
-          const txns = result.transactions || [];
-          allTxns = [...allTxns, ...txns];
-
-          if (result.pagination && result.pagination.hasNext) {
-            page++;
-          } else {
-            hasMore = false;
-          }
-        } else {
-          toast.error(result?.message || 'Failed to load work history');
-          hasMore = false;
+        for (let p = 2; p <= totalPages; p++) {
+          remainingPages.push(p);
         }
+
+        // Fetch remaining pages in parallel
+        const results = await Promise.all(
+          remainingPages.map(p => 
+            getUserTransactionSummary({
+              ...filterParams,
+              page: p
+            })
+          )
+        );
+
+        // Combine results
+        results.forEach(res => {
+          if (res && res.success) {
+            allTxns = [...allTxns, ...(res.transactions || [])];
+          }
+        });
       }
 
       if (allTxns.length > 0) {
@@ -1350,7 +1366,11 @@ const formatDateTime = (dateString) => {
 
         setGroupedByDate(grouped);
         setSortedDates(dates);
-        setCurrentDateIndex(0);
+        
+        // Only reset if we are on a new search or initial load
+        if (currentDateIndex >= dates.length) {
+          setCurrentDateIndex(0);
+        }
         setCurrentDatePageIndex(0);
 
       } else {
@@ -1409,9 +1429,34 @@ const formatDateTime = (dateString) => {
     }
   };
 
-  const handleDateSelect = (e) => {
-    const newIndex = parseInt(e.target.value);
-    setCurrentDateIndex(newIndex);
+  const handleDateChange = (e) => {
+    const selectedDateStr = e.target.value; // yyyy-MM-dd
+    if (!selectedDateStr) return;
+
+    const index = sortedDates.indexOf(selectedDateStr);
+    if (index !== -1) {
+      setCurrentDateIndex(index);
+    } else {
+      // Date not in the currently loaded list
+      toast.error(`No transactions found for ${format(new Date(selectedDateStr), 'dd MMM yyyy')} in currently loaded data.`);
+    }
+  };
+
+  const triggerDatePicker = () => {
+    if (dateInputRef.current) {
+      try {
+        // Modern browsers support showPicker()
+        if (typeof dateInputRef.current.showPicker === 'function') {
+          dateInputRef.current.showPicker();
+        } else {
+          // Fallback for older browsers
+          dateInputRef.current.click();
+        }
+      } catch (error) {
+        // Final fallback
+        dateInputRef.current.click();
+      }
+    }
   };
 
   // Transaction page navigation handlers
@@ -1473,8 +1518,15 @@ const formatDateTime = (dateString) => {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 text-xs md:text-sm"
+                className="w-full pl-8 pr-10 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 text-xs md:text-sm"
               />
+              {searchQuery && (
+                 
+                  <Clear onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-black-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  aria-label="Clear search" style={{ fontSize: 16 }} />
+           
+              )}
             </div>
 
             <select
@@ -1510,39 +1562,47 @@ const formatDateTime = (dateString) => {
   
   {/* Prev Button */}
   <button 
-    onClick={handlePrevDate} 
+    onClick={(e) => {
+      e.stopPropagation();
+      handlePrevDate();
+    }} 
     disabled={currentDateIndex === 0}
-    // Added: bg-transparent, border-none, outline-none, text-white
-    className="p-1.5 rounded bg-transparent border-none outline-none text-white hover:bg-white/20 disabled:opacity-30 transition"
+    className="p-2 rounded-lg bg-white/5 hover:bg-white/20 text-white disabled:opacity-20 transition-all duration-200 active:scale-90 flex items-center justify-center"
+    title="Previous Day"
   >
     <KeyboardArrowLeft />
   </button>
   
-  {/* Date Select Dropdown */}
-  <div className="relative flex items-center justify-center flex-1 px-2 group cursor-pointer">
-    <CalendarToday style={{ fontSize: 16 }} className="text-white opacity-90 absolute left-0 pointer-events-none" />
+  {/* Date Picker & Display */}
+  <div 
+    onClick={triggerDatePicker}
+    className="relative flex items-center justify-center flex-1 px-2 group cursor-pointer h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200 active:scale-95"
+  >
+    <CalendarToday style={{ fontSize: 18 }} className="text-white opacity-90 absolute left-3" />
     
-    <select 
-      value={currentDateIndex}
-      onChange={handleDateSelect}
-      className="appearance-none bg-transparent text-white font-bold text-sm md:text-lg pl-6 pr-6 outline-none cursor-pointer text-center w-full border-none focus:ring-0"
-    >
-      {sortedDates.map((date, index) => (
-        <option key={date} value={index} className="text-gray-800">
-          {format(new Date(date), 'dd MMM yyyy')}
-        </option>
-      ))}
-    </select>
-
-    <ArrowDropDown className="text-white opacity-90 absolute right-0 pointer-events-none" />
+    <input 
+      ref={dateInputRef}
+      type="date"
+      value={currentDate || ''}
+      onChange={handleDateChange}
+      className="absolute opacity-0 pointer-events-none w-0 h-0"
+    />
+    
+    <div className="flex items-center gap-2 font-bold text-sm md:text-lg text-white ml-6 select-none">
+      {currentDate ? format(new Date(currentDate), 'dd MMM yyyy') : 'Select Date'}
+      <ArrowDropDown className={`text-white transition-transform duration-200 group-hover:translate-y-0.5`} />
+    </div>
   </div>
 
   {/* Next Button */}
   <button 
-    onClick={handleNextDate} 
+    onClick={(e) => {
+      e.stopPropagation();
+      handleNextDate();
+    }} 
     disabled={currentDateIndex === sortedDates.length - 1}
-    // Added: bg-transparent, border-none, outline-none, text-white
-    className="p-1.5 rounded bg-transparent border-none outline-none text-white hover:bg-white/20 disabled:opacity-30 transition"
+    className="p-2 rounded-lg bg-white/5 hover:bg-white/20 text-white disabled:opacity-20 transition-all duration-200 active:scale-90 flex items-center justify-center"
+    title="Next Day"
   >
     <KeyboardArrowRight />
   </button>
@@ -1578,7 +1638,7 @@ const formatDateTime = (dateString) => {
             {/* ✅ SCROLLABLE TABLE AREA - PROFESSIONAL MOBILE VIEW */}
             <div 
               ref={tableContainerRef} 
-              className="flex-1 overflow-y-auto custom-scrollbar"
+              className="flex-1 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-sm">

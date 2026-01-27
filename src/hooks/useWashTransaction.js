@@ -400,13 +400,13 @@ const getUserTransactionSummary = useCallback(async (params) => {
       setData(summaryData.transactions?.data || []);
       setPagination(summaryData.transactions?.pagination);
 
-      console.log('✅ User summary loaded:', {
-        totalTransactions: summaryData.totalTransactions,
-        totalReceivedQty: summaryData.totalReceivedQty,
-        totalDeliveredQty: summaryData.totalDeliveredQty,
-        netBalance: summaryData.netBalance,
-        stageWiseSummary: Object.keys(summaryData.stageWiseSummary || {}).length + ' stages'
-      });
+      // console.log('✅ User summary loaded:', {
+      //   totalTransactions: summaryData.totalTransactions,
+      //   totalReceivedQty: summaryData.totalReceivedQty,
+      //   totalDeliveredQty: summaryData.totalDeliveredQty,
+      //   netBalance: summaryData.netBalance,
+      //   stageWiseSummary: Object.keys(summaryData.stageWiseSummary || {}).length + ' stages'
+      // });
 
       return { 
         success: true, 
