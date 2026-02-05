@@ -306,96 +306,159 @@ const Reports = () => {
   const filteredData = useMemo(() => {
     if (!reportData.length) return [];
 
-    let filtered = reportData;
+    // Helper to calculate quantities for a set of transactions
+    const calculateQuantities = (transactions) => {
+      const stats = {
+        periodWashReceived: 0, // Differentiates from WO total
+        periodWashDelivery: 0, // Differentiates from WO total
+        firstDryReceive: 0,
+        firstDryDelivery: 0,
+        unwashReceive: 0,
+        unwashDelivery: 0,
+        firstWashReceive: 0,
+        firstWashDelivery: 0,
+        secondDryReceive: 0,
+        secondDryDelivery: 0,
+        finalWashReceive: 0,
+        finalWashDelivery: 0,
+      };
 
-    // Apply filters
-    if (appliedFilters.buyer) {
-      const buyerLower = appliedFilters.buyer.toLowerCase();
-      filtered = filtered.filter(item => 
-        item.buyer.toLowerCase().includes(buyerLower)
-      );
-    }
+      transactions.forEach(t => {
+        const qty = t.quantity || 0;
+        const isReceive = t.transactionType === TRANSACTION_TYPES.RECEIVE;
+        const stageName = t.processStageName;
 
-    if (appliedFilters.factory) {
-      const factoryLower = appliedFilters.factory.toLowerCase();
-      filtered = filtered.filter(item => 
-        item.factory.toLowerCase() === factoryLower
-      );
-    }
+        if (isReceive) {
+          stats.periodWashReceived += qty;
+        } else {
+          stats.periodWashDelivery += qty;
+        }
 
-    if (appliedFilters.unit) {
-      filtered = filtered.filter(item => item.unit === appliedFilters.unit);
-    }
+        if (stageName === '1st Dry') {
+          isReceive ? stats.firstDryReceive += qty : stats.firstDryDelivery += qty;
+        } else if (stageName === 'Unwash') {
+          isReceive ? stats.unwashReceive += qty : stats.unwashDelivery += qty;
+        } else if (stageName === '1st Wash') {
+          isReceive ? stats.firstWashReceive += qty : stats.firstWashDelivery += qty;
+        } else if (stageName === '2nd Dry') {
+          isReceive ? stats.secondDryReceive += qty : stats.secondDryDelivery += qty;
+        } else if (stageName === 'Final Wash') {
+          isReceive ? stats.finalWashReceive += qty : stats.finalWashDelivery += qty;
+        }
+      });
 
-    // Date filter
-    if (appliedFilters.startDate || appliedFilters.endDate) {
-      const startTime = appliedFilters.startDate 
-        ? new Date(appliedFilters.startDate + 'T00:00:00').getTime() 
-        : null;
-      const endTime = appliedFilters.endDate 
-        ? new Date(appliedFilters.endDate + 'T23:59:59').getTime() 
-        : null;
+      return stats;
+    };
 
-      filtered = filtered.filter(item => {
-        const itemTransactions = item.transactions || [];
-        return itemTransactions.some(transaction => {
-          const transTime = new Date(transaction.transactionDate).getTime();
+    // 1. First pass: Apply transaction-level filters and recalculate stats
+    const mappedData = reportData.map(item => {
+      let validTransactions = item.transactions || [];
+
+      // Apply Date Filter (Transaction Level)
+      if (appliedFilters.startDate || appliedFilters.endDate) {
+        const startTime = appliedFilters.startDate 
+          ? new Date(appliedFilters.startDate + 'T00:00:00').getTime() 
+          : null;
+        const endTime = appliedFilters.endDate 
+          ? new Date(appliedFilters.endDate + 'T23:59:59').getTime() 
+          : null;
+
+        validTransactions = validTransactions.filter(t => {
+          const transTime = new Date(t.transactionDate).getTime();
           const startMatch = !startTime || transTime >= startTime;
           const endMatch = !endTime || transTime <= endTime;
           return startMatch && endMatch;
         });
-      });
-    }
-
-    // Process stage filter
-    if (appliedFilters.processStageId) {
-      const selectedStage = stages.find(s => s.id === parseInt(appliedFilters.processStageId));
-      if (selectedStage) {
-        filtered = filtered.filter(item => {
-          return item.transactions.some(t => t.processStageName === selectedStage.name);
-        });
       }
-    }
- if (appliedFilters.washTargetStartDate || appliedFilters.washTargetEndDate) {
-    const washStartTime = appliedFilters.washTargetStartDate 
-      ? new Date(appliedFilters.washTargetStartDate + 'T00:00:00').getTime() 
-      : null;
-    const washEndTime = appliedFilters.washTargetEndDate 
-      ? new Date(appliedFilters.washTargetEndDate + 'T23:59:59').getTime() 
-      : null;
 
-    filtered = filtered.filter(item => {
-      // Skip items without wash target date
-      if (!item.washTargetDateRaw) return false;
-      
-      const itemWashTargetTime = item.washTargetDateRaw.getTime();
-      const startMatch = !washStartTime || itemWashTargetTime >= washStartTime;
-      const endMatch = !washEndTime || itemWashTargetTime <= washEndTime;
-      
-      return startMatch && endMatch;
-    });
-  }
-    // Transaction type filter
-    if (appliedFilters.transactionTypeId !== '' && appliedFilters.transactionTypeId !== undefined) {
-      filtered = filtered.filter(item => {
-        return item.transactions.some(t => 
+      // Apply Process Stage Filter (Transaction Level)
+      if (appliedFilters.processStageId) {
+        const selectedStage = stages.find(s => s.id === parseInt(appliedFilters.processStageId));
+        if (selectedStage) {
+          validTransactions = validTransactions.filter(t => t.processStageName === selectedStage.name);
+        }
+      }
+
+      // Apply Transaction Type Filter (Transaction Level)
+      if (appliedFilters.transactionTypeId !== '' && appliedFilters.transactionTypeId !== undefined) {
+        validTransactions = validTransactions.filter(t => 
           t.transactionType === parseInt(appliedFilters.transactionTypeId)
         );
-      });
-    }
+      }
 
-    // Search filter
-    if (debouncedSearch.trim()) {
-      const query = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.workOrderNo.toLowerCase().includes(query) ||
-        item.fastReactNo.toLowerCase().includes(query) ||
-        item.buyer.toLowerCase().includes(query) ||
-        item.styleName.toLowerCase().includes(query)
-      );
-    }
+      // Recalculate stats based on filtered transactions
+      const newStats = calculateQuantities(validTransactions);
 
-    return filtered;
+      return {
+        ...item, // helper: preserves original totalWashReceived/Delivery
+        ...newStats, // helper: overwrites stage specific stats with filtered versions
+        transactions: validTransactions, 
+        originalTransactions: item.transactions 
+      };
+    });
+
+    // 2. Second pass: Apply Work Order level filters (Buyer, Factory, Search, etc.)
+    return mappedData.filter(item => {
+      // Buyer
+      if (appliedFilters.buyer && !item.buyer.toLowerCase().includes(appliedFilters.buyer.toLowerCase())) {
+        return false;
+      }
+
+      // Factory
+      if (appliedFilters.factory && item.factory.toLowerCase() !== appliedFilters.factory.toLowerCase()) {
+        return false;
+      }
+
+      // Unit
+      if (appliedFilters.unit && item.unit !== appliedFilters.unit) {
+        return false;
+      }
+
+      // Wash Target Date (Work Order Level)
+      if (appliedFilters.washTargetStartDate || appliedFilters.washTargetEndDate) {
+        if (!item.washTargetDateRaw) return false;
+        const targetTime = item.washTargetDateRaw.getTime();
+        
+        const startTime = appliedFilters.washTargetStartDate 
+          ? new Date(appliedFilters.washTargetStartDate + 'T00:00:00').getTime() 
+          : null;
+        const endTime = appliedFilters.washTargetEndDate 
+          ? new Date(appliedFilters.washTargetEndDate + 'T23:59:59').getTime() 
+          : null;
+
+        if (startTime && targetTime < startTime) return false;
+        if (endTime && targetTime > endTime) return false;
+      }
+
+      // Search
+      if (debouncedSearch.trim()) {
+        const query = debouncedSearch.toLowerCase();
+        const matches = 
+          item.workOrderNo.toLowerCase().includes(query) ||
+          item.fastReactNo.toLowerCase().includes(query) ||
+          item.buyer.toLowerCase().includes(query) ||
+          item.styleName.toLowerCase().includes(query);
+        if (!matches) return false;
+      }
+
+      // Filter out rows with zero activity if transaction filters are applied
+      const hasTransactionFilters = 
+        appliedFilters.startDate || 
+        appliedFilters.endDate || 
+        appliedFilters.processStageId || 
+        (appliedFilters.transactionTypeId !== '' && appliedFilters.transactionTypeId !== undefined);
+
+      if (hasTransactionFilters) {
+        // Check activity based on PERIOD stats, not WO stats
+        const hasActivity = 
+          item.periodWashReceived > 0 || 
+          item.periodWashDelivery > 0;
+        
+        if (!hasActivity) return false;
+      }
+
+      return true;
+    });
   }, [reportData, appliedFilters, debouncedSearch, stages]);
 
   // ==========================================
@@ -1510,3 +1573,4 @@ const Reports = () => {
 };
 
 export default Reports;
+

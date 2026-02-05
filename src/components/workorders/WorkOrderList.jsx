@@ -152,20 +152,20 @@ const WorkOrderList = () => {
         </span>
       ),
     },
-    {
-      field: 'washType',
-      headerName: 'Wash Type',
-      width: 130,
-      headerClassName: 'bg-gray-100 font-bold',
-      renderCell: (params) => (
-        <Chip
-          label={params.value || 'N/A'}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
-      ),
-    },
+    // {
+    //   field: 'washType',
+    //   headerName: 'Wash Type',
+    //   width: 130,
+    //   headerClassName: 'bg-gray-100 font-bold',
+    //   renderCell: (params) => (
+    //     <Chip
+    //       label={params.value || 'N/A'}
+    //       size="small"
+    //       color="primary"
+    //       variant="outlined"
+    //     />
+    //   ),
+    // },
     {
   field: 'washTargetDate',
   headerName: 'Wash Target',

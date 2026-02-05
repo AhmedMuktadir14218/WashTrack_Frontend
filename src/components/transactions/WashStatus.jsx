@@ -11,7 +11,6 @@ const WashStatus = () => {
   const navigate = useNavigate();
   const { workOrderId } = useParams();
   const { getStatus, loading } = useWashTransaction();
-
   const [status, setStatus] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
 
@@ -300,10 +299,10 @@ const WashStatus = () => {
               <span className="text-gray-600">Color</span>
               <span className="font-semibold">{status.color || 'N/A'}</span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span className="text-gray-600">Wash Type</span>
               <span className="font-semibold">{status.washType || 'N/A'}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between">
               <span className="text-gray-600">Order Qty</span>
               <span className="font-semibold">{status.orderQuantity.toLocaleString()}</span>

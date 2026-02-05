@@ -208,14 +208,14 @@ const WorkOrderDetail = () => {
               <p className="text-sm text-gray-600 mb-1">Color</p>
               <p className="font-semibold text-gray-800">{workOrder.color || 'N/A'}</p>
             </div>
-            <div>
+            {/* <div>
               <p className="text-sm text-gray-600 mb-1">Wash Type</p>
               <Chip
                 label={workOrder.washType || 'N/A'}
                 color="primary"
                 size="small"
               />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

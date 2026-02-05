@@ -389,7 +389,7 @@ const WorkOrderForm = () => {
               </div>
 
               {/* Wash Type */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Wash Type
                 </label>
@@ -402,7 +402,7 @@ const WorkOrderForm = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
                   placeholder="e.g., Acid Wash"
                 />
-              </div>
+              </div> */}
             </div>
           </div>
 
