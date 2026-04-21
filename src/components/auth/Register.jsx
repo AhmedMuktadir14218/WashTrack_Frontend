@@ -26,7 +26,12 @@ const PROCESS_STAGES = [
   { id: 2, name: 'Unwash' },
   { id: 3, name: '2nd Dry' },
   { id: 4, name: '1st Wash' },
-  { id: 5, name: 'Final Wash' }
+  { id: 5, name: 'Final Wash' },
+  { id: 6, name: '1st Dryer' },
+  { id: 7, name: '2nd Dryer' },
+  { id: 8, name: 'Final Dryer' },
+  { id: 9, name: 'Cool Dryer' },
+  { id: 10, name: 'ReDryer' },
 ];
 
 const Register = () => {

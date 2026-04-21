@@ -1179,7 +1179,7 @@ import {
   ArrowDropDown,
   Clear
 } from '@mui/icons-material';
-import { useWashTransaction } from '../../hooks/useWashTransaction';
+import { useReports } from '../../hooks/useReports';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
@@ -1200,9 +1200,9 @@ const WorkHistory = () => {
   const dateInputRef = useRef(null);
 
   const { 
-    getUserTransactionSummary, 
-    loading: hookLoading,
-  } = useWashTransaction();
+    fetchUserTransactions, 
+    loading: reportLoading,
+  } = useReports();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -1288,59 +1288,48 @@ const formatDateTime = (dateString) => {
     try {
       setIsLoading(true);
 
-      const PAGE_SIZE = 1000; // Increased page size for faster loading
-      
       const filterParams = {
-        page: 1,
-        pageSize: PAGE_SIZE,
-        searchTerm: searchQuery || undefined,
-        sortBy: 'transactionDate',
-        sortOrder: 'desc',
-        includeDayWiseBreakdown: false,
+        startDate: undefined, // Add date range filters if needed
+        endDate: undefined,
       };
 
-      if (filterType !== 'all') {
-        filterParams.transactionTypeId = parseInt(filterType);
-      }
-
-      // Fetch the first page
-      const firstResult = await getUserTransactionSummary(filterParams);
+      // Fetch all transactions from the new endpoint
+      const transactions = await fetchUserTransactions(currentUserId, filterParams);
       
-      if (!firstResult || !firstResult.success) {
-        toast.error(firstResult?.message || 'Failed to load work history');
+      if (!transactions) {
+        toast.error('Failed to load work history');
         setIsLoading(false);
         return;
       }
 
-      let allTxns = firstResult.transactions || [];
-      const pagination = firstResult.pagination;
+      // Map API fields if necessary
+      const mappedTxns = transactions.map(t => ({
+        ...t,
+        id: t.transactionId,
+        transactionType: t.transactionType === 'Receive' ? TRANSACTION_TYPES.RECEIVE : TRANSACTION_TYPES.DELIVERY,
+        transactionTypeName: t.transactionType,
+        processStageName: t.stageName
+      }));
 
-      // If there are more pages, fetch them in parallel for speed
-      if (pagination && pagination.totalPages > 1) {
-        const totalPages = pagination.totalPages;
-        const remainingPages = [];
-        
-        for (let p = 2; p <= totalPages; p++) {
-          remainingPages.push(p);
-        }
-
-        // Fetch remaining pages in parallel
-        const results = await Promise.all(
-          remainingPages.map(p => 
-            getUserTransactionSummary({
-              ...filterParams,
-              page: p
-            })
-          )
+      // Apply frontend filtering for Search and Type
+      let filteredTxns = mappedTxns;
+      
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filteredTxns = filteredTxns.filter(t => 
+          t.workOrderNo?.toLowerCase().includes(query) ||
+          t.styleName?.toLowerCase().includes(query) ||
+          t.buyer?.toLowerCase().includes(query) ||
+          t.processStageName?.toLowerCase().includes(query)
         );
-
-        // Combine results
-        results.forEach(res => {
-          if (res && res.success) {
-            allTxns = [...allTxns, ...(res.transactions || [])];
-          }
-        });
       }
+
+      if (filterType !== 'all') {
+        const typeId = parseInt(filterType);
+        filteredTxns = filteredTxns.filter(t => t.transactionType === typeId);
+      }
+
+      let allTxns = filteredTxns;
 
       if (allTxns.length > 0) {
         setAllTransactions(allTxns);
@@ -1499,7 +1488,11 @@ const formatDateTime = (dateString) => {
           </div>
 
           <button
-            onClick={() => loadData()}
+            onClick={() => {
+              setSearchQuery('');
+              setFilterType('all');
+              loadData();
+            }}
             disabled={isLoading}
             className="px-3 py-1.5 bg-white border hover:bg-gray-50 text-gray-700 rounded-lg flex items-center gap-1 shadow-sm transition duration-200 disabled:opacity-50 text-xs md:text-sm"
           >

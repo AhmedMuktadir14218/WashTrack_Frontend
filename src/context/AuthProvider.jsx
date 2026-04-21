@@ -158,6 +158,12 @@ export const AuthProvider = ({ children }) => {
     return categories.includes(categoryName);
   };
 
+  // ✅ Added getProcessStageAccess for backward compatibility
+  const getProcessStageAccess = () => {
+    if (!user || !user.processStageAccesses) return [];
+    return user.processStageAccesses;
+  };
+
   const value = {
     // State
     user,
@@ -186,6 +192,9 @@ export const AuthProvider = ({ children }) => {
     getCategories,
     getCategoryNames,
     hasCategory,
+
+    // Process Stage Access (backward compatibility)
+    getProcessStageAccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

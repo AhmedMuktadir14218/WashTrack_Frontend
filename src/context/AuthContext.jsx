@@ -137,7 +137,13 @@ export const AuthProvider = ({ children }) => {
     return categories.includes(categoryName);
   };
 
-  const value = {
+// ✅ FIXED: Define and return getProcessStageAccess
+  const getProcessStageAccess = () => {
+    if (!user || !user.processStageAccesses) return [];
+    return user.processStageAccesses;
+  };
+
+const value = {
     // State
     user,
     token,
@@ -156,7 +162,32 @@ export const AuthProvider = ({ children }) => {
     getCategories,
     getCategoryNames,
     hasCategory,
+    getProcessStageAccess, // ✅ ADDED HERE
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+//   const value = {
+//     // State
+//     user,
+//     token,
+//     isAuthenticated,
+//     isLoading,
+
+//     // Actions
+//     login,
+//     register,
+//     logout,
+//     updateUser,
+
+//     // Utilities
+//     hasRole,
+//     isAdmin,
+//     getCategories,
+//     getCategoryNames,
+//     hasCategory,
+//     getProcessStageAccess
+//   };
+
+//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+// };

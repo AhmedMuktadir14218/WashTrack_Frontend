@@ -30,6 +30,11 @@ const PROCESS_STAGES = [
   { id: 3, name: '2nd Dry' },
   { id: 4, name: '1st Wash' },
   { id: 5, name: 'Final Wash' },
+  { id: 6, name: '1st Dryer' },
+  { id: 7, name: '2nd Dryer' },
+  { id: 8, name: 'Final Dryer' },
+  { id: 9, name: 'Cool Dryer' },
+  { id: 10, name: 'ReDryer' },
 ];
 
 const TabPanel = ({ children, value, index }) => (
@@ -90,20 +95,20 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
     });
   };
 
-// const handleStageToggle = (stageId) => {
-//   setFormData(prev => ({
-//     ...prev,
-//     stageIds: prev.stageIds.includes(stageId)
-//       ? prev.stageIds.filter(id => id !== stageId)
-//       : [...prev.stageIds, stageId],
-//   }));
-// };
 const handleStageToggle = (stageId) => {
   setFormData(prev => ({
     ...prev,
-    stageIds: [stageId] // replace with only the clicked stage
+    stageIds: prev.stageIds.includes(stageId)
+      ? prev.stageIds.filter(id => id !== stageId)
+      : [...prev.stageIds, stageId],
   }));
 };
+// const handleStageToggle = (stageId) => {
+//   setFormData(prev => ({
+//     ...prev,
+//     stageIds: [stageId] // replace with only the clicked stage
+//   }));
+// };
   const validate = () => {
     const newErrors = {};
 

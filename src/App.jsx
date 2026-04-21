@@ -23,7 +23,9 @@ import UserManagement from './components/users/UserManagement';
 import UserLayout from './components/layout/UserLayout';
 import UserTransactionPage from './components/user/UserTransactionPage';
 import WorkHistory from './components/user/WorkHistory';
+import UserWorkOrderSummary from './components/user/UserWorkOrderSummary';
 import MachineTrack from './components/MachineTrack/MachineTrack';
+import { useThemeMode } from './hooks/useThemeMode';
 
 const theme = createTheme({
   palette: {
@@ -69,11 +71,12 @@ const theme = createTheme({
     },
   },
 });
+// Example AdminLayout.jsx
 
 // Wrapper component to get location
 function AppRoutes() {
   const location = useLocation();
-
+const { isDarkMode, toggleTheme } = useThemeMode();
   return (
     <Routes>
       {/* Public Routes */}
@@ -85,12 +88,12 @@ function AppRoutes() {
         path="/admin"
         element={
           <ProtectedRoute requiredRole="Admin">
-            <Layout key={location.pathname} />
+            <Layout key={location.pathname} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </ProtectedRoute>
         }
       >
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard key="dashboard" />} />
+        <Route path="dashboard" element={<Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
         <Route path="work-orders" element={<WorkOrderList key="work-orders" />} />
         <Route path="work-orders/create" element={<WorkOrderForm key="work-orders-create" />} />
         <Route path="work-orders/bulk-upload" element={<BulkUpload key="work-orders-bulk" />} />
@@ -118,6 +121,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="transactions" replace />} />
         <Route path="transactions" element={<UserTransactionPage key="user-transactions" />} />
         <Route path="work-history" element={<WorkHistory key="user-work-history" />} />
+        <Route path="work-order-summary" element={<UserWorkOrderSummary key="user-work-order-summary" />} />
         <Route path="*" element={<Navigate to="transactions" replace />} />
       </Route>
 
@@ -170,4 +174,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;  

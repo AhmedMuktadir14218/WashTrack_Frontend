@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Avatar,
-  Menu,
-  MenuItem,
-  Divider,
-  ListItemIcon,
-  Tooltip,
-  Button,
-  IconButton,
-  Drawer,
+  AppBar,  Toolbar,  Typography,  Box,  Avatar,  Menu,  MenuItem,  Divider,  ListItemIcon,  Tooltip,  Button,  IconButton,  Drawer,
 } from '@mui/material';
 import {
   AccountCircle,
@@ -22,6 +10,7 @@ import {
   LocalLaundryService,
   Menu as MenuIcon,
   Close as CloseIcon,
+  Assessment,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -44,6 +33,12 @@ const UserHeader = () => {
     setDrawerOpen(false);
     logout();
     navigate('/login');
+  };
+
+  const handleWorkOrderSummary = () => {
+    handleMenuClose();
+    setDrawerOpen(false);
+    navigate('/user/work-order-summary');
   };
 
   const handleWorkHistory = () => {
@@ -131,6 +126,13 @@ const UserHeader = () => {
 
               <Divider sx={{ my: 1 }} />
 
+              <MenuItem onClick={handleWorkOrderSummary}>
+                <ListItemIcon>
+                  <Assessment fontSize="small"/>
+                </ListItemIcon>
+                Work Order Summary
+              </MenuItem>
+
               <MenuItem onClick={handleWorkHistory}>
                 <ListItemIcon>
                   <HistoryOutlined fontSize="small" />
@@ -187,6 +189,16 @@ const UserHeader = () => {
           </Box>
 
           <Divider sx={{ my: 2 }} />
+
+          <MenuItem
+            onClick={handleWorkOrderSummary}
+            sx={{ mb: 1, borderRadius: 1 }}
+          >
+            <ListItemIcon>
+              <Assessment fontSize="small"  />   
+            </ListItemIcon>
+            <Typography>Daywise Summary</Typography>
+          </MenuItem>
 
           <MenuItem
             onClick={handleWorkHistory}

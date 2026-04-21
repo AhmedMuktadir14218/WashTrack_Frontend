@@ -1,4 +1,3 @@
-// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\user\UserTransactionPage.jsx
 import { useState, useEffect } from 'react';
 import { useProcessStage } from '../../hooks/useProcessStage';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,12 +33,15 @@ const DownArrowIcon = ({ className, ...props }) => (
 
 const UserTransactionPage = () => {
   const { stages } = useProcessStage();
-  const { getFirstStageAccess, isAdmin } = useAuth();
+  const { getProcessStageAccess, isAdmin } = useAuth(); // ✅ Using getProcessStageAccess
   
   const [step, setStep] = useState(1);
   const [transactionType, setTransactionType] = useState(null);
-  const [selectedStage, setSelectedStage] = useState(null);
-  const [userStageAccess, setUserStageAccess] = useState(null);
+  
+  // ✅ We will derive the list of allowed stages dynamically
+  const [allowedStages, setAllowedStages] = useState([]);
+  const [selectedStage, setSelectedStage] = useState(null); // This holds the ID
+  
   const [setupDone, setSetupDone] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [workOrders, setWorkOrders] = useState([]);
@@ -58,22 +60,34 @@ const UserTransactionPage = () => {
   useEffect(() => {
     if (isAdmin()) return;
 
-    const firstStageAccess = getFirstStageAccess();
-    if (!firstStageAccess?.canView) {
-      toast.error('No access');
+    // ✅ Get all stage access objects from user login response
+    const userAccesses = getProcessStageAccess();
+    
+    if (!userAccesses || userAccesses.length === 0) {
+      toast.error('No process stage access found for this user.');
       setSetupDone(true);
       return;
     }
 
-    setUserStageAccess(firstStageAccess);
-    const matchingStage = stages.find(s => s.id === firstStageAccess.processStageId);
-    if (matchingStage) setSelectedStage(matchingStage.id);
+    // ✅ Map the access objects to full stage details from the 'stages' hook
+    // We filter 'stages' to only include those present in userAccesses
+    const accessibleStages = stages.filter(s => 
+      userAccesses.some(ua => ua.processStageId === s.id)
+    );
+
+    setAllowedStages(accessibleStages);
+
+    if (accessibleStages.length > 0) {
+      // ✅ Default to the first accessible stage
+      setSelectedStage(accessibleStages[0].id);
+    }
+    
     setSetupDone(true);
-  }, [stages, getFirstStageAccess, isAdmin]);
+  }, [stages, getProcessStageAccess, isAdmin]);
 
   // Fetch Work Orders
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 2 || !selectedStage) return;
 
     const fetchWorkOrders = async () => {
       setLoading(true);
@@ -100,12 +114,12 @@ const UserTransactionPage = () => {
     };
 
     fetchWorkOrders();
-  }, [currentPage, pageSize, searchQuery, step]);
+  }, [currentPage, pageSize, searchQuery, step, selectedStage]); // ✅ Added selectedStage dependency
 
   // ✅ INSTANT - No setTimeout delay!
   const handleTypeSelect = (type) => {
-    if (!userStageAccess?.canView) {
-      toast.error("No access");
+    if (allowedStages.length === 0) {
+      toast.error("No access to any stage");
       return;
     }
     setTransactionType(type);
@@ -131,23 +145,32 @@ const UserTransactionPage = () => {
     const enteredQty = parseInt(quantity);
     const twr = wo.totalWashReceived || 0;
     
-    // ✅ Get stage balance directly from work order
-    const stageBalance = wo.stageBalances?.find(sb => sb.processStageId === selectedStage);
-    const stageReceived = stageBalance?.totalReceived || 0;
-    const stageDelivered = stageBalance?.totalDelivered || 0;
+    const stageName = currentStageName.toLowerCase();
+    const isDryer = stageName.includes('1st dryer') || 
+                    stageName.includes('2nd dryer') || 
+                    stageName.includes('final dryer') ||
+                    stageName.includes('cool dryer') ||
+                    stageName.includes('redryer');
 
-    // ✅ Calculate available
-    const availableQty = transactionType === 'delivery'
-      ? twr - stageDelivered
-      : twr - stageReceived;
+    if (!isDryer) {
+      // ✅ Get stage balance directly from work order
+      const stageBalance = wo.stageBalances?.find(sb => sb.processStageId === selectedStage);
+      const stageReceived = stageBalance?.totalReceived || 0;
+      const stageDelivered = stageBalance?.totalDelivered || 0;
 
-    if (enteredQty > availableQty) {
-      toast.error(
-        transactionType === 'delivery'
-          ? `ডেলিভারি সীমা: ${availableQty} (TWR:${twr} - Del:${stageDelivered})`
-          : `রিসিভ সীমা: ${availableQty} (TWR:${twr} - Rcv:${stageReceived})`
-      );
-      return;
+      // ✅ Calculate available
+      const availableQty = transactionType === 'delivery'
+        ? twr - stageDelivered
+        : twr - stageReceived;
+
+      if (enteredQty > availableQty) {
+        toast.error(
+          transactionType === 'delivery'
+            ? `ডেলিভারি সীমা: ${availableQty} (TWR:${twr} - Del:${stageDelivered})`
+            : `রিসিভ সীমা: ${availableQty} (TWR:${twr} - Rcv:${stageReceived})`
+        );
+        return;
+      }
     }
 
     setSelectedRows({ ...selectedRows, [workOrderId]: enteredQty });
@@ -157,6 +180,15 @@ const UserTransactionPage = () => {
     const newRows = { ...selectedRows };
     delete newRows[workOrderId];
     setSelectedRows(newRows);
+  };
+
+  // ✅ Handle Stage Change from Dropdown
+  const handleStageChange = (e) => {
+    const newStageId = parseInt(e.target.value);
+    setSelectedStage(newStageId);
+    setSelectedRows({}); // Clear selections when switching stages
+    setCurrentPage(1);
+    // The useEffect will trigger a refetch due to selectedStage change
   };
 
   const handleSave = async () => {
@@ -173,7 +205,7 @@ const UserTransactionPage = () => {
         ids.map(id => {
           const payload = {
             workOrderId: parseInt(id),
-            processStageId: selectedStage,
+            processStageId: selectedStage, // ✅ Uses currently selected stage
             quantity: selectedRows[id],
             transactionType: transactionType === 'receive' ? 1 : 2,
             transactionDate: today,
@@ -200,7 +232,7 @@ const UserTransactionPage = () => {
   };
 
   // Helpers
-  const stageName = stages.find(s => s.id === selectedStage)?.name || '';
+  const currentStageName = allowedStages.find(s => s.id === selectedStage)?.name || ''; // ✅ Get name from allowed list
   const selectedCount = Object.keys(selectedRows).length;
   const totalQuantity = Object.values(selectedRows).reduce((a, b) => a + b, 0);
   const selectedWorkOrders = workOrders.filter(wo => selectedRows[wo.id]);
@@ -228,12 +260,14 @@ const UserTransactionPage = () => {
     return <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
-  if (!userStageAccess?.canView) {
+  // ✅ Updated check to use allowedStages
+  if (!isAdmin() && allowedStages.length === 0) {
     return (
       <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
           <Lock className="text-red-600 mx-auto mb-4" style={{ fontSize: 40 }} />
           <h2 className="text-xl font-bold text-gray-800">Access Denied</h2>
+          <p className="text-gray-600 mt-2">You do not have access to any process stages.</p>
         </div>
       </div>
     );
@@ -273,7 +307,26 @@ const UserTransactionPage = () => {
                 <h1 className="text-xl font-bold text-gray-800">
                   {transactionType === 'receive' ? 'Receive' : 'Delivery'}
                 </h1>
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">{stageName}</span>
+                
+                {/* ✅ DROPDOWN REPLACEMENT */}
+                {allowedStages.length > 1 ? (
+                   <select
+                    value={selectedStage || ''}
+                    onChange={handleStageChange}
+                    className="mt-1 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold cursor-pointer"
+                  >
+                    {allowedStages.map(stage => (
+                      <option key={stage.id} value={stage.id}>
+                        {stage.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  // If only 1 stage, show as read-only badge
+                  <span className="mt-1 inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                    {currentStageName}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -331,9 +384,16 @@ const UserTransactionPage = () => {
                             const availQty = getAvailableQty(wo);
                             const stageVal = getStageVal(wo);
                             const isDelivery = transactionType === 'delivery';
+                            
+                            const stageName = currentStageName.toLowerCase();
+                            const isDryer = stageName.includes('1st dryer') || 
+                                            stageName.includes('2nd dryer') || 
+                                            stageName.includes('final dryer') ||
+                                            stageName.includes('cool dryer') ||
+                                            stageName.includes('redryer');
 
                             return (
-                              <tr key={wo.id} className={`hover:bg-gray-50 ${hasQty ? 'bg-green-50' : ''} ${availQty <= 0 ? 'bg-red-50' : ''}`}>
+                              <tr key={wo.id} className={`hover:bg-gray-50 ${hasQty ? 'bg-green-50' : ''} ${!isDryer && availQty <= 0 ? 'bg-red-50' : ''}`}>
                                 <td className="px-3 py-2">
                                   <div className="font-semibold text-gray-800 text-xs">{wo.workOrderNo}</div>
                                   <div className="text-xs text-gray-500">{wo.fastReactNo || '-'}</div>
@@ -350,28 +410,55 @@ const UserTransactionPage = () => {
                                 </td>
                                 <td className="px-2 py-2">
                                   <div className="flex flex-col items-center gap-1">
-                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${availQty > 0 ? (isDelivery ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700') : 'bg-red-100 text-red-500'}`}>
-                                      {availQty > 0 ? `Avl:${availQty}` : 'No Stock'}
-                                    </span>
-                                    {availQty > 0 ? (
-                                      <div className="flex items-center gap-1">
-                                        <input
-                                          type="number"
-                                          value={selectedRows[wo.id] || ''}
-                                          onChange={(e) => handleQuantityChange(wo.id, e.target.value)}
-                                          placeholder="0"
-                                          min="1"
-                                          max={availQty}
-                                          className="w-14 px-1.5 py-1.5 border-2 border-blue-400 rounded outline-none focus:border-blue-600 text-center text-xs font-bold text-blue-700 bg-blue-50"
-                                        />
-                                        {hasQty && (
-                                          <button onClick={() => handleRemoveRow(wo.id)} className="p-1 text-red-600 hover:bg-red-100 rounded">
-                                            <X style={{ fontSize: 14 }} />
-                                          </button>
-                                        )}
-                                      </div>
+                                    {isDryer ? (
+                                      // ✅ For dryer stages: always show input, no stock limit
+                                      <>
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isDelivery ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                          Unlimited
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <input
+                                            type="number"
+                                            value={selectedRows[wo.id] || ''}
+                                            onChange={(e) => handleQuantityChange(wo.id, e.target.value)}
+                                            placeholder="0"
+                                            min="1"
+                                            className="w-14 px-1.5 py-1.5 border-2 border-blue-400 rounded outline-none focus:border-blue-600 text-center text-xs font-bold text-blue-700 bg-blue-50"
+                                          />
+                                          {hasQty && (
+                                            <button onClick={() => handleRemoveRow(wo.id)} className="p-1 text-red-600 hover:bg-red-100 rounded">
+                                              <X style={{ fontSize: 14 }} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
                                     ) : (
-                                      <span className="text-[10px] text-red-400">{isDelivery ? 'Done' : 'Full'}</span>
+                                      // ✅ For non-dryer stages: show stock limit
+                                      <>
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${availQty > 0 ? (isDelivery ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700') : 'bg-red-100 text-red-500'}`}>
+                                          {availQty > 0 ? `Avl:${availQty}` : 'No Stock'}
+                                        </span>
+                                        {availQty > 0 ? (
+                                          <div className="flex items-center gap-1">
+                                            <input
+                                              type="number"
+                                              value={selectedRows[wo.id] || ''}
+                                              onChange={(e) => handleQuantityChange(wo.id, e.target.value)}
+                                              placeholder="0"
+                                              min="1"
+                                              max={availQty}
+                                              className="w-14 px-1.5 py-1.5 border-2 border-blue-400 rounded outline-none focus:border-blue-600 text-center text-xs font-bold text-blue-700 bg-blue-50"
+                                            />
+                                            {hasQty && (
+                                              <button onClick={() => handleRemoveRow(wo.id)} className="p-1 text-red-600 hover:bg-red-100 rounded">
+                                                <X style={{ fontSize: 14 }} />
+                                              </button>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="text-[10px] text-red-400">{isDelivery ? 'Done' : 'Full'}</span>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 </td>
@@ -485,6 +572,493 @@ const UserTransactionPage = () => {
 };
 
 export default UserTransactionPage;
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\user\UserTransactionPage.jsx
+// import { useState, useEffect } from 'react';
+// import { useProcessStage } from '../../hooks/useProcessStage';
+// import { useAuth } from '../../hooks/useAuth';
+// import { workOrderApi } from '../../api/workOrderApi';
+// import { washTransactionApi } from '../../api/washTransactionApi';
+// import LoadingSpinner from '../common/LoadingSpinner';
+// import EmptyState from '../common/EmptyState';
+// import toast from 'react-hot-toast';
+// import { 
+//   Search, 
+//   Save, 
+//   X, 
+//   Remove, 
+//   Lock,
+//   KeyboardArrowLeft,
+//   KeyboardArrowRight,
+//   FirstPage,
+//   LastPage
+// } from '@mui/icons-material';
+
+// // ✅ Icons outside component - prevents re-creation
+// const UpArrowIcon = ({ className, ...props }) => (
+//   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className} fill="currentColor" {...props}>
+//     <path d="M50 25 L75 50 L62 50 L62 75 L38 75 L38 50 L25 50 Z" />
+//   </svg>
+// );
+
+// const DownArrowIcon = ({ className, ...props }) => (
+//   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className} fill="currentColor" {...props}>
+//     <path transform="rotate(180 50 50)" d="M50 25 L75 50 L62 50 L62 75 L38 75 L38 50 L25 50 Z" />
+//   </svg>
+// );
+
+// const UserTransactionPage = () => {
+//   const { stages } = useProcessStage();
+//   const { getFirstStageAccess, isAdmin } = useAuth();
+  
+//   const [step, setStep] = useState(1);
+//   const [transactionType, setTransactionType] = useState(null);
+//   const [selectedStage, setSelectedStage] = useState(null);
+//   const [userStageAccess, setUserStageAccess] = useState(null);
+//   const [setupDone, setSetupDone] = useState(false);
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [workOrders, setWorkOrders] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [selectedRows, setSelectedRows] = useState({});
+//   const [isSaving, setIsSaving] = useState(false);
+//   const [activeTab, setActiveTab] = useState('workOrders');
+
+//   // Pagination State
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [pageSize, setPageSize] = useState(10);
+//   const [totalRecords, setTotalRecords] = useState(0);
+//   const [totalPages, setTotalPages] = useState(0);
+
+//   // Setup user stage access
+//   useEffect(() => {
+//     if (isAdmin()) return;
+
+//     const firstStageAccess = getFirstStageAccess();
+//     if (!firstStageAccess?.canView) {
+//       toast.error('No access');
+//       setSetupDone(true);
+//       return;
+//     }
+
+//     setUserStageAccess(firstStageAccess);
+//     const matchingStage = stages.find(s => s.id === firstStageAccess.processStageId);
+//     if (matchingStage) setSelectedStage(matchingStage.id);
+//     setSetupDone(true);
+//   }, [stages, getFirstStageAccess, isAdmin]);
+
+//   // Fetch Work Orders
+//   useEffect(() => {
+//     if (step !== 2) return;
+
+//     const fetchWorkOrders = async () => {
+//       setLoading(true);
+//       try {
+//         const response = await workOrderApi.getPaginated({
+//           page: currentPage,
+//           pageSize,
+//           searchTerm: searchQuery,
+//           sortBy: 'CreatedAt',
+//           sortOrder: 'desc',
+//         });
+
+//         if (response.data.success) {
+//           setWorkOrders(response.data.data || []);
+//           setTotalRecords(response.data.pagination.totalRecords);
+//           setTotalPages(response.data.pagination.totalPages);
+//         }
+//       } catch {
+//         toast.error('Failed to load');
+//         setWorkOrders([]);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchWorkOrders();
+//   }, [currentPage, pageSize, searchQuery, step]);
+
+//   // ✅ INSTANT - No setTimeout delay!
+//   const handleTypeSelect = (type) => {
+//     if (!userStageAccess?.canView) {
+//       toast.error("No access");
+//       return;
+//     }
+//     setTransactionType(type);
+//     setStep(2);
+//     setSearchQuery('');
+//     setSelectedRows({});
+//     setActiveTab('workOrders');
+//     setCurrentPage(1);
+//   };
+
+//   // ✅ Simple inline calculation
+//   const handleQuantityChange = (workOrderId, quantity) => {
+//     if (quantity === '' || parseInt(quantity) <= 0) {
+//       const newRows = { ...selectedRows };
+//       delete newRows[workOrderId];
+//       setSelectedRows(newRows);
+//       return;
+//     }
+
+//     const wo = workOrders.find(w => w.id === workOrderId);
+//     if (!wo) return;
+
+//     const enteredQty = parseInt(quantity);
+//     const twr = wo.totalWashReceived || 0;
+    
+//     // ✅ Get stage balance directly from work order
+//     const stageBalance = wo.stageBalances?.find(sb => sb.processStageId === selectedStage);
+//     const stageReceived = stageBalance?.totalReceived || 0;
+//     const stageDelivered = stageBalance?.totalDelivered || 0;
+
+//     // ✅ Calculate available
+//     const availableQty = transactionType === 'delivery'
+//       ? twr - stageDelivered
+//       : twr - stageReceived;
+
+//     if (enteredQty > availableQty) {
+//       toast.error(
+//         transactionType === 'delivery'
+//           ? `ডেলিভারি সীমা: ${availableQty} (TWR:${twr} - Del:${stageDelivered})`
+//           : `রিসিভ সীমা: ${availableQty} (TWR:${twr} - Rcv:${stageReceived})`
+//       );
+//       return;
+//     }
+
+//     setSelectedRows({ ...selectedRows, [workOrderId]: enteredQty });
+//   };
+
+//   const handleRemoveRow = (workOrderId) => {
+//     const newRows = { ...selectedRows };
+//     delete newRows[workOrderId];
+//     setSelectedRows(newRows);
+//   };
+
+//   const handleSave = async () => {
+//     const ids = Object.keys(selectedRows);
+//     if (!ids.length) {
+//       toast.error('Select at least one');
+//       return;
+//     }
+
+//     setIsSaving(true);
+//     try {
+//       const today = new Date().toISOString().split('T')[0];
+//       const results = await Promise.all(
+//         ids.map(id => {
+//           const payload = {
+//             workOrderId: parseInt(id),
+//             processStageId: selectedStage,
+//             quantity: selectedRows[id],
+//             transactionType: transactionType === 'receive' ? 1 : 2,
+//             transactionDate: today,
+//           };
+//           return transactionType === 'receive'
+//             ? washTransactionApi.createReceive(payload)
+//             : washTransactionApi.createDelivery(payload);
+//         })
+//       );
+
+//       const success = results.filter(r => r.data?.success).length;
+//       if (success > 0) {
+//         toast.success(`${success} saved`);
+//         setStep(1);
+//         setTransactionType(null);
+//         setSelectedRows({});
+//         setCurrentPage(1);
+//       }
+//     } catch {
+//       toast.error('Error saving');
+//     } finally {
+//       setIsSaving(false);
+//     }
+//   };
+
+//   // Helpers
+//   const stageName = stages.find(s => s.id === selectedStage)?.name || '';
+//   const selectedCount = Object.keys(selectedRows).length;
+//   const totalQuantity = Object.values(selectedRows).reduce((a, b) => a + b, 0);
+//   const selectedWorkOrders = workOrders.filter(wo => selectedRows[wo.id]);
+
+//   // ✅ Inline function to get available qty for display
+//   const getAvailableQty = (wo) => {
+//     const twr = wo.totalWashReceived || 0;
+//     const stageBalance = wo.stageBalances?.find(sb => sb.processStageId === selectedStage);
+//     const stageVal = transactionType === 'delivery' 
+//       ? (stageBalance?.totalDelivered || 0)
+//       : (stageBalance?.totalReceived || 0);
+//     return Math.max(0, twr - stageVal);
+//   };
+
+//   // ✅ Inline function to get stage value for display
+//   const getStageVal = (wo) => {
+//     const stageBalance = wo.stageBalances?.find(sb => sb.processStageId === selectedStage);
+//     return transactionType === 'delivery'
+//       ? (stageBalance?.totalDelivered || 0)
+//       : (stageBalance?.totalReceived || 0);
+//   };
+
+//   // Loading
+//   if (!setupDone) {
+//     return <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
+//   }
+
+//   if (!userStageAccess?.canView) {
+//     return (
+//       <div className="w-full h-[550px] bg-gray-50 flex items-center justify-center p-4">
+//         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
+//           <Lock className="text-red-600 mx-auto mb-4" style={{ fontSize: 40 }} />
+//           <h2 className="text-xl font-bold text-gray-800">Access Denied</h2>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="w-full bg-gray-50 overflow-hidden rounded-xl shadow-md">
+//       {step === 1 ? (
+//         <div className="h-screen min-h-[550px] flex flex-col bg-white">
+//           <div className="flex-1 px-6 pb-6 space-y-8 flex flex-col justify-center items-center">
+//             <button
+//               onClick={() => handleTypeSelect('delivery')}
+//               className="flex flex-col items-center justify-center p-8 w-48 h-48 bg-red-50 border-2 border-red-200 rounded-full hover:border-red-500 hover:bg-red-100 transition shadow-lg cursor-pointer"
+//             >
+//               <UpArrowIcon className="text-red-600 mb-1 w-24 h-24" />
+//               <h3 className="text-lg font-bold text-red-700">Delivery</h3>
+//             </button>
+
+//             <button
+//               onClick={() => handleTypeSelect('receive')}
+//               className="flex flex-col items-center justify-center p-8 w-48 h-48 bg-green-50 border-2 border-green-200 rounded-full hover:border-green-500 hover:bg-green-100 transition shadow-lg cursor-pointer"
+//             >
+//               <DownArrowIcon className="text-green-600 mb-1 w-24 h-24" />
+//               <h3 className="text-lg font-bold text-green-700">RECEIVE</h3>
+//             </button>
+//           </div>
+//         </div>
+//       ) : (
+//         <div className="min-h-[550px] flex flex-col">
+//           {/* Header */}
+//           <div className="px-6 pt-4 pb-2 flex-shrink-0">
+//             <div className="flex items-center justify-between mb-3">
+//               <button onClick={() => setStep(1)} className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium">
+//                 ← Back
+//               </button>
+//               <div className="text-right">
+//                 <h1 className="text-xl font-bold text-gray-800">
+//                   {transactionType === 'receive' ? 'Receive' : 'Delivery'}
+//                 </h1>
+//                 <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">{stageName}</span>
+//               </div>
+//             </div>
+
+//             <div className="flex border-b border-gray-200">
+//               <button
+//                 onClick={() => setActiveTab('workOrders')}
+//                 className={`flex-1 px-4 py-2 text-sm font-semibold border-b-2 ${activeTab === 'workOrders' ? 'border-primary-500 text-primary-700' : 'border-transparent text-gray-500'}`}
+//               >
+//                 Work Orders ({totalRecords})
+//               </button>
+//               <button
+//                 onClick={() => setActiveTab('selected')}
+//                 className={`flex-1 px-4 py-2 text-sm font-semibold border-b-2 ${activeTab === 'selected' ? 'border-primary-500 text-primary-700' : 'border-transparent text-gray-500'}`}
+//               >
+//                 Selected ({selectedCount})
+//               </button>
+//             </div>
+//           </div>
+
+//           <div className="flex-1 overflow-hidden">
+//             {activeTab === 'workOrders' && (
+//               <div className="h-full flex flex-col p-4 pt-2">
+//                 {/* Search */}
+//                 <div className="mb-3 relative">
+//                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 14 }} />
+//                   <input
+//                     type="text"
+//                     placeholder="Search..."
+//                     value={searchQuery}
+//                     onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+//                     className="w-full pl-9 pr-3 py-2 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 text-sm"
+//                   />
+//                 </div>
+
+//                 {/* Table */}
+//                 <div className="flex-1 overflow-hidden border border-gray-200 rounded-lg bg-white">
+//                   {loading ? (
+//                     <div className="flex items-center justify-center h-32"><LoadingSpinner size="md" /></div>
+//                   ) : workOrders.length === 0 ? (
+//                     <div className="flex items-center justify-center h-32"><EmptyState title="No Data" /></div>
+//                   ) : (
+//                     <div className="h-full max-h-[280px] overflow-y-auto scrollbar-hide">
+//                       <table className="w-full text-sm">
+//                         <thead className="bg-blue-100 sticky top-0 text-blue-700">
+//                           <tr>
+//                             <th className="px-3 py-2 text-left font-semibold text-xs">WO No</th>
+//                             <th className="px-3 py-2 text-left font-semibold text-xs">Style</th>
+//                             <th className="px-3 py-2 text-left font-semibold text-xs">Order Qty</th>
+//                             <th className="px-3 py-2 text-center font-semibold text-xs">Add Qty</th>
+//                           </tr>
+//                         </thead>
+//                         <tbody className="divide-y divide-gray-200">
+//                           {workOrders.map((wo) => {
+//                             const hasQty = selectedRows[wo.id];
+//                             const availQty = getAvailableQty(wo);
+//                             const stageVal = getStageVal(wo);
+//                             const isDelivery = transactionType === 'delivery';
+
+//                             return (
+//                               <tr key={wo.id} className={`hover:bg-gray-50 ${hasQty ? 'bg-green-50' : ''} ${availQty <= 0 ? 'bg-red-50' : ''}`}>
+//                                 <td className="px-3 py-2">
+//                                   <div className="font-semibold text-gray-800 text-xs">{wo.workOrderNo}</div>
+//                                   <div className="text-xs text-gray-500">{wo.fastReactNo || '-'}</div>
+//                                 </td>
+//                                 <td className="px-3 py-2">
+//                                   <div className="text-xs font-medium text-gray-700">{wo.styleName}</div>
+//                                   <div className="text-xs text-gray-500">{wo.marks || '-'}</div>
+//                                 </td>
+//                                 <td className="px-3 py-2">
+//                                   <div className="font-semibold text-gray-800 text-xs">{wo.orderQuantity.toLocaleString()}</div>
+//                                   <div className={`text-xs mt-0.5 ${isDelivery ? 'text-orange-600' : 'text-green-600'}`}>
+//                                     TWR:{wo.totalWashReceived || 0} | {isDelivery ? 'D' : 'R'}:{stageVal}
+//                                   </div>
+//                                 </td>
+//                                 <td className="px-2 py-2">
+//                                   <div className="flex flex-col items-center gap-1">
+//                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${availQty > 0 ? (isDelivery ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700') : 'bg-red-100 text-red-500'}`}>
+//                                       {availQty > 0 ? `Avl:${availQty}` : 'No Stock'}
+//                                     </span>
+//                                     {availQty > 0 ? (
+//                                       <div className="flex items-center gap-1">
+//                                         <input
+//                                           type="number"
+//                                           value={selectedRows[wo.id] || ''}
+//                                           onChange={(e) => handleQuantityChange(wo.id, e.target.value)}
+//                                           placeholder="0"
+//                                           min="1"
+//                                           max={availQty}
+//                                           className="w-14 px-1.5 py-1.5 border-2 border-blue-400 rounded outline-none focus:border-blue-600 text-center text-xs font-bold text-blue-700 bg-blue-50"
+//                                         />
+//                                         {hasQty && (
+//                                           <button onClick={() => handleRemoveRow(wo.id)} className="p-1 text-red-600 hover:bg-red-100 rounded">
+//                                             <X style={{ fontSize: 14 }} />
+//                                           </button>
+//                                         )}
+//                                       </div>
+//                                     ) : (
+//                                       <span className="text-[10px] text-red-400">{isDelivery ? 'Done' : 'Full'}</span>
+//                                     )}
+//                                   </div>
+//                                 </td>
+//                               </tr>
+//                             );
+//                           })}
+//                         </tbody>
+//                       </table>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 {/* Pagination */}
+//                 {!loading && workOrders.length > 0 && (
+//                   <div className="mt-3 flex items-center justify-between gap-3 bg-gray-50 p-3 rounded-lg border">
+//                     <div className="flex items-center gap-2">
+//                       <select value={pageSize} onChange={(e) => { setPageSize(parseInt(e.target.value)); setCurrentPage(1); }} className="px-2 py-1 border rounded text-xs">
+//                         <option value={5}>5</option>
+//                         <option value={10}>10</option>
+//                         <option value={25}>25</option>
+//                         <option value={50}>50</option>
+//                       </select>
+//                       <span className="text-xs text-gray-600">of {totalRecords}</span>
+//                     </div>
+//                     <div className="flex items-center gap-1">
+//                       <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1 rounded hover:bg-gray-200 disabled:opacity-30"><FirstPage style={{ fontSize: 18 }} /></button>
+//                       <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="p-1 rounded hover:bg-gray-200 disabled:opacity-30"><KeyboardArrowLeft style={{ fontSize: 18 }} /></button>
+//                       <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded font-semibold text-xs">{currentPage}/{totalPages}</span>
+//                       <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="p-1 rounded hover:bg-gray-200 disabled:opacity-30"><KeyboardArrowRight style={{ fontSize: 18 }} /></button>
+//                       <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="p-1 rounded hover:bg-gray-200 disabled:opacity-30"><LastPage style={{ fontSize: 18 }} /></button>
+//                     </div>
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+
+//             {activeTab === 'selected' && (
+//               <div className="h-full flex flex-col p-4 pt-2">
+//                 <div className="grid grid-cols-2 gap-3 mb-3">
+//                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+//                     <p className="text-xs text-blue-600 font-semibold mb-1">Items</p>
+//                     <p className="text-lg font-bold text-blue-900">{selectedCount}</p>
+//                   </div>
+//                   <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+//                     <p className="text-xs text-green-600 font-semibold mb-1">Total Qty</p>
+//                     <p className="text-lg font-bold text-green-900">{totalQuantity.toLocaleString()}</p>
+//                   </div>
+//                 </div>
+
+//                 <div className="flex-1 overflow-hidden border rounded-lg bg-white">
+//                   {selectedCount === 0 ? (
+//                     <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+//                       <Remove style={{ fontSize: 32 }} />
+//                       <p className="text-sm font-medium mt-2">No items selected</p>
+//                     </div>
+//                   ) : (
+//                     <div className="h-full max-h-[200px] overflow-y-auto scrollbar-hide">
+//                       <table className="w-full text-sm">
+//                         <thead className="bg-blue-100 sticky top-0">
+//                           <tr>
+//                             <th className="px-3 py-2 text-left font-semibold text-xs">WO No</th>
+//                             <th className="px-3 py-2 text-left font-semibold text-xs">Style</th>
+//                             <th className="px-3 py-2 text-center font-semibold text-xs">Qty</th>
+//                             <th className="px-3 py-2 w-10"></th>
+//                           </tr>
+//                         </thead>
+//                         <tbody className="divide-y divide-gray-200">
+//                           {selectedWorkOrders.map((wo) => (
+//                             <tr key={wo.id} className="hover:bg-gray-50">
+//                               <td className="px-3 py-2 font-semibold text-gray-800 text-xs">{wo.workOrderNo}</td>
+//                               <td className="px-3 py-2 text-xs text-gray-700">{wo.styleName}</td>
+//                               <td className="px-3 py-2 text-center font-bold text-green-700 text-xs">{selectedRows[wo.id]?.toLocaleString()}</td>
+//                               <td className="px-3 py-2 text-center">
+//                                 <button onClick={() => handleRemoveRow(wo.id)} className="p-1 text-red-600 hover:bg-red-100 rounded"><X style={{ fontSize: 16 }} /></button>
+//                               </td>
+//                             </tr>
+//                           ))}
+//                         </tbody>
+//                       </table>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 {selectedCount > 0 && (
+//                   <div className="mt-3">
+//                     <button
+//                       onClick={handleSave}
+//                       disabled={isSaving}
+//                       className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-sm rounded-lg shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+//                     >
+//                       {isSaving ? (
+//                         <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Saving...</span></>
+//                       ) : (
+//                         <><Save style={{ fontSize: 18 }} /><span>Save {selectedCount} {transactionType}</span></>
+//                       )}
+//                     </button>
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       )}
+
+//       <style jsx>{`
+//         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+//         .scrollbar-hide::-webkit-scrollbar { display: none; }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+// export default UserTransactionPage;
 
 
 

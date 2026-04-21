@@ -95,6 +95,11 @@ const ReceiveTransaction = () => {
       '2nd Dry': 'border-l-4 border-l-orange-500',
       '1st Wash': 'border-l-4 border-l-green-500',
       'Final Wash': 'border-l-4 border-l-purple-500',
+      '1st Dryer': 'border-l-4 border-l-orange-500',
+      '2nd Dryer': 'border-l-4 border-l-purple-500',
+      'Final Dryer': 'border-l-4 border-l-green-500',
+      'Cool Dryer': 'border-l-4 border-l-purple-500',
+      'ReDryer': 'border-l-4 border-l-purple-500',
     };
     return colors[stageName] || 'border-l-4 border-l-gray-500';
   };

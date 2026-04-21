@@ -1,0 +1,3659 @@
+// import { useState, useEffect, useRef } from 'react';
+// import { useAuth } from '../../hooks/useAuth';
+// import { reportApi } from '../../api/reportApi';
+// import { workOrderApi } from '../../api/workOrderApi';
+// import { washTransactionApi } from '../../api/washTransactionApi';
+// import LoadingSpinner from '../common/LoadingSpinner';
+// import toast from 'react-hot-toast';
+// import { format, startOfMonth, endOfMonth } from 'date-fns';
+// import {
+//   BarChart,
+//   Bar,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip as RechartsTooltip,
+//   ResponsiveContainer,
+//   PieChart,
+//   Pie,
+//   Cell,
+//   AreaChart,
+//   Area,
+//   Legend
+// } from 'recharts';
+// import {
+//   Close,
+//   Refresh,
+//   FilterAlt,
+//   CalendarToday,
+//   LocalShipping,
+//   TrendingUp,
+//   TrendingDown,
+//   Assignment,
+//   Warning,
+//   CheckCircle,
+//   ArrowDropDown,
+//   ArrowDropUp,
+//   ViewColumn,
+//   WaterDrop,
+//   DryCleaning,
+//   AcUnit,
+//   Replay,
+//   Search,
+//   FiberManualRecord,
+//   Assessment,
+//   Dashboard as DashboardIcon,
+//   Factory,
+//   Inventory2,
+//   Scale,
+//   TableChart,
+//   Insights
+// } from '@mui/icons-material';
+
+// const COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+
+// const Dashboard = () => {
+//   const { user, isAdmin } = useAuth();
+
+//   const [loading, setLoading] = useState(true);
+//   const [refreshing, setRefreshing] = useState(false);
+
+//   const [summaryStats, setSummaryStats] = useState({
+//     totalWorkOrders: 0,
+//     totalTransactions: 0,
+//     totalReceiveQty: 0,
+//     totalDeliveryQty: 0,
+//     totalOrderQuantity: 0,
+//     pendingOrders: 0,
+//     completedOrders: 0,
+//     balance: 0,
+//     stageBreakdown: {}
+//   });
+
+//   const [allWorkOrders, setAllWorkOrders] = useState([]);
+//   const [allTransactions, setAllTransactions] = useState([]);
+
+//   const [filterParams, setFilterParams] = useState({
+//     buyer: '',
+//     factory: '',
+//     unit: '',
+//     processStageId: '',
+//     transactionTypeId: '',
+//     startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+//     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+//   });
+//   const [appliedFilters, setAppliedFilters] = useState({});
+
+//   const [filterOptions, setFilterOptions] = useState({
+//     buyers: [],
+//     factories: [],
+//     units: [],
+//     processStages: []
+//   });
+
+//   const [activeModal, setActiveModal] = useState(null);
+//   const [modalLoading, setModalLoading] = useState(false);
+//   const [modalSortConfig, setModalSortConfig] = useState({ key: null, direction: 'asc' });
+
+//   const [sectionDateFilter, setSectionDateFilter] = useState({
+//     startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+//     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+//   });
+
+//   const [dhuFilter, setDhuFilter] = useState({ unit: '', shift: '' });
+
+//   const abortControllerRef = useRef(null);
+
+//   useEffect(() => {
+//     loadFilterOptions();
+//     loadDashboardData();
+//   }, []);
+
+//   useEffect(() => {
+//     if (Object.keys(appliedFilters).length > 0) {
+//       loadDashboardData();
+//     }
+//   }, [appliedFilters]);
+
+//   const loadFilterOptions = async () => {
+//     try {
+//       const response = await reportApi.getFilterOptions();
+//       const data = response.data?.data || response.data || {};
+//       setFilterOptions({
+//         buyers: Array.isArray(data.buyers) ? data.buyers : [],
+//         factories: Array.isArray(data.factories) ? data.factories : [],
+//         units: Array.isArray(data.units) ? data.units : [],
+//         processStages: Array.isArray(data.processStages) ? data.processStages : []
+//       });
+//     } catch (error) {
+//       console.error('Failed to load filter options:', error);
+//     }
+//   };
+
+//   const loadDashboardData = async () => {
+//     try {
+//       if (abortControllerRef.current) abortControllerRef.current.abort();
+//       abortControllerRef.current = new AbortController();
+//       setLoading(true);
+
+//       const params = {
+//         page: 1,
+//         pageSize: 1000,
+//         sortBy: 'transactionDate',
+//         sortOrder: 'desc',
+//         ...appliedFilters
+//       };
+
+//       const [summaryRes, transactionsRes, workOrdersRes] = await Promise.all([
+//         reportApi.getSummary(params),
+//         washTransactionApi.getPaginated(params),
+//         workOrderApi.getPaginated({ page: 1, pageSize: 1000, sortBy: 'CreatedAt', sortOrder: 'desc' })
+//       ]);
+
+//       const summaryData = summaryRes.data?.data || summaryRes.data;
+//       if (summaryData) {
+//         setSummaryStats({
+//           totalWorkOrders: Number(summaryData.totalWorkOrders) || 0,
+//           totalTransactions: Number(summaryData.totalTransactions) || 0,
+//           totalReceiveQty: Number(summaryData.totalReceiveQty) || 0,
+//           totalDeliveryQty: Number(summaryData.totalDeliveryQty) || 0,
+//           totalOrderQuantity: Number(summaryData.totalOrderQuantity) || 0,
+//           pendingOrders: Number(summaryData.pendingOrders) || 0,
+//           completedOrders: Number(summaryData.completedOrders) || 0,
+//           balance: (Number(summaryData.totalReceiveQty) || 0) - (Number(summaryData.totalDeliveryQty) || 0),
+//           stageBreakdown: summaryData.stageBreakdown || {}
+//         });
+//       }
+
+//       setAllTransactions(transactionsRes.data?.data || []);
+//       setAllWorkOrders(workOrdersRes.data?.data || []);
+//     } catch (error) {
+//       if (error.name !== 'AbortError') {
+//         console.error('Error loading dashboard data:', error);
+//         toast.error('Failed to load dashboard data');
+//       }
+//     } finally {
+//       setLoading(false);
+//       setRefreshing(false);
+//     }
+//   };
+
+//   const handleFilterChange = (e) => {
+//     const { name, value } = e.target;
+//     setFilterParams(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleApplyFilters = () => {
+//     setAppliedFilters({ ...filterParams });
+//     toast.success('Filters applied');
+//   };
+
+//   const handleResetFilters = () => {
+//     const reset = {
+//       buyer: '',
+//       factory: '',
+//       unit: '',
+//       processStageId: '',
+//       transactionTypeId: '',
+//       startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+//       endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+//     };
+//     setFilterParams(reset);
+//     setAppliedFilters({});
+//     toast.success('Filters reset');
+//     loadDashboardData();
+//   };
+
+//   const handleRefresh = () => {
+//     setRefreshing(true);
+//     loadDashboardData();
+//   };
+
+//   // ── Data Derivations ──
+
+//   const getProcessDeliveryData = () => {
+//     const stages = summaryStats.stageBreakdown || {};
+//     return [
+//       { key: '1st Dry', label: '1st Dry', color: '#3b82f6' },
+//       { key: 'UnWash Godun', label: 'UnWash Godun', color: '#f59e0b' },
+//       { key: '1st Wash', label: '1st Wash', color: '#06b6d4' },
+//       { key: '2nd Dry', label: '2nd Dry', color: '#6366f1' }
+//     ].map(process => {
+//       const stageData = stages[process.key] || {};
+//       return {
+//         ...process,
+//         received: stageData.receive || 0,
+//         delivered: stageData.delivery || 0,
+//         total: (stageData.receive || 0) + (stageData.delivery || 0)
+//       };
+//     });
+//   };
+
+//   const getDHUData = () => {
+//     const wash1st = allTransactions.filter(tx => (tx.processStageName || '').toLowerCase().includes('1st wash'));
+//     const washFinal = allTransactions.filter(tx => (tx.processStageName || '').toLowerCase().includes('final wash'));
+//     const washReceived1st = wash1st.reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+//     const washReceivedFinal = washFinal.reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+
+//     return {
+//       '1st Wash Section': {
+//         outputQty: washReceived1st,
+//         dhuPercent: washReceived1st > 0 ? (washReceived1st * 0.02).toFixed(1) : 0,
+//         defectQty: Math.round(washReceived1st * 0.02),
+//         passQty: washReceived1st - Math.round(washReceived1st * 0.02),
+//         topDefects: ['Color Shading', 'Puckering', 'Stain Mark']
+//       },
+//       'Final Wash Section': {
+//         outputQty: washReceivedFinal,
+//         dhuPercent: washReceivedFinal > 0 ? (washReceivedFinal * 0.015).toFixed(1) : 0,
+//         defectQty: Math.round(washReceivedFinal * 0.015),
+//         passQty: washReceivedFinal - Math.round(washReceivedFinal * 0.015),
+//         topDefects: ['Washing Spot', 'Size Variation', 'Fabric Damage']
+//       }
+//     };
+//   };
+
+//   const getDryerData = () => {
+//     const stages = summaryStats.stageBreakdown || {};
+//     return [
+//       { key: '1st Wash Dryer', label: '1st Wash Dryer', color: '#f97316' },
+//       { key: 'Final Wash Dryer', label: 'Final Wash Dryer', color: '#14b8a6' },
+//       { key: 'Cool Dryer', label: 'Cool Dryer', color: '#0ea5e9' },
+//       { key: 'Re-Dryer', label: 'Re-Dryer', color: '#f43f5e' }
+//     ].map(dryer => {
+//       const stageData = stages[dryer.key] || {};
+//       return { ...dryer, production: stageData.delivery || (stageData.receive || 0) + (stageData.delivery || 0) || 0 };
+//     });
+//   };
+
+//   // ── Chart Data ──
+
+//   const getReceiveVsDeliveryChartData = () => {
+//     const processData = getProcessDeliveryData();
+//     return processData.map(p => ({
+//       name: p.label,
+//       Received: p.received,
+//       Delivered: p.delivered
+//     }));
+//   };
+
+//   const getOrderStatusPieData = () => {
+//     const pending = summaryStats.pendingOrders || 0;
+//     const completed = summaryStats.completedOrders || 0;
+//     const inProgress = summaryStats.totalWorkOrders - pending - completed;
+//     return [
+//       { name: 'Completed', value: completed, color: '#10b981' },
+//       { name: 'In Progress', value: inProgress > 0 ? inProgress : 0, color: '#3b82f6' },
+//       { name: 'Pending', value: pending, color: '#f59e0b' }
+//     ].filter(d => d.value > 0);
+//   };
+
+//   const getDryerBarChartData = () => {
+//     return getDryerData().map(d => ({
+//       name: d.label.replace(' Dryer', ''),
+//       Production: d.production
+//     }));
+//   };
+
+//   const getDHUPieData = () => {
+//     const dhuData = getDHUData();
+//     const result = [];
+//     Object.entries(dhuData).forEach(([section, data]) => {
+//       result.push(
+//         { name: `${section} - Pass`, value: data.passQty, color: '#10b981' },
+//         { name: `${section} - Defect`, value: data.defectQty, color: '#ef4444' }
+//       );
+//     });
+//     return result.filter(d => d.value > 0);
+//   };
+
+//   const getBalanceTrendData = () => {
+//     const today = new Date();
+//     const data = [];
+//     for (let i = 6; i >= 0; i--) {
+//       const date = new Date(today);
+//       date.setDate(date.getDate() - i);
+//       const dayStr = format(date, 'yyyy-MM-dd');
+//       const dayTxns = allTransactions.filter(tx => {
+//         const txDate = tx.transactionDate ? format(new Date(tx.transactionDate), 'yyyy-MM-dd') : '';
+//         return txDate === dayStr;
+//       });
+//       const received = dayTxns.filter(tx => tx.transactionType === 1).reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+//       const delivered = dayTxns.filter(tx => tx.transactionType === 2).reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+//       data.push({
+//         name: format(date, 'EEE'),
+//         Received: received,
+//         Delivered: delivered,
+//         Balance: received - delivered
+//       });
+//     }
+//     return data;
+//   };
+
+//   // ── Modal ──
+
+//   const openModal = (type) => {
+//     setActiveModal(type);
+//     setModalLoading(true);
+//     setModalSortConfig({ key: null, direction: 'asc' });
+//     setTimeout(() => setModalLoading(false), 300);
+//   };
+
+//   const closeModal = () => {
+//     setActiveModal(null);
+//     setModalSortConfig({ key: null, direction: 'asc' });
+//   };
+
+//   const handleModalSort = (key) => {
+//     setModalSortConfig(prev => ({
+//       key,
+//       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+//     }));
+//   };
+
+//   const getSortedData = (data) => {
+//     if (!modalSortConfig.key) return data;
+//     return [...data].sort((a, b) => {
+//       const aVal = a[modalSortConfig.key] || '';
+//       const bVal = b[modalSortConfig.key] || '';
+//       const numA = Number(aVal);
+//       const numB = Number(bVal);
+//       if (!isNaN(numA) && !isNaN(numB)) {
+//         return modalSortConfig.direction === 'asc' ? numA - numB : numB - numA;
+//       }
+//       return modalSortConfig.direction === 'asc'
+//         ? String(aVal).toLowerCase().localeCompare(String(bVal).toLowerCase())
+//         : String(bVal).toLowerCase().localeCompare(String(aVal).toLowerCase());
+//     });
+//   };
+
+//   const SortIcon = ({ columnKey }) => {
+//     if (modalSortConfig.key !== columnKey) return <ArrowDropDown className="text-gray-300" fontSize="small" />;
+//     return modalSortConfig.direction === 'asc'
+//       ? <ArrowDropUp className="text-indigo-600" fontSize="small" />
+//       : <ArrowDropDown className="text-indigo-600" fontSize="small" />;
+//   };
+
+//   const getModalTableData = (type) => {
+//     if (type === 'delivery') {
+//       return allWorkOrders.map(wo => {
+//         const woTxns = allTransactions.filter(tx => tx.workOrderId === wo.id || tx.workOrderNo === wo.workOrderNo);
+//         const stageTotals = {};
+//         woTxns.forEach(tx => {
+//           const stage = tx.processStageName || 'Unknown';
+//           if (!stageTotals[stage]) stageTotals[stage] = { receive: 0, delivery: 0 };
+//           if (tx.transactionType === 1) stageTotals[stage].receive += Number(tx.quantity) || 0;
+//           if (tx.transactionType === 2) stageTotals[stage].delivery += Number(tx.quantity) || 0;
+//         });
+//         return {
+//           factory: wo.factory || '-',
+//           unit: wo.unit || 'Unit 1',
+//           workOrderNo: wo.workOrderNo || '-',
+//           buyer: wo.buyer || '-',
+//           styleName: wo.styleName || wo.description || '-',
+//           fastReactNo: wo.fastReactNo || '-',
+//           orderQty: wo.orderQuantity || 0,
+//           washTargetDate: wo.washTargetDate ? format(new Date(wo.washTargetDate), 'dd-MM-yy') : '-',
+//           totalWashReceived: stageTotals['1st Wash']?.receive || 0,
+//           totalWashDelivered: stageTotals['1st Wash']?.delivery || 0,
+//           firstDryDel: stageTotals['1st Dry']?.delivery || 0,
+//           unwashDel: stageTotals['UnWash Godun']?.delivery || 0,
+//           secondDryDel: stageTotals['2nd Dry']?.delivery || 0,
+//           firstWashDel: stageTotals['1st Wash']?.delivery || 0
+//         };
+//       });
+//     }
+
+//     if (type === 'dhu') {
+//       return allWorkOrders.map(wo => {
+//         const woTxns = allTransactions.filter(tx => tx.workOrderId === wo.id || tx.workOrderNo === wo.workOrderNo);
+//         const totalCheck = woTxns.reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+//         const passQty = Math.round(totalCheck * 0.96);
+//         const defectQty = totalCheck - passQty;
+//         const dhu = totalCheck > 0 ? ((defectQty / totalCheck) * 100).toFixed(1) : '0.0';
+//         return {
+//           factory: wo.factory || '-',
+//           unit: wo.unit || 'Unit 1',
+//           workOrderNo: wo.workOrderNo || '-',
+//           buyer: wo.buyer || '-',
+//           styleName: wo.styleName || wo.description || '-',
+//           fastReactNo: wo.fastReactNo || '-',
+//           orderQty: wo.orderQuantity || 0,
+//           washTargetDate: wo.washTargetDate ? format(new Date(wo.washTargetDate), 'dd-MM-yy') : '-',
+//           checkQty: totalCheck,
+//           passQty,
+//           defectQty,
+//           dhuPercent: `${dhu}%`
+//         };
+//       });
+//     }
+
+//     if (type === 'dryer') {
+//       return allWorkOrders.map(wo => {
+//         const woTxns = allTransactions.filter(tx => tx.workOrderId === wo.id || tx.workOrderNo === wo.workOrderNo);
+//         const stageData = {};
+//         woTxns.forEach(tx => {
+//           const stage = tx.processStageName || 'Unknown';
+//           if (!stageData[stage]) stageData[stage] = 0;
+//           stageData[stage] += Number(tx.quantity) || 0;
+//         });
+//         return {
+//           factory: wo.factory || '-',
+//           unit: wo.unit || 'Unit 1',
+//           workOrderNo: wo.workOrderNo || '-',
+//           buyer: wo.buyer || '-',
+//           styleName: wo.styleName || wo.description || '-',
+//           fastReactNo: wo.fastReactNo || '-',
+//           orderQty: wo.orderQuantity || 0,
+//           washTargetDate: wo.washTargetDate ? format(new Date(wo.washTargetDate), 'dd-MM-yy') : '-',
+//           totalRevQty: stageData['Total'] || wo.orderQuantity || 0,
+//           totalDel: stageData['2nd Dry']?.delivery || 0,
+//           firstWashDryer: stageData['1st Wash Dryer'] || 0,
+//           finalWashDryer: stageData['Final Wash Dryer'] || 0,
+//           coolDryer: stageData['Cool Dryer'] || 0,
+//           dhuPercent: '0.0%'
+//         };
+//       });
+//     }
+//     return [];
+//   };
+
+//   const hasActiveFilters = Object.values(appliedFilters).some(val => val !== '');
+
+//   const processDeliveryData = getProcessDeliveryData();
+//   const dhuData = getDHUData();
+//   const dryerData = getDryerData();
+
+//   if (loading && !refreshing) return <LoadingSpinner size="lg" fullScreen />;
+
+//   // ── Custom Chart Tooltip ──
+//   const CustomTooltip = ({ active, payload, label }) => {
+//     if (active && payload && payload.length) {
+//       return (
+//         <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 shadow-xl">
+//           <p className="text-slate-300 text-xs font-semibold mb-1">{label}</p>
+//           {payload.map((entry, index) => (
+//             <p key={index} className="text-xs" style={{ color: entry.color }}>
+//               <span className="font-medium">{entry.name}:</span>{' '}
+//               <span className="font-bold">{Number(entry.value).toLocaleString()}</span>
+//             </p>
+//           ))}
+//         </div>
+//       );
+//     }
+//     return null;
+//   };
+
+//   // ── Stat Card Component ──
+//   const StatCard = ({ icon, label, value, subtext, accentColor }) => (
+//     <div className="bg-white rounded-xl border border-slate-200/80 p-5 hover:shadow-md transition-shadow">
+//       <div className="flex items-start justify-between">
+//         <div>
+//           <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</p>
+//           <p className="text-2xl font-bold text-slate-800 mt-1.5">{value.toLocaleString()}</p>
+//           {subtext && <p className="text-xs text-slate-400 mt-1">{subtext}</p>}
+//         </div>
+//         <div className={`p-2.5 rounded-xl ${accentColor || 'bg-blue-50'}`}>
+//           {icon}
+//         </div>
+//       </div>
+//     </div>
+//   );
+
+//   // ── Section Card ──
+//   const SectionCard = ({ title, subtitle, icon, children, action }) => (
+//     <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
+//       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+//         <div className="flex items-center gap-3">
+//           <div className="p-2 bg-slate-800 rounded-lg text-white">{icon}</div>
+//           <div>
+//             <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+//             {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+//           </div>
+//         </div>
+//         {action}
+//       </div>
+//       <div className="p-5">{children}</div>
+//     </div>
+//   );
+
+//   // ── Modal Renderer ──
+//   const renderModal = () => {
+//     if (!activeModal) return null;
+//     let title = '', columns = [], data = [];
+
+//     if (activeModal === 'delivery') {
+//       title = 'Processwise Delivery Details';
+//       columns = [
+//         { key: 'factory', label: 'Factory' },
+//         { key: 'unit', label: 'Unit' },
+//         { key: 'workOrderNo', label: 'WO No' },
+//         { key: 'buyer', label: 'Buyer' },
+//         { key: 'styleName', label: 'Style' },
+//         { key: 'fastReactNo', label: 'FR No' },
+//         { key: 'orderQty', label: 'Order Qty', numeric: true },
+//         { key: 'washTargetDate', label: 'Target Date' },
+//         { key: 'totalWashReceived', label: 'Wash Recv', numeric: true },
+//         { key: 'totalWashDelivered', label: 'Wash Del', numeric: true },
+//         { key: 'firstDryDel', label: '1st Dry', numeric: true },
+//         { key: 'unwashDel', label: 'Unwash', numeric: true },
+//         { key: 'secondDryDel', label: '2nd Dry', numeric: true },
+//         { key: 'firstWashDel', label: '1st Wash', numeric: true }
+//       ];
+//       data = getSortedData(getModalTableData('delivery'));
+//     } else if (activeModal === 'dhu') {
+//       title = 'DHU Details';
+//       columns = [
+//         { key: 'factory', label: 'Factory' },
+//         { key: 'unit', label: 'Unit' },
+//         { key: 'workOrderNo', label: 'WO No' },
+//         { key: 'buyer', label: 'Buyer' },
+//         { key: 'styleName', label: 'Style' },
+//         { key: 'fastReactNo', label: 'FR No' },
+//         { key: 'orderQty', label: 'Order Qty', numeric: true },
+//         { key: 'washTargetDate', label: 'Target Date' },
+//         { key: 'checkQty', label: 'Check Qty', numeric: true },
+//         { key: 'passQty', label: 'Pass', numeric: true },
+//         { key: 'defectQty', label: 'Defect', numeric: true },
+//         { key: 'dhuPercent', label: 'DHU %' }
+//       ];
+//       data = getSortedData(getModalTableData('dhu'));
+//     } else if (activeModal === 'dryer') {
+//       title = 'Dryer Production Details';
+//       columns = [
+//         { key: 'factory', label: 'Factory' },
+//         { key: 'unit', label: 'Unit' },
+//         { key: 'workOrderNo', label: 'WO No' },
+//         { key: 'buyer', label: 'Buyer' },
+//         { key: 'styleName', label: 'Style' },
+//         { key: 'fastReactNo', label: 'FR No' },
+//         { key: 'orderQty', label: 'Order Qty', numeric: true },
+//         { key: 'washTargetDate', label: 'Target Date' },
+//         { key: 'totalRevQty', label: 'Rev Qty', numeric: true },
+//         { key: 'totalDel', label: 'Total Del', numeric: true },
+//         { key: 'firstWashDryer', label: '1st W Dryer', numeric: true },
+//         { key: 'finalWashDryer', label: 'Final W Dryer', numeric: true },
+//         { key: 'coolDryer', label: 'Cool Dryer', numeric: true },
+//         { key: 'dhuPercent', label: 'DHU %' }
+//       ];
+//       data = getSortedData(getModalTableData('dryer'));
+//     }
+
+//     return (
+//       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+//         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
+//           <div className="bg-slate-800 px-6 py-4 flex items-center justify-between flex-shrink-0">
+//             <div className="flex items-center gap-3">
+//               <ViewColumn className="text-white" />
+//               <h2 className="text-white font-bold text-base">{title}</h2>
+//               <span className="bg-white/15 text-white text-xs px-2 py-0.5 rounded-full">{data.length} records</span>
+//             </div>
+//             <button onClick={closeModal} className="text-white/60 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors">
+//               <Close />
+//             </button>
+//           </div>
+//           <div className="flex-1 overflow-auto">
+//             {modalLoading ? (
+//               <div className="flex items-center justify-center py-20"><LoadingSpinner size="md" /></div>
+//             ) : data.length === 0 ? (
+//               <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+//                 <Assignment sx={{ fontSize: 40 }} className="mb-2 text-slate-300" />
+//                 <p className="text-sm">No data available</p>
+//               </div>
+//             ) : (
+//               <div className="overflow-x-auto">
+//                 <table className="w-full text-sm">
+//                   <thead>
+//                     <tr className="bg-slate-50 sticky top-0 z-10">
+//                       {columns.map(col => (
+//                         <th key={col.key} onClick={() => handleModalSort(col.key)}
+//                           className="px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap cursor-pointer hover:bg-slate-100 select-none border-b border-slate-200 text-xs">
+//                           <div className="flex items-center gap-1">{col.label}<SortIcon columnKey={col.key} /></div>
+//                         </th>
+//                       ))}
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {data.map((row, idx) => (
+//                       <tr key={idx} className="border-b border-slate-50 hover:bg-blue-50/40 transition-colors">
+//                         {columns.map(col => (
+//                           <td key={col.key} className={`px-3 py-2 whitespace-nowrap text-xs ${col.numeric ? 'text-right font-medium' : 'text-left'} ${col.key === 'dhuPercent' && Number(String(row[col.key]).replace('%', '')) > 3 ? 'text-red-600 font-bold' : ''}`}>
+//                             {row[col.key] !== undefined && row[col.key] !== null
+//                               ? col.numeric && !isNaN(Number(row[col.key])) ? Number(row[col.key]).toLocaleString() : row[col.key]
+//                               : '-'}
+//                           </td>
+//                         ))}
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             )}
+//           </div>
+//           <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+//             <p className="text-xs text-slate-500">{data.length} records</p>
+//             <button onClick={closeModal} className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition-colors">Close</button>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   // ════════════════════════ MAIN RENDER ════════════════════════
+
+//   return (
+//     <div className="min-h-screen bg-[#f8fafc]">
+//       {/* ── Top Bar ── */}
+//       <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+//         <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+//           <div>
+//             <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+//               <DashboardIcon className="text-slate-700" sx={{ fontSize: 22 }} />
+//               Production Dashboard
+//             </h1>
+//             <p className="text-xs text-slate-400 mt-0.5">
+//               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+//             </p>
+//           </div>
+//           <div className="flex items-center gap-2">
+//             {hasActiveFilters && (
+//               <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 border border-blue-200">
+//                 <FilterAlt sx={{ fontSize: 14 }} /> Active
+//               </span>
+//             )}
+//             <button
+//               onClick={() => document.getElementById('filter-panel').classList.toggle('hidden')}
+//               className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all border ${
+//                 hasActiveFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+//               }`}
+//             >
+//               <FilterAlt sx={{ fontSize: 15 }} /> Filters
+//             </button>
+//             <button
+//               onClick={handleRefresh}
+//               disabled={refreshing}
+//               className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all disabled:opacity-50"
+//             >
+//               <Refresh sx={{ fontSize: 15 }} className={refreshing ? 'animate-spin' : ''} /> Refresh
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* ── Main Content: Single Scrollable Page ── */}
+//       <div className="max-w-[1600px] mx-auto px-6 py-5 space-y-5">
+
+//         {/* Filter Panel */}
+//         <div id="filter-panel" className="hidden">
+//           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+//             <div className="px-5 py-3 bg-slate-800 flex items-center justify-between">
+//               <span className="text-white text-xs font-semibold flex items-center gap-2"><FilterAlt sx={{ fontSize: 14 }} /> Filters</span>
+//               <button onClick={() => document.getElementById('filter-panel').classList.add('hidden')} className="text-white/60 hover:text-white"><Close sx={{ fontSize: 16 }} /></button>
+//             </div>
+//             <div className="p-5">
+//               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+//                 {[
+//                   { name: 'buyer', label: 'Buyer', options: filterOptions.buyers },
+//                   { name: 'factory', label: 'Factory', options: filterOptions.factories },
+//                   { name: 'unit', label: 'Unit', options: filterOptions.units }
+//                 ].map(f => (
+//                   <div key={f.name}>
+//                     <label className="block text-xs font-semibold text-slate-600 mb-1">{f.label}</label>
+//                     <select name={f.name} value={filterParams[f.name]} onChange={handleFilterChange}
+//                       className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-slate-400 outline-none bg-white">
+//                       <option value="">All</option>
+//                       {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+//                     </select>
+//                   </div>
+//                 ))}
+//                 <div>
+//                   <label className="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+//                   <select name="transactionTypeId" value={filterParams.transactionTypeId} onChange={handleFilterChange}
+//                     className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-slate-400 outline-none bg-white">
+//                     <option value="">All</option>
+//                     <option value="1">Receive</option>
+//                     <option value="2">Delivery</option>
+//                   </select>
+//                 </div>
+//                 <div>
+//                   <label className="block text-xs font-semibold text-slate-600 mb-1">Start</label>
+//                   <input type="date" name="startDate" value={filterParams.startDate} onChange={handleFilterChange}
+//                     className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-slate-400 outline-none" />
+//                 </div>
+//                 <div>
+//                   <label className="block text-xs font-semibold text-slate-600 mb-1">End</label>
+//                   <input type="date" name="endDate" value={filterParams.endDate} onChange={handleFilterChange}
+//                     className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:border-slate-400 outline-none" />
+//                 </div>
+//               </div>
+//               <div className="flex gap-2 mt-4">
+//                 <button onClick={handleApplyFilters} className="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors">
+//                   <Search sx={{ fontSize: 14 }} /> Apply
+//                 </button>
+//                 <button onClick={handleResetFilters} className="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded-lg flex items-center gap-1.5 hover:bg-slate-50 transition-colors">
+//                   <Close sx={{ fontSize: 14 }} /> Reset
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* ── Stat Cards Row ── */}
+//         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+//           <StatCard
+//             icon={<Assignment className="text-blue-600" sx={{ fontSize: 20 }} />}
+//             label="Total Orders"
+//             value={summaryStats.totalWorkOrders}
+//             subtext={`${summaryStats.pendingOrders} pending · ${summaryStats.completedOrders} done`}
+//             accentColor="bg-blue-50"
+//           />
+//           <StatCard
+//             icon={<TrendingUp className="text-emerald-600" sx={{ fontSize: 20 }} />}
+//             label="Total Received"
+//             value={summaryStats.totalReceiveQty}
+//             subtext="All process stages"
+//             accentColor="bg-emerald-50"
+//           />
+//           <StatCard
+//             icon={<LocalShipping className="text-amber-600" sx={{ fontSize: 20 }} />}
+//             label="Total Delivered"
+//             value={summaryStats.totalDeliveryQty}
+//             subtext="All process stages"
+//             accentColor="bg-amber-50"
+//           />
+//           <StatCard
+//             icon={<Scale className="text-violet-600" sx={{ fontSize: 20 }} />}
+//             label="Net Balance"
+//             value={summaryStats.balance}
+//             subtext="Received − Delivered"
+//             accentColor="bg-violet-50"
+//           />
+//         </div>
+
+//         {/* ── Charts Row 1: Receive vs Delivery Bar + Order Status Pie ── */}
+//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+//           <SectionCard
+//             title="Receive vs Delivery by Process"
+//             subtitle="Comparison across process stages"
+//             icon={<Insights sx={{ fontSize: 16 }} />}
+//             action={
+//               <button onClick={() => openModal('delivery')} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors">
+//                 <TableChart sx={{ fontSize: 14 }} /> Table
+//               </button>
+//             }
+//           >
+//             <div className="h-72">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <BarChart data={getReceiveVsDeliveryChartData()} barGap={4} barCategoryGap="20%">
+//                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+//                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+//                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+//                   <RechartsTooltip content={<CustomTooltip />} />
+//                   <Legend wrapperStyle={{ fontSize: 11 }} />
+//                   <Bar dataKey="Received" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+//                   <Bar dataKey="Delivered" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+//                 </BarChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </SectionCard>
+
+//           <SectionCard
+//             title="Order Status Breakdown"
+//             subtitle={`${summaryStats.totalWorkOrders} total work orders`}
+//             icon={<Assignment sx={{ fontSize: 16 }} />}
+//           >
+//             <div className="h-72 flex items-center justify-center">
+//               {getOrderStatusPieData().length > 0 ? (
+//                 <ResponsiveContainer width="100%" height="100%">
+//                   <PieChart>
+//                     <Pie
+//                       data={getOrderStatusPieData()}
+//                       cx="50%"
+//                       cy="50%"
+//                       innerRadius={65}
+//                       outerRadius={95}
+//                       paddingAngle={3}
+//                       dataKey="value"
+//                       stroke="none"
+//                     >
+//                       {getOrderStatusPieData().map((entry, index) => (
+//                         <Cell key={index} fill={entry.color} />
+//                       ))}
+//                     </Pie>
+//                     <RechartsTooltip content={<CustomTooltip />} />
+//                     <Legend wrapperStyle={{ fontSize: 11 }} />
+//                   </PieChart>
+//                 </ResponsiveContainer>
+//               ) : (
+//                 <p className="text-sm text-slate-400">No order data</p>
+//               )}
+//             </div>
+//           </SectionCard>
+
+//           {/* Balance Trend Area Chart */}
+//           <SectionCard
+//             title="7-Day Transaction Trend"
+//             subtitle="Daily receive & delivery flow"
+//             icon={<TrendingUp sx={{ fontSize: 16 }} />}
+//           >
+//             <div className="h-72">
+//               <ResponsiveContainer width="100%" height="100%">
+//                 <AreaChart data={getBalanceTrendData()}>
+//                   <defs>
+//                     <linearGradient id="gradRecv" x1="0" y1="0" x2="0" y2="1">
+//                       <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+//                       <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+//                     </linearGradient>
+//                     <linearGradient id="gradDel" x1="0" y1="0" x2="0" y2="1">
+//                       <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+//                       <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+//                     </linearGradient>
+//                   </defs>
+//                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+//                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+//                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+//                   <RechartsTooltip content={<CustomTooltip />} />
+//                   <Legend wrapperStyle={{ fontSize: 11 }} />
+//                   <Area type="monotone" dataKey="Received" stroke="#3b82f6" strokeWidth={2} fill="url(#gradRecv)" />
+//                   <Area type="monotone" dataKey="Delivered" stroke="#f59e0b" strokeWidth={2} fill="url(#gradDel)" />
+//                 </AreaChart>
+//               </ResponsiveContainer>
+//             </div>
+//           </SectionCard>
+//         </div>
+
+//         {/* ── Process Delivery Cards + DHU ── */}
+//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+//           {/* Processwise Cards */}
+//           <SectionCard
+//             title="Processwise Delivery"
+//             subtitle="Click card for details"
+//             icon={<LocalShipping sx={{ fontSize: 16 }} />}
+//           >
+//             <div className="grid grid-cols-2 gap-3">
+//               {processDeliveryData.map((process) => (
+//                 <div
+//                   key={process.key}
+//                   onClick={() => openModal('delivery')}
+//                   className="bg-slate-50 border border-slate-100 rounded-xl p-4 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all cursor-pointer group"
+//                 >
+//                   <div className="flex items-center gap-2 mb-3">
+//                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: process.color }} />
+//                     <h4 className="font-semibold text-slate-700 text-xs">{process.label}</h4>
+//                   </div>
+//                   <div className="space-y-2">
+//                     <div className="flex items-center justify-between">
+//                       <span className="text-[11px] text-slate-400">Received</span>
+//                       <span className="text-sm font-bold text-emerald-600">{process.received.toLocaleString()}</span>
+//                     </div>
+//                     <div className="flex items-center justify-between">
+//                       <span className="text-[11px] text-slate-400">Delivered</span>
+//                       <span className="text-sm font-bold text-amber-600">{process.delivered.toLocaleString()}</span>
+//                     </div>
+//                     <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
+//                       <span className="text-[11px] font-medium text-slate-500">Total</span>
+//                       <span className="text-base font-extrabold text-slate-800">{process.total.toLocaleString()}</span>
+//                     </div>
+//                   </div>
+//                   <div className="mt-2 text-center">
+//                     <span className="text-[10px] text-slate-400 group-hover:text-blue-500 transition-colors">View details →</span>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           </SectionCard>
+
+//           {/* DHU Section */}
+//           <SectionCard
+//             title="Wet Process DHU Summary"
+//             subtitle="Defect analysis per wash section"
+//             icon={<Warning sx={{ fontSize: 16 }} />}
+//             action={
+//               <button onClick={() => openModal('dhu')} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors">
+//                 <TableChart sx={{ fontSize: 14 }} /> Table
+//               </button>
+//             }
+//           >
+//             <div className="space-y-4">
+//               {Object.entries(dhuData).map(([sectionName, data]) => {
+//                 const dhuVal = Number(data.dhuPercent);
+//                 const isHigh = dhuVal > 3;
+//                 const total = data.outputQty || 1;
+//                 const passPercent = ((data.passQty / total) * 100).toFixed(1);
+
+//                 return (
+//                   <div key={sectionName} className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+//                     <div className="flex items-center justify-between mb-3">
+//                       <div className="flex items-center gap-2">
+//                         <FiberManualRecord sx={{ fontSize: 10, color: sectionName.includes('1st') ? '#06b6d4' : '#8b5cf6' }} />
+//                         <h4 className="font-semibold text-slate-700 text-xs">{sectionName}</h4>
+//                       </div>
+//                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isHigh ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+//                         DHU {data.dhuPercent}%
+//                       </span>
+//                     </div>
+
+//                     {/* Progress bar */}
+//                     <div className="w-full bg-slate-200 rounded-full h-2 mb-3 overflow-hidden">
+//                       <div
+//                         className="h-full rounded-full transition-all duration-500"
+//                         style={{
+//                           width: `${passPercent}%`,
+//                           backgroundColor: isHigh ? '#ef4444' : '#10b981'
+//                         }}
+//                       />
+//                     </div>
+
+//                     <div className="grid grid-cols-3 gap-3">
+//                       <div className="text-center">
+//                         <p className="text-[10px] text-slate-400 uppercase tracking-wider">Output</p>
+//                         <p className="text-sm font-bold text-slate-800">{data.outputQty.toLocaleString()}</p>
+//                       </div>
+//                       <div className="text-center">
+//                         <p className="text-[10px] text-slate-400 uppercase tracking-wider">Pass</p>
+//                         <p className="text-sm font-bold text-emerald-600">{data.passQty.toLocaleString()}</p>
+//                       </div>
+//                       <div className="text-center">
+//                         <p className="text-[10px] text-slate-400 uppercase tracking-wider">Defect</p>
+//                         <p className="text-sm font-bold text-red-500">{data.defectQty.toLocaleString()}</p>
+//                       </div>
+//                     </div>
+
+//                     <div className="mt-3 flex gap-2">
+//                       {data.topDefects.map((defect, i) => (
+//                         <span key={i} className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md">
+//                           {defect}
+//                         </span>
+//                       ))}
+//                     </div>
+//                   </div>
+//                 );
+//               })}
+//             </div>
+//           </SectionCard>
+//         </div>
+
+//         {/* ── Dryer Production Row ── */}
+//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+//           <div className="lg:col-span-2">
+//             <SectionCard
+//               title="Dryer Production Overview"
+//               subtitle="Production output by dryer type"
+//               icon={<AcUnit sx={{ fontSize: 16 }} />}
+//               action={
+//                 <button onClick={() => openModal('dryer')} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors">
+//                   <TableChart sx={{ fontSize: 14 }} /> Table
+//                 </button>
+//               }
+//             >
+//               <div className="h-72">
+//                 <ResponsiveContainer width="100%" height="100%">
+//                   <BarChart data={getDryerBarChartData()} barCategoryGap="25%">
+//                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+//                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+//                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+//                     <RechartsTooltip content={<CustomTooltip />} />
+//                     <Bar dataKey="Production" radius={[6, 6, 0, 0]}>
+//                       {getDryerBarChartData().map((entry, index) => (
+//                         <Cell key={index} fill={dryerData[index]?.color || COLORS[index % COLORS.length]} />
+//                       ))}
+//                     </Bar>
+//                   </BarChart>
+//                 </ResponsiveContainer>
+//               </div>
+//             </SectionCard>
+//           </div>
+
+//           {/* Dryer Quick Cards */}
+//           <SectionCard
+//             title="Dryer Cards"
+//             subtitle="Quick production view"
+//             icon={<AcUnit sx={{ fontSize: 16 }} />}
+//           >
+//             <div className="space-y-3">
+//               {dryerData.map((dryer) => (
+//                 <div
+//                   key={dryer.key}
+//                   onClick={() => openModal('dryer')}
+//                   className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:shadow-sm hover:border-slate-200 transition-all cursor-pointer group"
+//                 >
+//                   <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: dryer.color + '18' }}>
+//                     <AcUnit sx={{ fontSize: 18, color: dryer.color }} />
+//                   </div>
+//                   <div className="flex-1 min-w-0">
+//                     <p className="text-xs font-semibold text-slate-700 truncate">{dryer.label}</p>
+//                     <p className="text-[10px] text-slate-400">Production output</p>
+//                   </div>
+//                   <div className="text-right">
+//                     <p className="text-sm font-bold text-slate-800">{dryer.production.toLocaleString()}</p>
+//                     <p className="text-[10px] text-slate-400 group-hover:text-blue-500 transition-colors">details →</p>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           </SectionCard>
+//         </div>
+
+//         {/* Footer */}
+//         <div className="text-center py-4 border-t border-slate-200">
+//           <p className="text-[11px] text-slate-400">
+//             Production Dashboard · Last updated {new Date().toLocaleTimeString()} · WRD System v1.3.0
+//           </p>
+//         </div>
+//       </div>
+
+//       {renderModal()}
+//     </div>
+//   );
+// };
+
+// export default Dashboard;
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { reportApi } from '../../api/reportApi';
+import { workOrderApi } from '../../api/workOrderApi';
+import { washTransactionApi } from '../../api/washTransactionApi';
+import LoadingSpinner from '../common/LoadingSpinner';
+import toast from 'react-hot-toast';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend,
+  RadialBarChart, RadialBar
+} from 'recharts';
+import {
+  Close, Refresh, FilterAlt, CalendarToday, LocalShipping, TrendingUp,
+  Assignment, Warning, CheckCircle, ArrowDropDown, ArrowDropUp, ViewColumn,
+  WaterDrop, DryCleaning, AcUnit, Search, FiberManualRecord, Assessment,
+  Dashboard as DashboardIcon, Inventory2, Scale, TableChart, Insights,
+  LightMode, DarkMode, ArrowForward, Tune, ExpandMore, ExpandLess,
+  Speed, Timer, ErrorOutline, Opacity, Air, BarChart as BarChartIcon,
+  BubbleChart, DonutLarge, TrendingDown, Straighten, CheckBox,
+  ReportProblem, Percent, Factory
+} from '@mui/icons-material';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const PROCESS_STAGES = [
+  { key: '1st Dry',       label: '1st Dry',    color: '#f97316', icon: '🌬️' },
+  { key: 'UnWash Godun',  label: 'Unwash',     color: '#eab308', icon: '📦' },
+  { key: '1st Wash',      label: '1st Wash',   color: '#06b6d4', icon: '💧' },
+  { key: '2nd Dry',       label: '2nd Dry',    color: '#8b5cf6', icon: '🌪️' },
+  { key: 'Final Wash',    label: 'Final Wash', color: '#3b82f6', icon: '🫧' },
+];
+
+const DRYER_STAGES = [
+  { key: '1st Wash Dryer',   label: '1st Dryer',   color: '#f97316', icon: '🌬️' },
+  { key: '2nd Wash Dryer',   label: '2nd Dryer',   color: '#8b5cf6', icon: '🌪️' },
+  { key: 'Final Wash Dryer', label: 'Final Dryer', color: '#14b8a6', icon: '💨' },
+  { key: 'Cool Dryer',       label: 'Cool Dryer',  color: '#0ea5e9', icon: '❄️' },
+  { key: 'Re-Dryer',         label: 'Re-Dryer',    color: '#f43f5e', icon: '🔄' },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmtNum = (val) => {
+  const n = Number(val) || 0;
+  return n === 0 ? '—' : n.toLocaleString();
+};
+
+const fmtDate = (val) => {
+  if (!val) return '—';
+  try { return format(new Date(val), 'dd-MM-yy'); } catch { return '—'; }
+};
+
+const numOf = (val) => {
+  if (val === '—' || val == null) return 0;
+  return Number(String(val).replace(/,/g, '')) || 0;
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+const Dashboard = ({ isDarkMode, toggleTheme }) => {
+  const { user, isAdmin } = useAuth();
+
+  const [loading,    setLoading]    = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [summaryStats, setSummaryStats] = useState({
+    totalWorkOrders: 0, totalTransactions: 0,
+    totalReceiveQty: 0, totalDeliveryQty: 0,
+    totalOrderQuantity: 0, pendingOrders: 0,
+    completedOrders: 0,  balance: 0, stageBreakdown: {},
+  });
+
+  const [allWorkOrders,   setAllWorkOrders]   = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
+
+  const [filterParams, setFilterParams] = useState({
+    buyer: '', factory: '', unit: '', processStageId: '', transactionTypeId: '',
+    startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    endDate:   format(endOfMonth(new Date()),   'yyyy-MM-dd'),
+  });
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [filterOptions,  setFilterOptions]  = useState({
+    buyers: [], factories: [], units: [], processStages: [],
+  });
+
+  const [activeModal,      setActiveModal]      = useState(null);
+  const [modalLoading,     setModalLoading]     = useState(false);
+  const [modalSortConfig,  setModalSortConfig]  = useState({ key: null, direction: 'asc' });
+  const [modalSearchQuery, setModalSearchQuery] = useState('');
+
+  const abortControllerRef = useRef(null);
+
+  // ─── Effects ────────────────────────────────────────────────────────
+  useEffect(() => { loadFilterOptions(); loadDashboardData(); }, []);
+  useEffect(() => {
+    if (Object.keys(appliedFilters).length > 0) loadDashboardData();
+  }, [appliedFilters]);
+
+  // ─── Data Loading ────────────────────────────────────────────────────
+  const loadFilterOptions = async () => {
+    try {
+      const response = await reportApi.getFilterOptions();
+      const data = response.data?.data || response.data || {};
+      setFilterOptions({
+        buyers:        Array.isArray(data.buyers)        ? data.buyers        : [],
+        factories:     Array.isArray(data.factories)     ? data.factories     : [],
+        units:         Array.isArray(data.units)         ? data.units         : [],
+        processStages: Array.isArray(data.processStages) ? data.processStages : [],
+      });
+    } catch (error) { console.error('Failed to load filter options:', error); }
+  };
+
+  const loadDashboardData = async () => {
+    try {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      abortControllerRef.current = new AbortController();
+      setLoading(true);
+
+      const params = {
+        page: 1, pageSize: 1000,
+        sortBy: 'transactionDate', sortOrder: 'desc',
+        ...appliedFilters,
+      };
+
+      const [summaryRes, transactionsRes, workOrdersRes] = await Promise.all([
+        reportApi.getSummary(params),
+        washTransactionApi.getPaginated(params),
+        workOrderApi.getPaginated({
+          page: 1, pageSize: 1000, sortBy: 'CreatedAt', sortOrder: 'desc',
+        }),
+      ]);
+
+      const sd = summaryRes.data?.data || summaryRes.data;
+      if (sd) {
+        const recv = Number(sd.totalReceiveQty)  || 0;
+        const del  = Number(sd.totalDeliveryQty) || 0;
+        setSummaryStats({
+          totalWorkOrders:   Number(sd.totalWorkOrders)   || 0,
+          totalTransactions: Number(sd.totalTransactions) || 0,
+          totalReceiveQty:   recv,
+          totalDeliveryQty:  del,
+          totalOrderQuantity:Number(sd.totalOrderQuantity)|| 0,
+          pendingOrders:     Number(sd.pendingOrders)     || 0,
+          completedOrders:   Number(sd.completedOrders)   || 0,
+          balance:           recv - del,
+          stageBreakdown:    sd.stageBreakdown || {},
+        });
+      }
+
+      setAllTransactions(transactionsRes.data?.data || []);
+      setAllWorkOrders(workOrdersRes.data?.data    || []);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error loading dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      }
+    } finally { setLoading(false); setRefreshing(false); }
+  };
+
+  // ─── Filter Handlers ─────────────────────────────────────────────────
+  const handleFilterChange  = (e) => {
+    const { name, value } = e.target;
+    setFilterParams(prev => ({ ...prev, [name]: value }));
+  };
+  const handleApplyFilters  = () => {
+    setAppliedFilters({ ...filterParams });
+    toast.success('Filters applied');
+  };
+  const handleResetFilters  = () => {
+    const reset = {
+      buyer: '', factory: '', unit: '', processStageId: '', transactionTypeId: '',
+      startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+      endDate:   format(endOfMonth(new Date()),   'yyyy-MM-dd'),
+    };
+    setFilterParams(reset);
+    setAppliedFilters({});
+    toast.success('Filters reset');
+    loadDashboardData();
+  };
+  const handleRefresh = () => { setRefreshing(true); loadDashboardData(); };
+
+  // ─── Stage Aggregation ───────────────────────────────────────────────
+  const buildStageMap = (wo) => {
+    const woTxns = allTransactions.filter(
+      tx => tx.workOrderId === wo.id || tx.workOrderNo === wo.workOrderNo
+    );
+    const recv = {}, del = {};
+    woTxns.forEach(tx => {
+      const s = tx.processStageName || 'Unknown';
+      if (tx.transactionType === 1) recv[s] = (recv[s] || 0) + (Number(tx.quantity) || 0);
+      if (tx.transactionType === 2) del[s]  = (del[s]  || 0) + (Number(tx.quantity) || 0);
+    });
+
+    const washRecv = Object.entries(recv)
+      .filter(([n]) => n.toLowerCase().includes('wash'))
+      .reduce((s, [, v]) => s + v, 0);
+    const washDel = Object.entries(del)
+      .filter(([n]) => n.toLowerCase().includes('wash'))
+      .reduce((s, [, v]) => s + v, 0);
+    const totalRecv = Object.values(recv).reduce((s, v) => s + v, 0);
+    const totalDel  = Object.values(del).reduce((s,  v) => s + v, 0);
+
+    return { recv, del, washRecv, washDel, totalRecv, totalDel };
+  };
+
+  // ─── Derived Data ────────────────────────────────────────────────────
+  const getProcessDeliveryData = () => {
+    const stages = summaryStats.stageBreakdown || {};
+    return PROCESS_STAGES.map(p => {
+      const sd = stages[p.key] || {};
+      const received  = sd.receive  || 0;
+      const delivered = sd.delivery || 0;
+      return {
+        ...p,
+        received,
+        delivered,
+        total:      received + delivered,
+        efficiency: received > 0 ? ((delivered / received) * 100).toFixed(1) : 0,
+      };
+    });
+  };
+
+  const getDHUChartData = () => {
+    // Aggregate DHU per work order for chart
+    return allWorkOrders.slice(0, 10).map(wo => {
+      const m = buildStageMap(wo);
+      const checkQty  = wo.checkQty  != null ? Number(wo.checkQty)  : m.washRecv;
+      const defectQty = wo.defectQty != null ? Number(wo.defectQty) : Math.round(checkQty * 0.004);
+      const dhu = checkQty > 0 ? +((defectQty / checkQty) * 100).toFixed(1) : 0;
+      return {
+        name: (wo.workOrderNo || '').slice(-6),
+        DHU: dhu,
+        CheckQty: checkQty,
+      };
+    });
+  };
+
+const getDryerData = () => {
+  const stages = summaryStats.stageBreakdown || {};
+  return DRYER_STAGES.map(d => {
+    const sd = stages[d.key] || {};
+    return {
+      ...d,
+      production: sd.delivery || sd.receive || 0,
+    };
+  });
+};
+
+  const getOrderStatusPieData = () => {
+    const p  = summaryStats.pendingOrders   || 0;
+    const c  = summaryStats.completedOrders || 0;
+    const ip = Math.max(summaryStats.totalWorkOrders - p - c, 0);
+    return [
+      { name: 'Completed',   value: c,  color: '#10b981' },
+      { name: 'In Progress', value: ip, color: '#3b82f6' },
+      { name: 'Pending',     value: p,  color: '#f59e0b' },
+    ].filter(d => d.value > 0);
+  };
+
+  const getBalanceTrendData = () => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (6 - i));
+      const ds = format(d, 'yyyy-MM-dd');
+      const day = allTransactions.filter(tx =>
+        tx.transactionDate
+          ? format(new Date(tx.transactionDate), 'yyyy-MM-dd') === ds
+          : false
+      );
+      const rcv = day.filter(tx => tx.transactionType === 1).reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+      const dlv = day.filter(tx => tx.transactionType === 2).reduce((s, tx) => s + (Number(tx.quantity) || 0), 0);
+      return { name: format(d, 'EEE'), Received: rcv, Delivered: dlv, Balance: rcv - dlv };
+    });
+  };
+
+  const getReceiveVsDeliveryChartData = () =>
+    getProcessDeliveryData().map(p => ({
+      name: p.label, Received: p.received, Delivered: p.delivered,
+    }));
+
+  // ─── Modal Table Data ────────────────────────────────────────────────
+
+  // DHU modal rows — matches sample data exactly
+  const getDHUModalData = () =>
+    allWorkOrders.map(wo => {
+      const m        = buildStageMap(wo);
+      const checkQty  = wo.checkQty  != null ? Number(wo.checkQty)  : m.washRecv;
+      const defectQty = wo.defectQty != null ? Number(wo.defectQty) : Math.round(checkQty * 0.004);
+      const passQty   = wo.passQty   != null ? Number(wo.passQty)   : checkQty - defectQty;
+      const dhuPct    = checkQty > 0 ? ((defectQty / checkQty) * 100).toFixed(1) : '0.0';
+      return {
+        factory:        wo.factory      || '—',
+        unit:           wo.unit         || '—',
+        workOrderNo:    wo.workOrderNo  || '—',
+        buyer:          wo.buyer        || '—',
+        styleName:      wo.styleName    || wo.description || '—',
+        fastReactNo:    wo.fastReactNo  || wo.fastReactNumber || wo.frNo || '—',
+        orderQty:       fmtNum(wo.orderQuantity),
+        washTargetDate: fmtDate(wo.washTargetDate || wo.targetDate),
+        checkQty:       fmtNum(checkQty),
+        passQty:        fmtNum(passQty),
+        defectQty:      fmtNum(defectQty),
+        dhuPercent:     `${dhuPct}%`,
+        _dhuNum:        Number(dhuPct),
+        _defectRaw:     defectQty,
+      };
+    });
+
+  // Processwise delivery modal rows
+  const getDeliveryModalData = () =>
+    allWorkOrders.map(wo => {
+      const m = buildStageMap(wo);
+      return {
+        factory:           wo.factory     || '—',
+        unit:              wo.unit        || '—',
+        workOrderNo:       wo.workOrderNo || '—',
+        buyer:             wo.buyer       || '—',
+        styleName:         wo.styleName   || wo.description || '—',
+        fastReactNo:       wo.fastReactNo || wo.fastReactNumber || wo.frNo || '—',
+        orderQty:          fmtNum(wo.orderQuantity),
+        washTargetDate:    fmtDate(wo.washTargetDate || wo.targetDate),
+        totalWashReceived: fmtNum(m.washRecv),
+        totalWashDelivery: fmtNum(m.washDel),
+        firstDryDel:       fmtNum(m.del['1st Dry']),
+        unwashDel:         fmtNum(m.del['UnWash Godun'] || m.del['Unwash'] || 0),
+        secondDryDel:      fmtNum(m.del['2nd Dry']),
+        firstWashDel:      fmtNum(m.del['1st Wash']),
+      };
+    });
+
+  // Dryer modal rows — matches sample data exactly
+const getDryerModalData = () =>
+  allWorkOrders.map(wo => {
+    const m         = buildStageMap(wo);
+    const checkQty  = wo.checkQty  != null ? Number(wo.checkQty)  : m.washRecv;
+    const defectQty = wo.defectQty != null ? Number(wo.defectQty) : Math.round(checkQty * 0.004);
+    const dhuPct    = checkQty > 0 ? ((defectQty / checkQty) * 100).toFixed(1) : '0.0';
+    return {
+      factory:        wo.factory     || '—',
+      unit:           wo.unit        || '—',
+      workOrderNo:    wo.workOrderNo || '—',
+      buyer:          wo.buyer       || '—',
+      styleName:      wo.styleName   || wo.description || '—',
+      fastReactNo:    wo.fastReactNo || wo.fastReactNumber || wo.frNo || '—',
+      orderQty:       fmtNum(wo.orderQuantity),
+      washTargetDate: fmtDate(wo.washTargetDate || wo.targetDate),
+      totalRevdQty:   fmtNum(m.totalRecv),
+      totalDlv:       fmtNum(m.totalDel),
+      firstDryer:     fmtNum(m.del['1st Wash Dryer']),
+      secondDryer:    fmtNum(m.del['2nd Wash Dryer']),
+      finalDryer:     fmtNum(m.del['Final Wash Dryer']),
+      coolDryer:      fmtNum(m.del['Cool Dryer']),
+      reDryer:        fmtNum(m.del['Re-Dryer']),
+      dhuPercent:     `${dhuPct}%`,
+      _dhuNum:        Number(dhuPct),
+    };
+  });
+
+  const getModalTableData = (type) => {
+    if (type === 'delivery') return getDeliveryModalData();
+    if (type === 'dhu')      return getDHUModalData();
+    if (type === 'dryer')    return getDryerModalData();
+    return [];
+  };
+
+  // ─── Modal Sorting / Filtering ───────────────────────────────────────
+  const openModal  = (type) => {
+    setActiveModal(type);
+    setModalLoading(true);
+    setModalSearchQuery('');
+    setModalSortConfig({ key: null, direction: 'asc' });
+    setTimeout(() => setModalLoading(false), 300);
+  };
+  const closeModal = () => {
+    setActiveModal(null);
+    setModalSortConfig({ key: null, direction: 'asc' });
+    setModalSearchQuery('');
+  };
+
+  const handleModalSort = (key) =>
+    setModalSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+
+  const getSortedFilteredData = (data) => {
+    let d = data;
+    // Search filter
+    if (modalSearchQuery.trim()) {
+      const q = modalSearchQuery.toLowerCase();
+      d = d.filter(row =>
+        Object.values(row).some(v =>
+          v !== null && v !== undefined && String(v).toLowerCase().includes(q)
+        )
+      );
+    }
+    // Sort
+    if (!modalSortConfig.key) return d;
+    return [...d].sort((a, b) => {
+      const aRaw = a[modalSortConfig.key];
+      const bRaw = b[modalSortConfig.key];
+      const numA = numOf(aRaw);
+      const numB = numOf(bRaw);
+      const isNumA = !isNaN(numA) && String(aRaw) !== String(numA);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return modalSortConfig.direction === 'asc' ? numA - numB : numB - numA;
+      }
+      const sA = String(aRaw === '—' ? '' : aRaw).toLowerCase();
+      const sB = String(bRaw === '—' ? '' : bRaw).toLowerCase();
+      return modalSortConfig.direction === 'asc'
+        ? sA.localeCompare(sB)
+        : sB.localeCompare(sA);
+    });
+  };
+
+  // ─── Computed ────────────────────────────────────────────────────────
+  const hasActiveFilters    = Object.values(appliedFilters).some(v => v !== '');
+  const processDeliveryData = getProcessDeliveryData();
+  const dryerData           = getDryerData();
+  const maxProcessTotal     = Math.max(...processDeliveryData.map(p => p.total), 1);
+  const maxDryerProd        = Math.max(...dryerData.map(d => d.production), 1);
+
+  // overall DHU summary for hero cards
+  const totalCheckQty  = allWorkOrders.reduce((s, wo) => {
+    const m = buildStageMap(wo);
+    return s + (wo.checkQty != null ? Number(wo.checkQty) : m.washRecv);
+  }, 0);
+  const totalDefectQty = allWorkOrders.reduce((s, wo) => {
+    const m        = buildStageMap(wo);
+    const checkQty = wo.checkQty  != null ? Number(wo.checkQty)  : m.washRecv;
+    return s + (wo.defectQty != null ? Number(wo.defectQty) : Math.round(checkQty * 0.004));
+  }, 0);
+  const overallDHU = totalCheckQty > 0
+    ? ((totalDefectQty / totalCheckQty) * 100).toFixed(2)
+    : '0.00';
+
+  if (loading && !refreshing) return <LoadingSpinner size="lg" fullScreen />;
+
+  // ─── Theme ────────────────────────────────────────────────────────────
+  const tk = {
+    surface:       isDarkMode ? 'bg-[#080c1a]'   : 'bg-[#f0ede8]',
+    cardBg:        isDarkMode ? 'bg-[#0e1225]'   : 'bg-white',
+    cardBorder:    isDarkMode ? 'border-[#1c2240]' : 'border-[#e6e2db]',
+    cardHover:     isDarkMode ? 'hover:bg-[#131830]' : 'hover:bg-[#faf9f7]',
+    textPrimary:   isDarkMode ? 'text-[#e8e6e0]' : 'text-[#18160f]',
+    textSecondary: isDarkMode ? 'text-[#6e7285]' : 'text-[#7a776e]',
+    textMuted:     isDarkMode ? 'text-[#3e4155]' : 'text-[#b0ac a4]',
+    headerBg:      isDarkMode ? 'bg-[#0a0e1e]'   : 'bg-white',
+    axisColor:     isDarkMode ? '#1c2240'         : '#e6e2db',
+    tickColor:     isDarkMode ? '#6e7285'         : '#7a776e',
+    gridColor:     isDarkMode ? '#141930'         : '#f0ede8',
+  };
+  // short aliases
+  const {
+    surface, cardBg, cardBorder, cardHover,
+    textPrimary, textSecondary, textMuted, headerBg,
+    axisColor, tickColor, gridColor,
+  } = tk;
+
+  const AMBER = '#e8920d';
+
+  // ─── Mini Components ──────────────────────────────────────────────────
+
+  const MiniBar = ({ value, max, color = AMBER, height = 5 }) => {
+    const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+    return (
+      <div
+        className={`w-full rounded-full overflow-hidden ${isDarkMode ? 'bg-[#1c2240]' : 'bg-[#ece8e1]'}`}
+        style={{ height }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+    );
+  };
+
+  const DHUBadge = ({ value }) => {
+    const n = Number(value);
+    const isHigh = n > 3;
+    const isMed  = n > 1.5 && n <= 3;
+    return (
+      <span className={`inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
+        isHigh ? 'bg-red-500/10   text-red-500'   :
+        isMed  ? 'bg-amber-500/10 text-amber-500' :
+                 'bg-emerald-500/10 text-emerald-500'
+      }`}>
+        {isHigh ? <ErrorOutline sx={{ fontSize: 11 }} /> : <CheckCircle sx={{ fontSize: 11 }} />}
+        {value}%
+      </span>
+    );
+  };
+
+  const SortIcon = ({ columnKey }) => {
+    if (modalSortConfig.key !== columnKey)
+      return <ArrowDropDown className="opacity-25" fontSize="small" />;
+    return modalSortConfig.direction === 'asc'
+      ? <ArrowDropUp   className="text-amber-500" fontSize="small" />
+      : <ArrowDropDown className="text-amber-500" fontSize="small" />;
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className={`${isDarkMode ? 'bg-[#1a1f38] border-[#2a3050]' : 'bg-white border-[#e6e2db]'} border rounded-xl px-4 py-3 shadow-2xl`}>
+        <p className={`${textSecondary} text-[10px] font-semibold mb-2 uppercase tracking-widest`}>{label}</p>
+        {payload.map((entry, i) => (
+          <p key={i} className="text-sm" style={{ color: entry.color }}>
+            <span className="opacity-70 font-medium">{entry.name}: </span>
+            <span className="font-bold">{Number(entry.value).toLocaleString()}</span>
+          </p>
+        ))}
+      </div>
+    );
+  };
+
+  // ─── Layout Components ────────────────────────────────────────────────
+
+  const StatCard = ({ icon, label, value, subtext, accent, delay = 0, badge }) => (
+    <div
+      className={`${cardBg} rounded-2xl border ${cardBorder} p-5 transition-all duration-300 ${cardHover} relative overflow-hidden group`}
+      style={{ animation: `fadeUp 0.5s ${delay}ms ease-out both` }}
+    >
+      <div
+        className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-[0.05]"
+        style={{ background: accent || AMBER }}
+      />
+      <div className="flex items-start justify-between relative">
+        <div className="space-y-1.5">
+          <p className={`text-[10px] font-bold ${textSecondary} uppercase tracking-[0.12em]`}>{label}</p>
+          <p className={`text-[26px] font-extrabold leading-none ${textPrimary} tabular-nums`}>
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </p>
+          {subtext && <p className={`text-[11px] ${textMuted}`}>{subtext}</p>}
+          {badge}
+        </div>
+        <div
+          className="p-3 rounded-xl transition-transform duration-300 group-hover:scale-110"
+          style={{ background: `${accent || AMBER}15`, color: accent || AMBER }}
+        >
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+
+  const Section = ({ title, subtitle, icon, children, action, className = '', delay = 0 }) => (
+    <div
+      className={`${cardBg} rounded-2xl border ${cardBorder} overflow-hidden transition-colors duration-300 ${className}`}
+      style={{ animation: `fadeUp 0.5s ${delay}ms ease-out both` }}
+    >
+      <div className={`px-6 py-4 border-b ${cardBorder} flex items-center justify-between`}>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl" style={{ background: `${AMBER}14`, color: AMBER }}>{icon}</div>
+          <div>
+            <h3 className={`text-sm font-bold ${textPrimary}`}>{title}</h3>
+            {subtitle && <p className={`text-[10px] ${textMuted} mt-0.5`}>{subtitle}</p>}
+          </div>
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+
+  const ViewTableBtn = ({ type, label = 'View Table' }) => (
+    <button
+      onClick={() => openModal(type)}
+      className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border ${cardBorder} ${cardBg} ${cardHover} ${textSecondary} hover:text-amber-500 transition-all`}
+    >
+      <TableChart sx={{ fontSize: 13 }} />
+      {label}
+    </button>
+  );
+
+  // ─── Column Definitions ───────────────────────────────────────────────
+
+  const DELIVERY_COLS = [
+    { key: 'factory',           label: 'Factory',            align: 'left'   },
+    { key: 'unit',              label: 'Unit',               align: 'left'   },
+    { key: 'workOrderNo',       label: 'Work Order No',      align: 'left'   },
+    { key: 'buyer',             label: 'Buyer',              align: 'left'   },
+    { key: 'styleName',         label: 'Style Name',         align: 'left'   },
+    { key: 'fastReactNo',       label: 'FastReact No',       align: 'left'   },
+    { key: 'orderQty',          label: 'Order Qty',          align: 'right', numeric: true },
+    { key: 'washTargetDate',    label: 'Wash Target Date',   align: 'center' },
+    { key: 'totalWashReceived', label: 'Total Wash Received',align: 'right', numeric: true },
+    { key: 'totalWashDelivery', label: 'Total Wash Delivery',align: 'right', numeric: true },
+    { key: 'firstDryDel',       label: '1st Dry Del',        align: 'right', numeric: true },
+    { key: 'unwashDel',         label: 'Unwash Del',         align: 'right', numeric: true },
+    { key: 'secondDryDel',      label: '2nd Dry Del',        align: 'right', numeric: true },
+    { key: 'firstWashDel',      label: '1st Wash Del',       align: 'right', numeric: true },
+  ];
+
+  const DHU_COLS = [
+    { key: 'factory',        label: 'Factory',          align: 'left'   },
+    { key: 'unit',           label: 'Unit',             align: 'left'   },
+    { key: 'workOrderNo',    label: 'Work Order No',    align: 'left'   },
+    { key: 'buyer',          label: 'Buyer',            align: 'left'   },
+    { key: 'styleName',      label: 'Style Name',       align: 'left'   },
+    { key: 'fastReactNo',    label: 'FastReact No',     align: 'left'   },
+    { key: 'orderQty',       label: 'Order Qty',        align: 'right', numeric: true },
+    { key: 'washTargetDate', label: 'Wash Target Date', align: 'center' },
+    { key: 'checkQty',       label: 'Check Qty',        align: 'right', numeric: true },
+    { key: 'passQty',        label: 'Pass Qty',         align: 'right', numeric: true },
+    { key: 'defectQty',      label: 'Defect Qty',       align: 'right', numeric: true, highlight: 'defect' },
+    { key: 'dhuPercent',     label: 'DHU %',            align: 'center',               highlight: 'dhu'    },
+  ];
+
+const DRYER_COLS = [
+  { key: 'factory',        label: 'Factory',          align: 'left'   },
+  { key: 'unit',           label: 'Unit',             align: 'left'   },
+  { key: 'workOrderNo',    label: 'Work Order No',    align: 'left'   },
+  { key: 'buyer',          label: 'Buyer',            align: 'left'   },
+  { key: 'styleName',      label: 'Style Name',       align: 'left'   },
+  { key: 'fastReactNo',    label: 'FastReact No',     align: 'left'   },
+  { key: 'orderQty',       label: 'Order Qty',        align: 'right', numeric: true },
+  { key: 'washTargetDate', label: 'Wash Target Date', align: 'center' },
+  { key: 'totalRevdQty',   label: 'Total Revd Qty',   align: 'right', numeric: true },
+  { key: 'totalDlv',       label: 'Total Dlv',        align: 'right', numeric: true },
+  { key: 'firstDryer',     label: '1st Dryer',        align: 'right', numeric: true },
+  { key: 'secondDryer',    label: '2nd Dryer',        align: 'right', numeric: true },
+  { key: 'finalDryer',     label: 'Final Dryer',      align: 'right', numeric: true },
+  { key: 'coolDryer',      label: 'Cool Dryer',       align: 'right', numeric: true },
+  { key: 'reDryer',        label: 'Re-Dryer',         align: 'right', numeric: true },
+  { key: 'dhuPercent',     label: 'DHU %',            align: 'center',               highlight: 'dhu' },
+];
+
+  const MODAL_META = {
+    delivery: { title: 'Processwise Delivery Details', cols: DELIVERY_COLS, icon: <LocalShipping sx={{ fontSize: 18, color: AMBER }} /> },
+    dhu:      { title: 'DHU Analysis Details',         cols: DHU_COLS,      icon: <Warning sx={{ fontSize: 18, color: AMBER }} /> },
+    dryer:    { title: 'Dryer Production Details',     cols: DRYER_COLS,    icon: <AcUnit  sx={{ fontSize: 18, color: AMBER }} /> },
+  };
+
+  // ─── Modal Render ─────────────────────────────────────────────────────
+  const renderModal = () => {
+    if (!activeModal) return null;
+    const meta    = MODAL_META[activeModal];
+    const rawData = getModalTableData(activeModal);
+    const data    = getSortedFilteredData(rawData);
+
+    // Summary row totals for numeric columns
+    const numericKeys = meta.cols.filter(c => c.numeric).map(c => c.key);
+    const totals = numericKeys.reduce((acc, key) => {
+      acc[key] = data.reduce((s, row) => s + numOf(row[key]), 0);
+      return acc;
+    }, {});
+
+    // DHU summary
+    const totalCheck  = data.reduce((s, r) => s + numOf(r.checkQty  ?? r.totalRevdQty), 0);
+    const totalDefect = data.reduce((s, r) => s + (r._defectRaw || 0), 0);
+    const avgDHU = totalCheck > 0 ? ((totalDefect / totalCheck) * 100).toFixed(2) : '0.00';
+
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
+        <div
+          className={`relative ${cardBg} rounded-2xl shadow-2xl w-full max-w-[98vw] max-h-[94vh] flex flex-col border ${cardBorder} overflow-hidden`}
+          style={{ animation: 'fadeUp 0.25s ease-out both' }}
+        >
+          {/* ── Modal Header ── */}
+          <div
+            className={`px-6 py-4 flex items-center justify-between flex-shrink-0 border-b ${cardBorder}`}
+            style={{ background: `${AMBER}09` }}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 rounded-xl flex-shrink-0" style={{ background: `${AMBER}18` }}>
+                {meta.icon}
+              </div>
+              <div className="min-w-0">
+                <h2 className={`font-bold text-sm ${textPrimary} truncate`}>{meta.title}</h2>
+                <p className={`text-[10px] ${textMuted}`}>{data.length} of {rawData.length} records</p>
+              </div>
+              {/* DHU summary badge for DHU / Dryer modals */}
+              {(activeModal === 'dhu' || activeModal === 'dryer') && (
+                <div className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-xl border ${cardBorder} ${isDarkMode ? 'bg-[#141829]' : 'bg-[#faf9f7]'}`}>
+                  <span className={`text-[10px] font-semibold ${textSecondary}`}>Avg DHU</span>
+                  <DHUBadge value={avgDHU} />
+                </div>
+              )}
+            </div>
+            {/* Search + Close */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${cardBorder} ${isDarkMode ? 'bg-[#141829]' : 'bg-[#faf9f7]'}`}>
+                <Search sx={{ fontSize: 14 }} className={textSecondary} />
+                <input
+                  type="text"
+                  placeholder="Search…"
+                  value={modalSearchQuery}
+                  onChange={e => setModalSearchQuery(e.target.value)}
+                  className={`bg-transparent text-xs outline-none w-40 ${textPrimary} placeholder:${textMuted}`}
+                />
+                {modalSearchQuery && (
+                  <button onClick={() => setModalSearchQuery('')}>
+                    <Close sx={{ fontSize: 13 }} className={textSecondary} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={closeModal}
+                className={`p-2 rounded-xl border ${cardBorder} ${cardHover} transition-colors`}
+              >
+                <Close sx={{ fontSize: 16 }} className={textSecondary} />
+              </button>
+            </div>
+          </div>
+
+          {/* ── Modal Body ── */}
+          <div className="flex-1 overflow-auto">
+            {modalLoading ? (
+              <div className="flex items-center justify-center py-24">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : data.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3">
+                <Assignment sx={{ fontSize: 48 }} className={textMuted} />
+                <p className={`text-sm ${textMuted}`}>No records found</p>
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                {/* Table Head */}
+                <thead>
+                  <tr className={`sticky top-0 z-10 ${isDarkMode ? 'bg-[#0e1225]' : 'bg-[#faf9f7]'}`}>
+                    <th className={`px-3 py-3 text-center border-b ${cardBorder} ${textSecondary} text-[10px] font-bold uppercase tracking-widest w-10`}>#</th>
+                    {meta.cols.map(col => (
+                      <th
+                        key={col.key}
+                        onClick={() => handleModalSort(col.key)}
+                        className={`px-3 py-3 font-bold ${textSecondary} whitespace-nowrap cursor-pointer select-none border-b ${cardBorder} text-[10px] uppercase tracking-widest text-${col.align}`}
+                      >
+                        <div className={`flex items-center gap-0.5 ${
+                          col.align === 'center' ? 'justify-center' :
+                          col.align === 'right'  ? 'justify-end'   : ''
+                        }`}>
+                          {col.label}
+                          <SortIcon columnKey={col.key} />
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                {/* Table Body */}
+                <tbody>
+                  {data.map((row, idx) => (
+                    <tr
+                      key={idx}
+                      className={`border-b ${cardBorder} ${isDarkMode ? 'hover:bg-[#131830]' : 'hover:bg-[#faf9f7]'} transition-colors`}
+                    >
+                      <td className={`px-3 py-2.5 text-center ${textMuted} tabular-nums`}>{idx + 1}</td>
+                      {meta.cols.map(col => {
+                        const val       = row[col.key];
+                        const isDash    = val === '—';
+                        const dhuNum    = row._dhuNum || 0;
+                        const isDHUHigh = col.highlight === 'dhu' && dhuNum > 3;
+                        const isDHUMed  = col.highlight === 'dhu' && dhuNum > 1.5 && dhuNum <= 3;
+                        const isDefHigh = col.highlight === 'defect' && !isDash && numOf(val) > 0;
+
+                        let cellClass = `px-3 py-2.5 whitespace-nowrap text-${col.align} `;
+                        if      (isDHUHigh)  cellClass += 'text-red-500   font-extrabold';
+                        else if (isDHUMed)   cellClass += 'text-amber-500 font-extrabold';
+                        else if (col.highlight === 'dhu') cellClass += 'text-emerald-500 font-bold';
+                        else if (isDefHigh)  cellClass += 'text-amber-500 font-bold';
+                        else if (isDash)     cellClass += textMuted;
+                        else if (col.numeric)cellClass += `${textPrimary} font-semibold tabular-nums`;
+                        else                 cellClass += textPrimary;
+
+                        // Render DHU as badge in the cell
+                        if (col.highlight === 'dhu') {
+                          return (
+                            <td key={col.key} className={`px-3 py-2.5 text-center`}>
+                              <DHUBadge value={String(val).replace('%', '')} />
+                            </td>
+                          );
+                        }
+
+                        return (
+                          <td key={col.key} className={cellClass}>{val}</td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+
+                {/* Totals Footer */}
+                <tfoot>
+                  <tr className={`${isDarkMode ? 'bg-[#0a0e1e]' : 'bg-[#f5f2ed]'} sticky bottom-0`}>
+                    <td className={`px-3 py-2.5 text-center text-[10px] font-bold ${textSecondary} uppercase tracking-wider`} colSpan={2}>Total</td>
+                    {meta.cols.slice(1).map(col => (
+                      <td
+                        key={col.key}
+                        className={`px-3 py-2.5 text-${col.align} text-[11px] font-extrabold tabular-nums`}
+                        style={{ color: col.numeric ? AMBER : 'transparent' }}
+                      >
+                        {col.numeric ? (totals[col.key] || 0).toLocaleString() : ''}
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              </table>
+            )}
+          </div>
+
+          {/* ── Modal Footer ── */}
+          <div className={`px-6 py-3 flex items-center justify-between flex-shrink-0 border-t ${cardBorder} ${isDarkMode ? 'bg-[#0a0e1e]' : 'bg-[#faf9f7]'}`}>
+            <p className={`text-[10px] ${textMuted}`}>
+              Showing {data.length} of {rawData.length} records
+              {modalSearchQuery && ` · filtered by "${modalSearchQuery}"`}
+            </p>
+            <button
+              onClick={closeModal}
+              className="px-5 py-2 text-xs font-bold rounded-xl text-white transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ backgroundColor: AMBER }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ════════════════════════════════════════════════════════════════════
+  return (
+    <>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
+      `}</style>
+
+      <div className={`min-h-screen ${surface} transition-colors duration-500`}>
+
+        {/* ══════════════ HEADER ══════════════ */}
+        <header className={`${headerBg} border-b ${cardBorder} sticky top-0 z-40 backdrop-blur-xl`}>
+          <div className="max-w-[1680px] mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
+            {/* Brand */}
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: AMBER }}
+              >
+                <DashboardIcon sx={{ fontSize: 18, color: '#fff' }} />
+              </div>
+              <div>
+                <h1 className={`text-[15px] font-extrabold ${textPrimary} tracking-tight leading-tight`}>
+                  Production Command Center
+                </h1>
+                <p className={`text-[10px] ${textMuted}`}>
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl border ${cardBorder} transition-all ${
+                  isDarkMode
+                    ? 'text-amber-400 hover:bg-amber-400/10'
+                    : 'text-indigo-500 hover:bg-indigo-50'
+                }`}
+              >
+                {isDarkMode ? <LightMode sx={{ fontSize: 17 }} /> : <DarkMode sx={{ fontSize: 17 }} />}
+              </button>
+
+              {hasActiveFilters && (
+                <span
+                  className="hidden sm:flex text-[10px] font-bold px-2.5 py-1 rounded-full items-center gap-1 text-white"
+                  style={{ backgroundColor: AMBER }}
+                >
+                  <FiberManualRecord sx={{ fontSize: 7 }} /> Active
+                </span>
+              )}
+
+              <button
+                onClick={() => setShowFilters(p => !p)}
+                className={`px-3.5 py-2 rounded-xl flex items-center gap-1.5 text-xs font-semibold border ${cardBorder} ${cardBg} ${cardHover} ${textSecondary} transition-all`}
+              >
+                <Tune sx={{ fontSize: 15 }} />
+                <span className="hidden sm:inline">Filters</span>
+                {showFilters ? <ExpandLess sx={{ fontSize: 15 }} /> : <ExpandMore sx={{ fontSize: 15 }} />}
+              </button>
+
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className={`px-3.5 py-2 rounded-xl flex items-center gap-1.5 text-xs font-semibold border ${cardBorder} ${cardBg} ${cardHover} ${textSecondary} transition-all disabled:opacity-40`}
+              >
+                <Refresh sx={{ fontSize: 15 }} className={refreshing ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ── Filter Panel ── */}
+          {showFilters && (
+            <div className={`border-t ${cardBorder} ${isDarkMode ? 'bg-[#090c1c]' : 'bg-[#faf9f7]'}`}>
+              <div className="max-w-[1680px] mx-auto px-6 py-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+                  {[
+                    { name: 'buyer',   label: 'Buyer',   opts: filterOptions.buyers   },
+                    { name: 'factory', label: 'Factory', opts: filterOptions.factories },
+                    { name: 'unit',    label: 'Unit',    opts: filterOptions.units    },
+                  ].map(f => (
+                    <div key={f.name}>
+                      <label className={`block text-[10px] font-bold ${textSecondary} uppercase tracking-[0.1em] mb-1`}>
+                        {f.label}
+                      </label>
+                      <select
+                        name={f.name}
+                        value={filterParams[f.name]}
+                        onChange={handleFilterChange}
+                        className={`w-full px-3 py-2 text-xs border ${cardBorder} rounded-xl ${cardBg} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-amber-500/30`}
+                      >
+                        <option value="">All</option>
+                        {f.opts.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  ))}
+
+                  <div>
+                    <label className={`block text-[10px] font-bold ${textSecondary} uppercase tracking-[0.1em] mb-1`}>Type</label>
+                    <select
+                      name="transactionTypeId"
+                      value={filterParams.transactionTypeId}
+                      onChange={handleFilterChange}
+                      className={`w-full px-3 py-2 text-xs border ${cardBorder} rounded-xl ${cardBg} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-amber-500/30`}
+                    >
+                      <option value="">All</option>
+                      <option value="1">Receive</option>
+                      <option value="2">Delivery</option>
+                    </select>
+                  </div>
+
+                  {[
+                    { name: 'startDate', label: 'From' },
+                    { name: 'endDate',   label: 'To'   },
+                  ].map(f => (
+                    <div key={f.name}>
+                      <label className={`block text-[10px] font-bold ${textSecondary} uppercase tracking-[0.1em] mb-1`}>
+                        {f.label}
+                      </label>
+                      <input
+                        type="date"
+                        name={f.name}
+                        value={filterParams[f.name]}
+                        onChange={handleFilterChange}
+                        className={`w-full px-3 py-2 text-xs border ${cardBorder} rounded-xl ${cardBg} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-amber-500/30`}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleApplyFilters}
+                    className="px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 text-white hover:opacity-90 active:scale-[0.98] transition-all"
+                    style={{ backgroundColor: AMBER }}
+                  >
+                    <Search sx={{ fontSize: 14 }} /> Apply
+                  </button>
+                  <button
+                    onClick={handleResetFilters}
+                    className={`px-5 py-2 text-xs font-semibold rounded-xl flex items-center gap-2 border ${cardBorder} ${cardBg} ${textSecondary} ${cardHover} transition-all`}
+                  >
+                    <Close sx={{ fontSize: 14 }} /> Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </header>
+
+        {/* ══════════════ MAIN ══════════════ */}
+        <main className="max-w-[1680px] mx-auto px-6 py-6 space-y-6">
+
+          {/* ── HERO STAT CARDS ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <StatCard
+              icon={<Assignment sx={{ fontSize: 21 }} />}
+              label="Total Work Orders"
+              value={summaryStats.totalWorkOrders}
+              subtext={`${summaryStats.pendingOrders} pending · ${summaryStats.completedOrders} done`}
+              accent="#3b82f6" delay={0}
+            />
+            <StatCard
+              icon={<TrendingUp sx={{ fontSize: 21 }} />}
+              label="Total Received"
+              value={summaryStats.totalReceiveQty}
+              subtext="All wash stages"
+              accent="#10b981" delay={60}
+            />
+            <StatCard
+              icon={<LocalShipping sx={{ fontSize: 21 }} />}
+              label="Total Delivered"
+              value={summaryStats.totalDeliveryQty}
+              subtext="All wash stages"
+              accent="#f59e0b" delay={120}
+            />
+            <StatCard
+              icon={<Scale sx={{ fontSize: 21 }} />}
+              label="Net Balance"
+              value={summaryStats.balance}
+              subtext="Received − Delivered"
+              accent={summaryStats.balance >= 0 ? '#10b981' : '#ef4444'} delay={180}
+            />
+            <StatCard
+              icon={<ErrorOutline sx={{ fontSize: 21 }} />}
+              label="Overall DHU"
+              value={`${overallDHU}%`}
+              subtext={`${totalDefectQty.toLocaleString()} defects of ${totalCheckQty.toLocaleString()}`}
+              accent={Number(overallDHU) > 3 ? '#ef4444' : '#10b981'}
+              delay={240}
+              badge={<DHUBadge value={overallDHU} />}
+            />
+          </div>
+
+          {/* ── CHARTS ROW 1 ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            {/* Receive vs Delivery Bar */}
+            <Section
+              title="Receive vs Delivery"
+              subtitle="By process stage"
+              icon={<Insights sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="delivery" />}
+              className="lg:col-span-5"
+              delay={80}
+            >
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={getReceiveVsDeliveryChartData()} barGap={3} barCategoryGap="22%">
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: tickColor }} axisLine={{ stroke: axisColor }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: tickColor }} axisLine={false} tickLine={false} />
+                    <RechartsTooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: tickColor }} iconType="circle" iconSize={7} />
+                    <Bar dataKey="Received"  fill="#10b981" radius={[5, 5, 0, 0]} />
+                    <Bar dataKey="Delivered" fill="#f59e0b" radius={[5, 5, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Section>
+
+            {/* Order Status Donut */}
+            <Section
+              title="Order Status"
+              subtitle={`${summaryStats.totalWorkOrders} orders total`}
+              icon={<DonutLarge sx={{ fontSize: 16 }} />}
+              className="lg:col-span-3"
+              delay={140}
+            >
+              <div className="h-64 flex items-center justify-center">
+                {getOrderStatusPieData().length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={getOrderStatusPieData()}
+                        cx="50%" cy="50%"
+                        innerRadius={54} outerRadius={82}
+                        paddingAngle={4}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {getOrderStatusPieData().map((e, i) => (
+                          <Cell key={i} fill={e.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 11, color: tickColor }} iconType="circle" iconSize={7} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Assignment sx={{ fontSize: 40 }} className={textMuted} />
+                    <p className={`text-xs ${textMuted}`}>No orders yet</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* 7-Day Flow Area */}
+            <Section
+              title="7-Day Flow"
+              subtitle="Daily receive & delivery"
+              icon={<Timer sx={{ fontSize: 16 }} />}
+              className="lg:col-span-4"
+              delay={200}
+            >
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={getBalanceTrendData()}>
+                    <defs>
+                      <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#10b981" stopOpacity={0.18} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}    />
+                      </linearGradient>
+                                           <linearGradient id="gD" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#f59e0b" stopOpacity={0.18} />
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}    />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: tickColor }} axisLine={{ stroke: axisColor }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: tickColor }} axisLine={false} tickLine={false} />
+                    <RechartsTooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: tickColor }} iconType="circle" iconSize={7} />
+                    <Area type="monotone" dataKey="Received"  stroke="#10b981" strokeWidth={2} fill="url(#gR)" dot={{ fill: '#10b981', r: 3 }} />
+                    <Area type="monotone" dataKey="Delivered" stroke="#f59e0b" strokeWidth={2} fill="url(#gD)" dot={{ fill: '#f59e0b', r: 3 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Section>
+          </div>
+
+          {/* ── PROCESSWISE DELIVERY BREAKDOWN ── */}
+          <Section
+            title="Processwise Delivery Breakdown"
+            subtitle="Stage-level receive and delivery metrics"
+            icon={<LocalShipping sx={{ fontSize: 16 }} />}
+            action={<ViewTableBtn type="delivery" label="Full Report" />}
+            delay={260}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {processDeliveryData.map((process) => (
+                <div
+                  key={process.key}
+                  onClick={() => openModal('delivery')}
+                  className={`relative p-4 rounded-2xl border ${cardBorder} ${cardHover} cursor-pointer group transition-all duration-300 hover:shadow-lg overflow-hidden`}
+                  style={{ background: isDarkMode ? '#0e1225' : '#fff' }}
+                >
+                  {/* Top color bar */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl"
+                    style={{ backgroundColor: process.color }}
+                  />
+                  {/* Corner glow */}
+                  <div
+                    className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.06] pointer-events-none"
+                    style={{ background: process.color }}
+                  />
+
+                  <div className="flex items-center gap-2 mb-3 mt-1">
+                    <span className="text-lg leading-none">{process.icon}</span>
+                    <h4 className={`text-xs font-bold ${textPrimary}`}>{process.label}</h4>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {/* Received */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider`}>Received</span>
+                        <span className="text-[11px] font-extrabold text-emerald-500 tabular-nums">
+                          {process.received.toLocaleString()}
+                        </span>
+                      </div>
+                      <MiniBar value={process.received} max={maxProcessTotal} color="#10b981" height={4} />
+                    </div>
+
+                    {/* Delivered */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider`}>Delivered</span>
+                        <span className="text-[11px] font-extrabold text-amber-500 tabular-nums">
+                          {process.delivered.toLocaleString()}
+                        </span>
+                      </div>
+                      <MiniBar value={process.delivered} max={maxProcessTotal} color="#f59e0b" height={4} />
+                    </div>
+
+                    {/* Divider + Total */}
+                    <div className={`pt-2 border-t ${cardBorder} flex items-center justify-between`}>
+                      <span className={`text-[9px] font-bold ${textSecondary} uppercase tracking-wider`}>Total</span>
+                      <span className={`text-sm font-extrabold ${textPrimary} tabular-nums`}>
+                        {process.total.toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Efficiency badge */}
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[9px] ${textMuted} group-hover:text-amber-500 transition-colors flex items-center gap-0.5`}>
+                        Details <ArrowForward sx={{ fontSize: 9 }} />
+                      </span>
+                      {Number(process.efficiency) > 0 && (
+                        <span
+                          className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+                            Number(process.efficiency) >= 90
+                              ? 'bg-emerald-500/10 text-emerald-500'
+                              : 'bg-amber-500/10 text-amber-500'
+                          }`}
+                        >
+                          {process.efficiency}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* ══════════════════════════════════════════════════════
+              DHU ANALYSIS + DRYER PRODUCTION
+          ══════════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+
+            {/* ────────────────────────────────────────────────────
+                DHU ANALYSIS  (col-span-5)
+            ──────────────────────────────────────────────────── */}
+            <Section
+              title="Wet Process DHU Analysis"
+              subtitle="Defects per hundred units across all work orders"
+              icon={<Warning sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="dhu" />}
+              className="xl:col-span-5"
+              delay={320}
+            >
+              {/* ── KPI Strip ── */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                {[
+                  {
+                    label:  'Total Checked',
+                    value:  totalCheckQty.toLocaleString(),
+                    color:  '#3b82f6',
+                    bg:     '#3b82f615',
+                    icon:   <CheckCircle sx={{ fontSize: 16 }} />,
+                    sub:    'pieces inspected',
+                  },
+                  {
+                    label:  'Total Defects',
+                    value:  totalDefectQty.toLocaleString(),
+                    color:  '#ef4444',
+                    bg:     '#ef444415',
+                    icon:   <ErrorOutline sx={{ fontSize: 16 }} />,
+                    sub:    'pieces rejected',
+                  },
+                  {
+                    label:  'Overall DHU',
+                    value:  `${overallDHU}%`,
+                    color:  Number(overallDHU) > 3 ? '#ef4444' : Number(overallDHU) > 1.5 ? '#f59e0b' : '#10b981',
+                    bg:     Number(overallDHU) > 3 ? '#ef444415' : Number(overallDHU) > 1.5 ? '#f59e0b15' : '#10b98115',
+                    icon:   <Percent sx={{ fontSize: 16 }} />,
+                    sub:    Number(overallDHU) > 3 ? 'Action required' : 'Within target',
+                  },
+                ].map(item => (
+                  <div
+                    key={item.label}
+                    className={`relative p-3.5 rounded-2xl border ${cardBorder} overflow-hidden`}
+                    style={{ background: isDarkMode ? '#090c1c' : '#faf9f7' }}
+                  >
+                    {/* bg glow */}
+                    <div
+                      className="absolute -bottom-4 -right-4 w-16 h-16 rounded-full opacity-[0.08] pointer-events-none"
+                      style={{ background: item.color }}
+                    />
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center mb-2"
+                      style={{ background: item.bg, color: item.color }}
+                    >
+                      {item.icon}
+                    </div>
+                    <p className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider mb-0.5`}>
+                      {item.label}
+                    </p>
+                    <p className="text-lg font-extrabold tabular-nums leading-tight" style={{ color: item.color }}>
+                      {item.value}
+                    </p>
+                    <p className={`text-[9px] ${textMuted} mt-0.5`}>{item.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── DHU Bar Chart ── */}
+              <div className={`rounded-2xl border ${cardBorder} p-4 mb-4`}
+                style={{ background: isDarkMode ? '#060919' : '#fafaf9' }}>
+                <p className={`text-[10px] font-bold ${textSecondary} uppercase tracking-wider mb-3`}>
+                  DHU % by Work Order
+                </p>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getDHUChartData()} barCategoryGap="28%">
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 9, fill: tickColor }}
+                        axisLine={{ stroke: axisColor }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 9, fill: tickColor }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={v => `${v}%`}
+                      />
+                      {/* Reference lines */}
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          const dhu    = payload[0]?.value ?? 0;
+                          const isHigh = dhu > 3;
+                          const isMed  = dhu > 1.5 && dhu <= 3;
+                          return (
+                            <div
+                              className={`border rounded-xl px-4 py-3 shadow-2xl`}
+                              style={{
+                                background: isDarkMode ? '#1a1f38' : '#fff',
+                                borderColor: isDarkMode ? '#2a3050' : '#e6e2db',
+                              }}
+                            >
+                              <p className={`text-[10px] font-bold ${textSecondary} mb-2 uppercase tracking-widest`}>
+                                WO: {label}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: isHigh ? '#ef4444' : isMed ? '#f59e0b' : '#10b981' }}
+                                />
+                                <p
+                                  className="text-base font-extrabold"
+                                  style={{ color: isHigh ? '#ef4444' : isMed ? '#f59e0b' : '#10b981' }}
+                                >
+                                  {dhu}%
+                                </p>
+                              </div>
+                              <p className={`text-[10px] ${textMuted} mt-1`}>
+                                {isHigh ? '⚠️ High — Action needed' : isMed ? '⚡ Average — Monitor closely' : '✅ Good — Within target'}
+                              </p>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar dataKey="DHU" radius={[5, 5, 0, 0]} barSize={16} isAnimationActive>
+                        {getDHUChartData().map((entry, i) => (
+                          <Cell
+                            key={i}
+                            fill={
+                              entry.DHU > 3   ? '#ef4444' :
+                              entry.DHU > 1.5 ? '#f59e0b' : '#10b981'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* ── DHU Legend ── */}
+              <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${cardBorder}`}
+                style={{ background: isDarkMode ? '#090c1c' : '#faf9f7' }}>
+                <p className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider`}>DHU Scale</p>
+                <div className="flex items-center gap-4">
+                  {[
+                    { color: '#10b981', label: '≤ 1.5%  Good'    },
+                    { color: '#f59e0b', label: '1.5–3%  Average' },
+                    { color: '#ef4444', label: '> 3%  Critical'  },
+                  ].map(item => (
+                    <div key={item.label} className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className={`text-[9px] font-semibold ${textSecondary}`}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Section>
+
+            {/* ────────────────────────────────────────────────────
+                DRYER PRODUCTION  (col-span-7)
+            ──────────────────────────────────────────────────── */}
+            <Section
+              title="Dryer Production Overview"
+              subtitle="Output tracking across all 5 dryer stages"
+              icon={<AcUnit sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="dryer" />}
+              className="xl:col-span-7"
+              delay={380}
+            >
+              {/* ── Dryer KPI Strip ── */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                {[
+                  {
+                    label: 'Total Input',
+                    value: summaryStats.totalReceiveQty.toLocaleString(),
+                    color: '#3b82f6',
+                    bg:    '#3b82f615',
+                    icon:  <TrendingUp sx={{ fontSize: 16 }} />,
+                    sub:   'pieces received',
+                  },
+                  {
+                    label: 'Total Output',
+                    value: dryerData.reduce((s, d) => s + d.production, 0).toLocaleString(),
+                    color: AMBER,
+                    bg:    `${AMBER}15`,
+                    icon:  <Speed sx={{ fontSize: 16 }} />,
+                    sub:   'pieces processed',
+                  },
+                  {
+                    label: 'Active Dryers',
+                    value: `${dryerData.filter(d => d.production > 0).length} / ${dryerData.length}`,
+                    color: '#10b981',
+                    bg:    '#10b98115',
+                    icon:  <CheckCircle sx={{ fontSize: 16 }} />,
+                    sub:   'dryers running',
+                  },
+                ].map(item => (
+                  <div
+                    key={item.label}
+                    className={`relative p-3.5 rounded-2xl border ${cardBorder} overflow-hidden`}
+                    style={{ background: isDarkMode ? '#090c1c' : '#faf9f7' }}
+                  >
+                    <div
+                      className="absolute -bottom-4 -right-4 w-16 h-16 rounded-full opacity-[0.08] pointer-events-none"
+                      style={{ background: item.color }}
+                    />
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center mb-2"
+                      style={{ background: item.bg, color: item.color }}
+                    >
+                      {item.icon}
+                    </div>
+                    <p className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider mb-0.5`}>
+                      {item.label}
+                    </p>
+                    <p className="text-lg font-extrabold tabular-nums leading-tight" style={{ color: item.color }}>
+                      {item.value}
+                    </p>
+                    <p className={`text-[9px] ${textMuted} mt-0.5`}>{item.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Main Dryer Grid: Chart + Cards side by side ── */}
+              <div className="grid grid-cols-12 gap-4">
+
+                {/* Horizontal Bar Chart */}
+                <div
+                  className={`col-span-7 rounded-2xl border ${cardBorder} p-4`}
+                  style={{ background: isDarkMode ? '#060919' : '#fafaf9' }}
+                >
+                  <p className={`text-[10px] font-bold ${textSecondary} uppercase tracking-wider mb-3`}>
+                    Production by Dryer
+                  </p>
+                  <div className="h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={dryerData.map(d => ({
+                          name:       d.label,
+                          Production: d.production,
+                          _color:     d.color,
+                        }))}
+                        layout="vertical"
+                        barCategoryGap="20%"
+                        margin={{ left: 0, right: 16, top: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} horizontal={false} />
+                        <XAxis
+                          type="number"
+                          tick={{ fontSize: 9, fill: tickColor }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={v => v.toLocaleString()}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={{ fontSize: 10, fill: tickColor }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={82}
+                        />
+                        <RechartsTooltip content={<CustomTooltip />} />
+                        <Bar dataKey="Production" radius={[0, 8, 8, 0]} barSize={22} isAnimationActive>
+                          {dryerData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Dryer Cards Stack */}
+                <div className="col-span-5 flex flex-col gap-2">
+                  {dryerData.map((dryer, idx) => {
+                    const totalOutput = dryerData.reduce((s, d) => s + d.production, 0);
+                    const sharePct    = totalOutput > 0
+                      ? ((dryer.production / totalOutput) * 100).toFixed(1)
+                      : '0.0';
+                    const isActive    = dryer.production > 0;
+
+                    return (
+                      <div
+                        key={dryer.key}
+                        onClick={() => openModal('dryer')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer group transition-all duration-200 hover:shadow-md relative overflow-hidden`}
+                        style={{
+                          borderColor:  isActive ? `${dryer.color}40` : undefined,
+                          background:   isDarkMode
+                            ? isActive ? `${dryer.color}08` : '#090c1c'
+                            : isActive ? `${dryer.color}05` : '#faf9f7',
+                          borderColor: isDarkMode ? (isActive ? `${dryer.color}35` : '#1c2240') : (isActive ? `${dryer.color}30` : '#e6e2db'),
+                        }}
+                      >
+                        {/* Left accent bar */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
+                          style={{ backgroundColor: isActive ? dryer.color : 'transparent' }}
+                        />
+
+                        {/* Icon */}
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base leading-none ml-1"
+                          style={{
+                            background: isActive ? `${dryer.color}18` : isDarkMode ? '#1c2240' : '#ece8e1',
+                          }}
+                        >
+                          {dryer.icon}
+                        </div>
+
+                        {/* Label + mini bar */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className={`text-[10px] font-bold ${textPrimary} truncate`}>
+                              {dryer.label}
+                            </p>
+                            {!isActive && (
+                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${isDarkMode ? 'bg-[#1c2240] text-[#3e4155]' : 'bg-[#ece8e1] text-[#b0aca4]'}`}>
+                                IDLE
+                              </span>
+                            )}
+                          </div>
+                          <MiniBar
+                            value={dryer.production}
+                            max={maxDryerProd}
+                            color={isActive ? dryer.color : isDarkMode ? '#1c2240' : '#e6e2db'}
+                            height={3}
+                          />
+                        </div>
+
+                        {/* Value + share */}
+                        <div className="text-right flex-shrink-0 pl-1">
+                          <p
+                            className="text-sm font-extrabold tabular-nums leading-tight"
+                            style={{ color: isActive ? dryer.color : isDarkMode ? '#3e4155' : '#b0aca4' }}
+                          >
+                            {isActive ? dryer.production.toLocaleString() : '—'}
+                          </p>
+                          <p className={`text-[9px] font-semibold ${isActive ? textSecondary : textMuted} tabular-nums`}>
+                            {isActive ? `${sharePct}%` : '0%'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Grand Total Row */}
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2`}
+                    style={{
+                      borderColor: `${AMBER}35`,
+                      background:  isDarkMode ? `${AMBER}08` : `${AMBER}06`,
+                    }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ml-1"
+                      style={{ background: `${AMBER}18`, color: AMBER }}
+                    >
+                      <Speed sx={{ fontSize: 16 }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[10px] font-bold ${textPrimary}`}>Grand Total</p>
+                      <p className={`text-[8px] font-semibold ${textMuted}`}>All dryers combined</p>
+                    </div>
+                    <p
+                      className="text-sm font-extrabold tabular-nums"
+                      style={{ color: AMBER }}
+                    >
+                      {dryerData.reduce((s, d) => s + d.production, 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Dryer Share Progress Row ── */}
+              <div className={`mt-4 p-4 rounded-2xl border ${cardBorder}`}
+                style={{ background: isDarkMode ? '#060919' : '#fafaf9' }}>
+                <p className={`text-[10px] font-bold ${textSecondary} uppercase tracking-wider mb-3`}>
+                  Production Share
+                </p>
+                <div className="space-y-2">
+                  {dryerData.map(dryer => {
+                    const total    = dryerData.reduce((s, d) => s + d.production, 0);
+                    const sharePct = total > 0 ? (dryer.production / total) * 100 : 0;
+                    return (
+                      <div key={dryer.key} className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 w-24 flex-shrink-0">
+                          <span className="text-xs leading-none">{dryer.icon}</span>
+                          <span className={`text-[10px] font-semibold ${textSecondary} truncate`}>
+                            {dryer.label}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <MiniBar
+                            value={dryer.production}
+                            max={Math.max(...dryerData.map(d => d.production), 1)}
+                            color={dryer.color}
+                            height={6}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 w-24 justify-end flex-shrink-0">
+                          <span
+                            className="text-[10px] font-extrabold tabular-nums"
+                            style={{ color: dryer.color }}
+                          >
+                            {dryer.production.toLocaleString()}
+                          </span>
+                          <span
+                            className="text-[9px] font-bold px-1.5 py-0.5 rounded-md tabular-nums"
+                            style={{
+                              background: `${dryer.color}15`,
+                              color:       dryer.color,
+                            }}
+                          >
+                            {sharePct.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Section>
+          </div>
+
+          {/* ── QUICK PREVIEW TABLES ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+            {/* DHU Quick Table */}
+            <Section
+              title="DHU Quick View"
+              subtitle="Top 5 work orders by DHU"
+              icon={<ReportProblem sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="dhu" label="Full Table" />}
+              delay={440}
+            >
+              <div className="space-y-1.5">
+                {/* Table Head */}
+                <div className={`grid grid-cols-12 gap-1 px-2 py-1.5 rounded-lg ${isDarkMode ? 'bg-[#090c1c]' : 'bg-[#f5f2ed]'}`}>
+                  {['WO No', 'Check', 'Defect', 'DHU'].map((h, i) => (
+                    <p
+                      key={h}
+                      className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider col-span-3 ${i > 0 ? 'text-right' : ''}`}
+                    >
+                      {h}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Rows */}
+                {getDHUModalData()
+                  .sort((a, b) => b._dhuNum - a._dhuNum)
+                  .slice(0, 5)
+                  .map((row, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => openModal('dhu')}
+                      className={`grid grid-cols-12 gap-1 px-2 py-2 rounded-lg border ${cardBorder} ${cardHover} cursor-pointer transition-all group`}
+                    >
+                      <div className="col-span-3 flex items-center gap-1.5 min-w-0">
+                        <div
+                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor:
+                              row._dhuNum > 3 ? '#ef4444' :
+                              row._dhuNum > 1.5 ? '#f59e0b' : '#10b981',
+                          }}
+                        />
+                        <p className={`text-[10px] font-semibold ${textPrimary} truncate`}>
+                          {row.workOrderNo}
+                        </p>
+                      </div>
+                      <p className={`col-span-3 text-[10px] font-semibold ${textSecondary} text-right tabular-nums`}>
+                        {row.checkQty}
+                      </p>
+                      <p className="col-span-3 text-[10px] font-bold text-amber-500 text-right tabular-nums">
+                        {row.defectQty}
+                      </p>
+                      <div className="col-span-3 flex justify-end">
+                        <DHUBadge value={String(row.dhuPercent).replace('%', '')} />
+                      </div>
+                    </div>
+                  ))}
+
+                {getDHUModalData().length === 0 && (
+                  <div className="flex flex-col items-center py-8 gap-2">
+                    <CheckCircle sx={{ fontSize: 36 }} className={textMuted} />
+                    <p className={`text-xs ${textMuted}`}>No DHU data</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* Processwise Quick Table */}
+            <Section
+              title="Delivery Quick View"
+              subtitle="Top 5 work orders by wash delivery"
+              icon={<LocalShipping sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="delivery" label="Full Table" />}
+              delay={500}
+            >
+              <div className="space-y-1.5">
+                {/* Table Head */}
+                <div className={`grid grid-cols-12 gap-1 px-2 py-1.5 rounded-lg ${isDarkMode ? 'bg-[#090c1c]' : 'bg-[#f5f2ed]'}`}>
+                  {['WO No', 'W.Recv', 'W.Del', 'Eff%'].map((h, i) => (
+                    <p
+                      key={h}
+                      className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider col-span-3 ${i > 0 ? 'text-right' : ''}`}
+                    >
+                      {h}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Rows */}
+                {getDeliveryModalData()
+                  .sort((a, b) => numOf(b.totalWashDelivery) - numOf(a.totalWashDelivery))
+                  .slice(0, 5)
+                  .map((row, idx) => {
+                    const recv = numOf(row.totalWashReceived);
+                    const del  = numOf(row.totalWashDelivery);
+                    const eff  = recv > 0 ? ((del / recv) * 100).toFixed(1) : '0.0';
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => openModal('delivery')}
+                        className={`grid grid-cols-12 gap-1 px-2 py-2 rounded-lg border ${cardBorder} ${cardHover} cursor-pointer transition-all`}
+                      >
+                        <p className={`col-span-3 text-[10px] font-semibold ${textPrimary} truncate`}>
+                          {row.workOrderNo}
+                        </p>
+                        <p className={`col-span-3 text-[10px] font-semibold ${textSecondary} text-right tabular-nums`}>
+                          {row.totalWashReceived}
+                        </p>
+                        <p className="col-span-3 text-[10px] font-bold text-amber-500 text-right tabular-nums">
+                          {row.totalWashDelivery}
+                        </p>
+                        <p
+                          className={`col-span-3 text-[10px] font-extrabold text-right tabular-nums ${
+                            Number(eff) >= 90 ? 'text-emerald-500' : 'text-amber-500'
+                          }`}
+                        >
+                          {eff}%
+                        </p>
+                      </div>
+                    );
+                  })}
+
+                {getDeliveryModalData().length === 0 && (
+                  <div className="flex flex-col items-center py-8 gap-2">
+                    <LocalShipping sx={{ fontSize: 36 }} className={textMuted} />
+                    <p className={`text-xs ${textMuted}`}>No delivery data</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* Dryer Quick Table */}
+            <Section
+              title="Dryer Quick View"
+              subtitle="Top 5 work orders by dryer output"
+              icon={<AcUnit sx={{ fontSize: 16 }} />}
+              action={<ViewTableBtn type="dryer" label="Full Table" />}
+              delay={560}
+            >
+              <div className="space-y-1.5">
+                {/* Table Head */}
+                <div className={`grid grid-cols-12 gap-1 px-2 py-1.5 rounded-lg ${isDarkMode ? 'bg-[#090c1c]' : 'bg-[#f5f2ed]'}`}>
+                  {['WO No', 'Recv', 'Dlv', 'DHU'].map((h, i) => (
+                    <p
+                      key={h}
+                      className={`text-[9px] font-bold ${textMuted} uppercase tracking-wider col-span-3 ${i > 0 ? 'text-right' : ''}`}
+                    >
+                      {h}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Rows */}
+                {getDryerModalData()
+                  .sort((a, b) => numOf(b.totalDlv) - numOf(a.totalDlv))
+                  .slice(0, 5)
+                  .map((row, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => openModal('dryer')}
+                      className={`grid grid-cols-12 gap-1 px-2 py-2 rounded-lg border ${cardBorder} ${cardHover} cursor-pointer transition-all`}
+                    >
+                      <p className={`col-span-3 text-[10px] font-semibold ${textPrimary} truncate`}>
+                        {row.workOrderNo}
+                      </p>
+                      <p className={`col-span-3 text-[10px] font-semibold ${textSecondary} text-right tabular-nums`}>
+                        {row.totalRevdQty}
+                      </p>
+                      <p className="col-span-3 text-[10px] font-bold text-amber-500 text-right tabular-nums">
+                        {row.totalDlv}
+                      </p>
+                      <div className="col-span-3 flex justify-end">
+                        <DHUBadge value={String(row.dhuPercent).replace('%', '')} />
+                      </div>
+                    </div>
+                  ))}
+
+                {getDryerModalData().length === 0 && (
+                  <div className="flex flex-col items-center py-8 gap-2">
+                    <AcUnit sx={{ fontSize: 36 }} className={textMuted} />
+                    <p className={`text-xs ${textMuted}`}>No dryer data</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+          </div>
+
+          {/* ── FOOTER ── */}
+          <div className={`text-center py-5 border-t ${cardBorder}`}>
+            <p className={`text-[10px] ${textMuted} uppercase tracking-[0.15em] font-semibold`}>
+              Production Dashboard · WRD System v1.4.0 · Last synced {new Date().toLocaleTimeString()}
+            </p>
+          </div>
+        </main>
+      </div>
+
+      {/* ── MODAL ── */}
+      {renderModal()}
+    </>
+  );
+};
+
+export default Dashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\dashboard\Dashboard.jsx
+
+// import React, { useState } from 'react';
+
+// // ============ CUSTOM SVG ICONS ============
+// const IconFilter = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+//   </svg>
+// );
+
+// const IconTrendingUp = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+//     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+//     <polyline points="17 6 23 6 23 12" />
+//   </svg>
+// );
+
+// const IconTrendingDown = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+//     <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+//     <polyline points="17 18 23 18 23 12" />
+//   </svg>
+// );
+
+// const IconBarChart = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <line x1="12" y1="20" x2="12" y2="10" />
+//     <line x1="18" y1="20" x2="18" y2="4" />
+//     <line x1="6" y1="20" x2="6" y2="16" />
+//   </svg>
+// );
+
+// const IconHome = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+//     <polyline points="9 22 9 12 15 12 15 22" />
+//   </svg>
+// );
+
+// const IconWaterDrop = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+//   </svg>
+// );
+
+// const IconFire = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+//   </svg>
+// );
+
+// const IconCalendar = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+//     <line x1="16" y1="2" x2="16" y2="6" />
+//     <line x1="8" y1="2" x2="8" y2="6" />
+//     <line x1="3" y1="10" x2="21" y2="10" />
+//   </svg>
+// );
+
+// const IconBuilding = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+//     <path d="M9 22V12h6v10" />
+//     <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M8 18h.01" />
+//   </svg>
+// );
+
+// const IconClock = ({ className = '' }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <circle cx="12" cy="12" r="10" />
+//     <polyline points="12 6 12 12 16 14" />
+//   </svg>
+// );
+
+
+// // ============ MAIN DASHBOARD ============
+// const Dashboard = ({ isDarkMode }) => {
+//   const [filterOpen, setFilterOpen] = useState(false);
+//   const [filters, setFilters] = useState({
+//     fromDate: '',
+//     toDate: '',
+//     unit: '3',
+//     shift: '',
+//   });
+
+//   const toggleFilter = () => setFilterOpen(!filterOpen);
+
+//   const handleFilterChange = (field, value) => {
+//     setFilters((prev) => ({ ...prev, [field]: value }));
+//   };
+
+//   const resetFilters = () => {
+//     setFilters({ fromDate: '', toDate: '', unit: '', shift: '' });
+//   };
+
+//   return (
+//     <div
+//       className={`w-full overflow-hidden ${
+//         isDarkMode
+//           ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+//           : 'bg-gradient-to-br from-blue-100 via-sky-100 to-blue-50'
+//       }`}
+//       style={{
+//         height: '100vh',
+//         display: 'flex',
+//         flexDirection: 'column',
+//         padding: '6px',
+//         boxSizing: 'border-box',
+//         overflow: 'hidden',
+//       }}
+//     >
+//       {/* Header — fixed size */}
+//       <div style={{ flexShrink: 0 }}>
+//         <Header toggleFilter={toggleFilter} />
+//       </div>
+
+//       {/* Filter Panel — collapses/expands */}
+//       <div style={{ flexShrink: 0 }}>
+//         <FilterPanel
+//           open={filterOpen}
+//           filters={filters}
+//           onFilterChange={handleFilterChange}
+//           onReset={resetFilters}
+//           isDarkMode={isDarkMode}
+//         />
+//       </div>
+
+//       {/* Main Content — fills remaining height */}
+//       <div
+//         style={{
+//           flex: 1,
+//           display: 'flex',
+//           flexDirection: 'column',
+//           gap: '4px',
+//           minHeight: 0,
+//           marginTop: '4px',
+//         }}
+//       >
+//         {/* Top Summary Cards */}
+//         <div style={{ flexShrink: 0 }}>
+//           <TopSummaryCards isDarkMode={isDarkMode} />
+//         </div>
+
+//         {/* DHU Section Label */}
+//         <div style={{ flexShrink: 0 }}>
+//           <SectionLabel title="DHU Summary" color="blue" isDarkMode={isDarkMode} />
+//         </div>
+
+//         {/* DHU Panels — grows */}
+//         <div style={{ flex: 1, minHeight: 0 }}>
+//           <DHUSections isDarkMode={isDarkMode} />
+//         </div>
+
+//         {/* Dry Section Details — grows */}
+//         <div style={{ flex: 1, minHeight: 0 }}>
+//           <DrySectionDetails isDarkMode={isDarkMode} />
+//         </div>
+
+//         {/* Dryer Production Summary Label */}
+//         <div style={{ flexShrink: 0 }}>
+//           <SectionLabel title="Dryer Production Summary" color="sky" isDarkMode={isDarkMode} />
+//         </div>
+
+//         {/* Dryer Production Cards */}
+//         <div style={{ flexShrink: 0 }}>
+//           <DryerProductionSummary isDarkMode={isDarkMode} />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // ============ HEADER ============
+// const Header = ({ toggleFilter }) => (
+//   <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 rounded-xl px-4 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 shadow-lg shadow-blue-900/30">
+//     <div className="flex items-center gap-3">
+//       <div className="flex gap-1">
+//         <div className="w-[5px] h-4 bg-blue-400 rounded-sm -skew-x-[15deg]" />
+//         <div className="w-[8px] h-4 bg-blue-300 rounded-sm -skew-x-[15deg]" />
+//         <div className="w-[5px] h-4 bg-white/80 rounded-sm -skew-x-[15deg]" />
+//       </div>
+//       <div>
+//         <h1 className="text-white text-sm md:text-base font-black italic uppercase tracking-tight leading-tight">
+//           Processwise Delivery Summary Dashboard
+//         </h1>
+//         <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-widest">
+//           DHU & Dryer Analytics • Live Report
+//         </p>
+//       </div>
+//     </div>
+//     <button
+//       onClick={toggleFilter}
+//       className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 backdrop-blur-sm cursor-pointer"
+//     >
+//       <IconFilter className="w-4 h-4 text-blue-300" />
+//       Filters
+//     </button>
+//   </header>
+// );
+
+// // ============ FILTER PANEL ============
+// const FilterPanel = ({ open, filters, onFilterChange, onReset, isDarkMode }) => (
+//   <div
+//     className={`overflow-hidden transition-all duration-500 ease-in-out ${
+//       open ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
+//     }`}
+//   >
+//     <div
+//       className={`backdrop-blur-sm border-2 rounded-xl shadow-lg p-3 mt-1 ${
+//         isDarkMode
+//           ? 'bg-slate-800/95 border-blue-500/30'
+//           : 'bg-white/95 border-blue-200'
+//       }`}
+//     >
+//       <div className="flex items-center gap-2 mb-2">
+//         <div className="w-1 h-4 bg-blue-600 rounded-full" />
+//         <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+//           Filter Options
+//         </h3>
+//       </div>
+//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+//         {/* From Date */}
+//         <div className="space-y-1">
+//           <label className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+//             <IconCalendar className="w-3 h-3 text-blue-500" /> From Date
+//           </label>
+//           <input
+//             type="date"
+//             value={filters.fromDate}
+//             onChange={(e) => onFilterChange('fromDate', e.target.value)}
+//             className={`w-full border-2 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-blue-400 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+//           />
+//         </div>
+//         {/* To Date */}
+//         <div className="space-y-1">
+//           <label className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+//             <IconCalendar className="w-3 h-3 text-blue-500" /> To Date
+//           </label>
+//           <input
+//             type="date"
+//             value={filters.toDate}
+//             onChange={(e) => onFilterChange('toDate', e.target.value)}
+//             className={`w-full border-2 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all focus:border-blue-400 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+//           />
+//         </div>
+//         {/* Select Unit */}
+//         <div className="space-y-1">
+//           <label className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+//             <IconBuilding className="w-3 h-3 text-blue-500" /> Select Unit
+//           </label>
+//           <select
+//             value={filters.unit}
+//             onChange={(e) => onFilterChange('unit', e.target.value)}
+//             className={`w-full border-2 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all cursor-pointer focus:border-blue-400 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+//           >
+//             <option value="">-- Select Unit --</option>
+//             {[1, 2, 3, 4, 5].map((u) => (
+//               <option key={u} value={String(u)}>Unit {u}</option>
+//             ))}
+//           </select>
+//         </div>
+//         {/* Select Shift */}
+//         <div className="space-y-1">
+//           <label className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+//             <IconClock className="w-3 h-3 text-blue-500" /> Select Shift
+//           </label>
+//           <select
+//             value={filters.shift}
+//             onChange={(e) => onFilterChange('shift', e.target.value)}
+//             className={`w-full border-2 rounded-lg px-2 py-1.5 text-xs font-medium outline-none transition-all cursor-pointer focus:border-blue-400 ${isDarkMode ? 'bg-slate-900/50 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+//           >
+//             <option value="">-- Select Shift --</option>
+//             <option value="A">Shift A (06:00–14:00)</option>
+//             <option value="B">Shift B (14:00–22:00)</option>
+//             <option value="C">Shift C (22:00–06:00)</option>
+//           </select>
+//         </div>
+//       </div>
+//       <div className="flex justify-end mt-2 gap-2">
+//         <button
+//           onClick={onReset}
+//           className={`px-3 py-1.5 rounded-lg border-2 text-xs font-bold transition cursor-pointer ${isDarkMode ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+//         >
+//           Reset
+//         </button>
+//         <button className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 cursor-pointer">
+//           Apply Filter
+//         </button>
+//       </div>
+//     </div>
+//   </div>
+// );
+
+// // ============ TOP SUMMARY CARDS ============
+// const TopSummaryCards = ({ isDarkMode }) => {
+//   const cards = [
+//     { title: '1st Dry Section', type: 'blue', icon: 'chart', received: 500, delivery: 500, showBoth: true },
+//     { title: 'UnWash Godown', type: 'blue', icon: 'home', mainValue: 980, showChart: true },
+//     { title: '1st Wash Section', type: 'blue', icon: 'water', delivery: 600, showDeliveryOnly: true },
+//     { title: '2nd Dry Section', type: 'orange', icon: 'fire', received: 450, delivery: 800, showBoth: true },
+//   ];
+
+//   return (
+//     <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+//       {cards.map((card, index) => (
+//         <TopCard key={index} card={card} isDarkMode={isDarkMode} />
+//       ))}
+//     </div>
+//   );
+// };
+
+// const TopCard = ({ card, isDarkMode }) => {
+//   const isOrange = card.type === 'orange';
+
+//   const getIcon = () => {
+//     const iconClass = `w-3.5 h-3.5 ${isOrange ? 'text-orange-500' : 'text-blue-500'}`;
+//     switch (card.icon) {
+//       case 'chart': return <IconBarChart className={iconClass} />;
+//       case 'home': return <IconHome className={iconClass} />;
+//       case 'water': return <IconWaterDrop className={iconClass} />;
+//       case 'fire': return <IconFire className={iconClass} />;
+//       default: return <IconBarChart className={iconClass} />;
+//     }
+//   };
+
+//   return (
+//     <div
+//       className={`border-2 rounded-xl p-2 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg ${
+//         isDarkMode
+//           ? isOrange
+//             ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-400/30 hover:shadow-orange-500/20'
+//             : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-400/30 hover:shadow-blue-500/20'
+//           : isOrange
+//             ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300 hover:shadow-orange-200/50'
+//             : 'bg-gradient-to-br from-white to-blue-50 border-blue-200 hover:shadow-blue-200/50'
+//       }`}
+//     >
+//       {/* Header */}
+//       <div className="flex justify-between items-center mb-1.5">
+//         <h2 className={`font-bold text-xs ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+//           {card.title}
+//         </h2>
+//         <div className={`p-1 rounded-lg border ${
+//           isOrange
+//             ? isDarkMode ? 'bg-orange-500/20 border-orange-400/30' : 'bg-orange-50 border-orange-200'
+//             : isDarkMode ? 'bg-blue-500/20 border-blue-400/30' : 'bg-blue-50 border-blue-100'
+//         }`}>
+//           {getIcon()}
+//         </div>
+//       </div>
+
+//       {card.showBoth && (
+//         <div className="flex items-center justify-between">
+//           <CardIcon type={card.type} />
+//           <div className="flex gap-2">
+//             <StatBox label="Received" value={card.received} trend="up" isDarkMode={isDarkMode} />
+//             <div className={`w-px ${isOrange ? 'bg-orange-200' : 'bg-blue-200'}`} />
+//             <StatBox label="Delivery" value={card.delivery} trend="down" isGreen isDarkMode={isDarkMode} />
+//           </div>
+//         </div>
+//       )}
+
+//       {card.showDeliveryOnly && (
+//         <div className="flex items-center justify-between">
+//           <WashIcon />
+//           <div className="text-center">
+//             <p className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Delivery</p>
+//             <span className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{card.delivery}</span>
+//           </div>
+//         </div>
+//       )}
+
+//       {card.showChart && (
+//         <div className="flex items-end justify-between gap-2">
+//           <div className="text-center">
+//             <span className={`text-lg font-black block leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{card.mainValue}</span>
+//             <span className={`text-[9px] font-bold uppercase mt-0.5 block leading-tight ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Unwash<br />Delivery</span>
+//           </div>
+//           <MiniBarChart isDarkMode={isDarkMode} />
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => (
+//   <div className="text-center">
+//     <p className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</p>
+//     <div className="flex items-center gap-0.5 justify-center">
+//       <span className={`text-base font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{value}</span>
+//       {trend === 'up'
+//         ? <IconTrendingUp className={`w-2.5 h-2.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+//         : <IconTrendingDown className={`w-2.5 h-2.5 ${isGreen ? 'text-green-500' : 'text-orange-500'}`} />
+//       }
+//     </div>
+//   </div>
+// );
+
+// const CardIcon = ({ type }) => (
+//   <div className={`w-8 h-8 rounded-lg flex items-center justify-center border-2 ${type === 'orange' ? 'bg-orange-200 border-orange-600' : 'bg-blue-200 border-blue-500'}`}>
+//     {type === 'orange'
+//       ? <IconFire className="text-orange-700 w-4 h-4" />
+//       : <IconBarChart className="text-blue-600 w-4 h-4" />
+//     }
+//   </div>
+// );
+
+// const WashIcon = () => (
+//   <div className="flex gap-1">
+//     {[12, 9, 6, 4].map((size, i) => (
+//       <div key={i} style={{ width: size, height: size }} className="rounded-full bg-cyan-100 border-[1.5px] border-cyan-600" />
+//     ))}
+//   </div>
+// );
+
+// const MiniBarChart = ({ isDarkMode }) => {
+//   const bars = [
+//     { value: 900, height: '55%', active: false, label: 'Rec' },
+//     { value: 950, height: '70%', active: false, label: 'Nov' },
+//     { value: 950, height: '70%', active: true, label: 'Rec' },
+//     { value: 980, height: '90%', active: true, highlight: true, label: 'Dec' },
+//   ];
+//   return (
+//     <div className="flex items-end gap-0.5 h-8">
+//       {bars.map((bar, i) => {
+//         const barColor = bar.highlight ? 'bg-blue-600' : bar.active ? 'bg-blue-400' : isDarkMode ? 'bg-slate-600' : 'bg-slate-300';
+//         const textColor = bar.highlight ? 'text-blue-600' : bar.active ? 'text-blue-400' : isDarkMode ? 'text-slate-500' : 'text-slate-400';
+//         return (
+//           <div key={i} className="flex flex-col items-center gap-0.5">
+//             <span className={`text-[7px] font-bold ${textColor}`}>{bar.value}</span>
+//             <div className={`w-[11px] ${barColor} rounded-t`} style={{ height: bar.height }} />
+//             <span className={`text-[7px] font-semibold ${textColor}`}>{bar.label}</span>
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// };
+
+// // ============ SECTION LABEL ============
+// const SectionLabel = ({ title, color, isDarkMode }) => {
+//   const colorClasses = { blue: 'bg-blue-600', sky: 'bg-sky-500' };
+//   const colorClassesLight = { blue: 'bg-blue-400', sky: 'bg-sky-300' };
+//   return (
+//     <div className="flex items-center gap-2 py-0.5">
+//       <div className="flex gap-0.5">
+//         <div className={`w-1 h-4 ${colorClasses[color]} rounded-full`} />
+//         <div className={`w-0.5 h-4 ${colorClassesLight[color]} rounded-full`} />
+//       </div>
+//       <h2 className={`text-sm font-black uppercase tracking-wide ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+//         {title}
+//       </h2>
+//       <div className={`flex-1 h-px bg-gradient-to-r ${color === 'blue' ? 'from-blue-200' : 'from-sky-200'} to-transparent`} />
+//     </div>
+//   );
+// };
+
+// // ============ DHU SECTIONS ============
+// const DHUSections = ({ isDarkMode }) => (
+//   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', height: '100%' }}>
+//     <DHUPanel
+//       title="1st Wash Section"
+//       type="blue"
+//       outputQty={400}
+//       defectQty={360}
+//       dhuPercent={2.6}
+//       dhuStatus="good"
+//       defects={['design mis match', 'chemical issue', 'skill issue']}
+//       isDarkMode={isDarkMode}
+//     />
+//     <DHUPanel
+//       title="Final Wash Section"
+//       type="orange"
+//       outputQty={900}
+//       defectQty={506}
+//       dhuPercent={9.6}
+//       dhuStatus="action"
+//       defects={['design mis match', 'chemical issue', 'skill issue']}
+//       isDarkMode={isDarkMode}
+//     />
+//   </div>
+// );
+
+// const DHUPanel = ({ title, type, outputQty, defectQty, dhuPercent, dhuStatus, defects, isDarkMode }) => {
+//   const isOrange = type === 'orange';
+//   return (
+//     <div
+//       className={`border-[2.5px] rounded-xl overflow-hidden shadow-md ${
+//         isOrange ? 'border-orange-700 shadow-orange-200/30' : 'border-blue-600 shadow-blue-200/30'
+//       }`}
+//       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+//     >
+//       {/* Header */}
+//       <div className={`text-white font-bold text-center py-1.5 text-xs tracking-wide uppercase flex items-center justify-center gap-1.5 flex-shrink-0 ${
+//         isOrange ? 'bg-gradient-to-r from-orange-700 to-orange-600' : 'bg-gradient-to-r from-blue-600 to-blue-500'
+//       }`}>
+//         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOrange ? 'bg-orange-300' : 'bg-blue-300'}`} />
+//         {title}
+//         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOrange ? 'bg-orange-300' : 'bg-blue-300'}`} />
+//       </div>
+
+//       {/* Content */}
+//       <div
+//         className={`p-2 grid grid-cols-3 gap-2 flex-1 ${
+//           isDarkMode
+//             ? isOrange ? 'bg-orange-500/5' : 'bg-blue-500/5'
+//             : isOrange ? 'bg-orange-50' : 'bg-blue-50/50'
+//         }`}
+//       >
+//         {/* Column 1 */}
+//         <div className="flex flex-col gap-2">
+//           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex-1">
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Output Qty</p>
+//             <GaugeSmall value={75} />
+//             <span className={`text-base font-black block mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{outputQty}</span>
+//           </InnerCard>
+//           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex-1">
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Defect Qty</p>
+//             <span className={`text-base font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{defectQty}</span>
+//           </InnerCard>
+//         </div>
+
+//         {/* Column 2 - DHU Gauge */}
+//         <div className={`p-2 text-center flex flex-col justify-center items-center rounded-xl border-2 ${
+//           dhuStatus === 'good'
+//             ? isDarkMode ? 'bg-green-500/10 border-green-400/50' : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
+//             : isDarkMode ? 'bg-orange-500/10 border-orange-400/50' : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-300'
+//         }`}>
+//           <p className={`font-bold text-xs mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>DHU%</p>
+//           <DHUGauge value={dhuPercent} status={dhuStatus} isDarkMode={isDarkMode} />
+//           <span className={`font-bold text-[10px] mt-0.5 ${dhuStatus === 'good' ? 'text-green-600' : 'text-orange-600'}`}>
+//             {dhuStatus === 'good' ? '● Good' : '⚠ Action Needed'}
+//           </span>
+//         </div>
+
+//         {/* Column 3 */}
+//         <div className="flex flex-col gap-2">
+//           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex-1">
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Defect Qty</p>
+//             <span className={`text-base font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{defectQty}</span>
+//           </InnerCard>
+//           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex-1">
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Top 3 Defects</p>
+//             {defects.map((defect, i) => (
+//               <div key={i} className="flex items-center gap-1.5 mb-0.5">
+//                 <span className={`w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-black flex-shrink-0 ${isOrange ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-700'}`}>{i + 1}</span>
+//                 <span className={`text-[9px] font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{defect}</span>
+//               </div>
+//             ))}
+//           </InnerCard>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// const InnerCard = ({ children, isOrange, isDarkMode, className = '' }) => (
+//   <div className={`rounded-lg p-2 text-center shadow-sm ${
+//     isDarkMode
+//       ? isOrange ? 'bg-slate-800/50 border border-orange-500/20' : 'bg-slate-800/50 border border-blue-500/20'
+//       : isOrange ? 'bg-white border-[1.5px] border-orange-200' : 'bg-white border-[1.5px] border-blue-100'
+//   } ${className}`}>
+//     {children}
+//   </div>
+// );
+
+// const GaugeSmall = ({ value }) => (
+//   <div className="w-12 h-6 mx-auto relative">
+//     <svg viewBox="0 0 100 50" className="w-full h-full">
+//       <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#e2e8f0" strokeWidth="10" strokeLinecap="round" />
+//       <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#22c55e" strokeWidth="10" strokeLinecap="round" strokeDasharray="125" strokeDashoffset={125 - (value / 100) * 125} />
+//       <line x1="50" y1="50" x2="75" y2="22" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" />
+//       <circle cx="50" cy="50" r="5" fill="#0f172a" />
+//     </svg>
+//   </div>
+// );
+
+// const DHUGauge = ({ value, status, isDarkMode }) => {
+//   const color = status === 'good' ? '#5b90b1' : '#dc2626';
+//   const circumference = 2 * Math.PI * 38;
+//   const normalizedValue = Math.min(value, 15) / 15;
+//   const offset = circumference - normalizedValue * circumference;
+//   return (
+//     <div className="w-16 h-16 relative">
+//       <svg viewBox="0 0 100 100" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+//         <circle cx="50" cy="50" r="38" fill="none" stroke={isDarkMode ? '#334155' : '#e2e8f0'} strokeWidth="9" />
+//         <circle cx="50" cy="50" r="38" fill="none" stroke={color} strokeWidth="9" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} />
+//       </svg>
+//       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+//         <span className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{value}%</span>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // ============ DRY SECTION DETAILS ============
+// const DrySectionDetails = ({ isDarkMode }) => (
+//   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', height: '100%' }}>
+//     <DryDetailPanel
+//       title="1st Dry Section Details"
+//       type="teal"
+//       outputQty={988}
+//       defectQty={880}
+//       dhuPercent={5.5}
+//       dhuStatus="good"
+//       defects={['over-drying marks', 'uneven dryness', 'handling issue']}
+//       isDarkMode={isDarkMode}
+//     />
+//     <DryDetailPanel
+//       title="2nd Dry Section Details"
+//       type="amber"
+//       outputQty={560}
+//       defectQty={566}
+//       dhuPercent={6.6}
+//       dhuStatus="action"
+//       defects={['surface pilling', 'temperature variation', 'fabric type error']}
+//       isDarkMode={isDarkMode}
+//     />
+//   </div>
+// );
+
+// const DryDetailPanel = ({ title, type, outputQty, defectQty, dhuPercent, dhuStatus, defects, isDarkMode }) => {
+//   const isAmber = type === 'amber';
+//   return (
+//     <div
+//       className={`border-[2.5px] rounded-xl overflow-hidden shadow-md ${
+//         isAmber ? 'border-amber-500 shadow-amber-200/30' : 'border-teal-600 shadow-teal-200/30'
+//       }`}
+//       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+//     >
+//       {/* Header */}
+//       <div className={`text-white font-bold text-center py-1.5 text-xs tracking-wide uppercase flex items-center justify-center gap-1.5 flex-shrink-0 ${
+//         isAmber ? 'bg-gradient-to-r from-amber-600 to-amber-500' : 'bg-gradient-to-r from-teal-600 to-teal-500'
+//       }`}>
+//         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAmber ? 'bg-yellow-300' : 'bg-teal-300'}`} />
+//         {title}
+//         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isAmber ? 'bg-yellow-300' : 'bg-teal-300'}`} />
+//       </div>
+
+//       {/* Content */}
+//       <div className={`p-2 grid grid-cols-3 gap-2 flex-1 ${
+//         isDarkMode
+//           ? isAmber ? 'bg-amber-500/5' : 'bg-teal-500/5'
+//           : isAmber ? 'bg-amber-50' : 'bg-teal-50'
+//       }`}>
+//         {/* DHU % */}
+//         <div className={`p-2 text-center flex flex-col justify-center items-center rounded-xl border-2 ${
+//           dhuStatus === 'good'
+//             ? isDarkMode ? 'bg-green-500/10 border-green-400/50' : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
+//             : isDarkMode ? 'bg-amber-500/10 border-amber-400/50' : 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
+//         }`}>
+//           <p className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>DHU %</p>
+//           <span className={`text-xl font-black leading-none mt-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{dhuPercent}%</span>
+//           <span className={`font-bold text-[10px] mt-1 text-center leading-tight ${dhuStatus === 'good' ? 'text-green-600' : 'text-amber-600'}`}>
+//             {dhuStatus === 'good' ? '● Good' : '⚠ Action Needed'}
+//           </span>
+//         </div>
+
+//         {/* Output & Defect */}
+//         <div className="flex flex-col gap-2">
+//           <div className={`rounded-lg p-2 text-center shadow-sm flex-1 flex flex-col justify-center border-[1.5px] ${
+//             isDarkMode ? 'bg-slate-800/50 border-slate-600/30' : isAmber ? 'bg-white border-amber-100' : 'bg-white border-teal-100'
+//           }`}>
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Output Qty</p>
+//             <span className={`text-base font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{outputQty}</span>
+//           </div>
+//           <div className={`rounded-lg p-2 text-center shadow-sm flex-1 flex flex-col justify-center border-[1.5px] ${
+//             isDarkMode ? 'bg-slate-800/50 border-slate-600/30' : isAmber ? 'bg-white border-amber-100' : 'bg-white border-teal-100'
+//           }`}>
+//             <p className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Defect Qty</p>
+//             <span className={`text-base font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{defectQty}</span>
+//           </div>
+//         </div>
+
+//         {/* Top 3 Defects */}
+//         <div className={`rounded-lg p-2 shadow-sm border-[1.5px] ${
+//           isDarkMode ? 'bg-slate-800/50 border-slate-600/30' : isAmber ? 'bg-white border-amber-100' : 'bg-white border-teal-100'
+//         }`}>
+//           <p className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Top 3 Defects</p>
+//           {defects.map((defect, i) => (
+//             <div key={i} className="flex items-center gap-1.5 mb-1">
+//               <span className={`w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-black flex-shrink-0 ${isAmber ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700'}`}>{i + 1}</span>
+//               <span className={`text-[9px] font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{defect}</span>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // ============ DRYER PRODUCTION SUMMARY ============
+// const DryerProductionSummary = ({ isDarkMode }) => {
+//   const dryers = [
+//     { name: '1st Wash Dryer', delivery: 400 },
+//     { name: 'Final Wash Dryer', delivery: 880 },
+//     { name: 'Cool Dryer', delivery: 980 },
+//     { name: 'Re-Dryer', delivery: 500 },
+//   ];
+//   return (
+//     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+//       {dryers.map((dryer, index) => (
+//         <DryerCard key={index} dryer={dryer} isDarkMode={isDarkMode} />
+//       ))}
+//     </div>
+//   );
+// };
+
+// const DryerCard = ({ dryer, isDarkMode }) => (
+//   <div className={`rounded-xl p-2 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg border-2 ${
+//     isDarkMode
+//       ? 'bg-gradient-to-br from-sky-500/10 to-blue-500/5 border-sky-400/30 hover:shadow-sky-500/20'
+//       : 'bg-gradient-to-br from-white to-sky-50 border-sky-200 hover:shadow-sky-200/50'
+//   }`}>
+//     <DryerIcon />
+//     <div className="flex-1 min-w-0">
+//       <h4 className={`font-bold text-xs mb-1 leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{dryer.name}</h4>
+//       <div className="bg-gradient-to-r from-blue-800 to-blue-500 rounded-lg px-2.5 py-1 inline-flex flex-col shadow-lg shadow-blue-500/30">
+//         <span className="text-[8px] font-bold uppercase tracking-widest text-blue-200">Delivery</span>
+//         <span className="text-base font-black leading-tight text-white">{dryer.delivery}</span>
+//       </div>
+//     </div>
+//   </div>
+// );
+
+// const DryerIcon = () => (
+//   <div className="w-11 h-11 flex-shrink-0">
+//     <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
+//       <rect x="6" y="6" width="52" height="54" rx="7" fill="#bfdbfe" stroke="#1d4ed8" strokeWidth="2.5" />
+//       <rect x="6" y="6" width="52" height="13" rx="7" fill="#1e3a8a" />
+//       <rect x="6" y="13" width="52" height="6" fill="#1e3a8a" />
+//       <circle cx="14" cy="12" r="2.5" fill="#60a5fa" />
+//       <circle cx="20" cy="12" r="2.5" fill="#34d399" />
+//       <rect x="34" y="8" width="18" height="7" rx="3" fill="#1d4ed8" />
+//       <circle cx="38" cy="11.5" r="1.2" fill="#93c5fd" />
+//       <circle cx="43" cy="11.5" r="1.2" fill="#93c5fd" />
+//       <circle cx="48" cy="11.5" r="1.2" fill="#93c5fd" />
+//       <circle cx="32" cy="38" r="16" fill="white" stroke="#1d4ed8" strokeWidth="2.5" />
+//       <circle cx="32" cy="38" r="11" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5" />
+//       <path d="M21 40 Q26.5 35.5 32 40 T43 40 L43 47 A11 11 0 0 1 21 47Z" fill="#3b82f6" opacity="0.7" />
+//       <circle cx="32" cy="38" r="3" fill="#1e40af" />
+//     </svg>
+//   </div>
+// );
+
+// export default Dashboard;

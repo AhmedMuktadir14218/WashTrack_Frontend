@@ -1,4 +1,3 @@
-// D:\TusukaReact\WashRecieveDelivary_Frontend\src\api\reportApi.js
 import axiosInstance from './axiosConfig';
 
 export const reportApi = {
@@ -6,79 +5,141 @@ export const reportApi = {
   // GET TRANSACTION REPORT (MAIN ENDPOINT)
   // ==========================================
   getTransactionReport: (params) => {
-    const cleanParams = {};
+    // Map params to PascalCase as per API spec
+    const queryParams = {
+      Page: params.page,
+      PageSize: params.pageSize,
+      SearchTerm: params.searchTerm,
+      Buyer: params.buyer,
+      Factory: params.factory,
+      Unit: params.unit,
+      ProcessStageId: params.processStageId,
+      TransactionTypeId: params.transactionTypeId,
+      StartDate: params.startDate,
+      EndDate: params.endDate,
+      WashTargetStartDate: params.washTargetStartDate,
+      WashTargetEndDate: params.washTargetEndDate,
+      SortBy: params.sortBy,
+      SortOrder: params.sortOrder
+    };
 
-    // Pagination
-    if (params.page) cleanParams.page = params.page;
-    if (params.pageSize) cleanParams.pageSize = params.pageSize;
+    // Remove undefined/null/empty strings to keep URL clean
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === undefined || queryParams[key] === '' || queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
 
-    // Search
-    if (params.searchTerm) cleanParams.searchTerm = params.searchTerm;
+    console.log('📤 Report API params:', queryParams);
 
-    // Filters
-    if (params.buyer) cleanParams.buyer = params.buyer;
-    if (params.factory) cleanParams.factory = params.factory;
-    if (params.unit) cleanParams.unit = params.unit;
-    if (params.processStageId) cleanParams.processStageId = params.processStageId;
-    if (params.transactionTypeId !== undefined && params.transactionTypeId !== '') {
-      cleanParams.transactionTypeId = params.transactionTypeId;
-    }
-
-    // Transaction Date Range
-    if (params.startDate) cleanParams.startDate = params.startDate;
-    if (params.endDate) cleanParams.endDate = params.endDate;
-
-    // Wash Target Date Range
-    if (params.washTargetStartDate) cleanParams.washTargetStartDate = params.washTargetStartDate;
-    if (params.washTargetEndDate) cleanParams.washTargetEndDate = params.washTargetEndDate;
-
-    // Sorting
-    if (params.sortBy) cleanParams.sortBy = params.sortBy;
-    if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
-
-    console.log('📤 Report API params:', cleanParams);
-
-    return axiosInstance.get('/report/transactions', { params: cleanParams });
+    return axiosInstance.get('/Report/transactions', { params: queryParams });
   },
 
   // ==========================================
   // GET SUMMARY ONLY
   // ==========================================
   getSummary: (params = {}) => {
-    return axiosInstance.get('/report/summary', { params });
+    const queryParams = {
+      SearchTerm: params.searchTerm,
+      Buyer: params.buyer,
+      Factory: params.factory,
+      Unit: params.unit,
+      ProcessStageId: params.processStageId,
+      TransactionTypeId: params.transactionTypeId,
+      StartDate: params.startDate,
+      EndDate: params.endDate,
+      WashTargetStartDate: params.washTargetStartDate,
+      WashTargetEndDate: params.washTargetEndDate,
+    };
+
+    // Remove undefined/null/empty strings
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === undefined || queryParams[key] === '' || queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
+
+    return axiosInstance.get('/Report/summary', { params: queryParams });
   },
 
   // ==========================================
   // GET FILTER OPTIONS
   // ==========================================
   getFilterOptions: () => {
-    return axiosInstance.get('/report/filter-options');
+    return axiosInstance.get('/Report/filter-options');
   },
 
   // ==========================================
   // EXPORT TO CSV
   // ==========================================
   exportToCsv: (params = {}) => {
-    const cleanParams = {};
+    const queryParams = {
+      SearchTerm: params.searchTerm,
+      Buyer: params.buyer,
+      Factory: params.factory,
+      Unit: params.unit,
+      ProcessStageId: params.processStageId,
+      TransactionTypeId: params.transactionTypeId,
+      StartDate: params.startDate,
+      EndDate: params.endDate,
+      WashTargetStartDate: params.washTargetStartDate,
+      WashTargetEndDate: params.washTargetEndDate,
+      SortBy: params.sortBy,
+      SortOrder: params.sortOrder,
+    };
 
-    if (params.searchTerm) cleanParams.searchTerm = params.searchTerm;
-    if (params.buyer) cleanParams.buyer = params.buyer;
-    if (params.factory) cleanParams.factory = params.factory;
-    if (params.unit) cleanParams.unit = params.unit;
-    if (params.processStageId) cleanParams.processStageId = params.processStageId;
-    if (params.transactionTypeId !== undefined && params.transactionTypeId !== '') {
-      cleanParams.transactionTypeId = params.transactionTypeId;
-    }
-    if (params.startDate) cleanParams.startDate = params.startDate;
-    if (params.endDate) cleanParams.endDate = params.endDate;
-    if (params.washTargetStartDate) cleanParams.washTargetStartDate = params.washTargetStartDate;
-    if (params.washTargetEndDate) cleanParams.washTargetEndDate = params.washTargetEndDate;
-    if (params.sortBy) cleanParams.sortBy = params.sortBy;
-    if (params.sortOrder) cleanParams.sortOrder = params.sortOrder;
+    // Remove undefined/null/empty strings
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === undefined || queryParams[key] === '' || queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
 
-    return axiosInstance.get('/report/export/csv', {
-      params: cleanParams,
+    return axiosInstance.get('/Report/export/csv', {
+      params: queryParams,
       responseType: 'blob'
     });
+  },
+
+  // ==========================================
+  // GET USER WORK ORDER SUMMARY
+  // ==========================================
+  getUserWorkOrderSummary: (userId, params = {}) => {
+    const queryParams = {
+      startDate: params.startDate,
+      endDate: params.endDate,
+      buyer: params.buyer,
+      factory: params.factory,
+      unit: params.unit,
+      processStageId: params.processStageId,
+    };
+
+    // Remove undefined/null/empty strings
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === undefined || queryParams[key] === '' || queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
+
+    return axiosInstance.get(`/report/user-workorder-summary/${userId}`, { params: queryParams });
+  },
+
+  // ==========================================
+  // GET USER TRANSACTION HISTORY
+  // ==========================================
+  getUserTransactions: (userId, params = {}) => {
+    const queryParams = {
+      startDate: params.startDate,
+      endDate: params.endDate,
+    };
+
+    // Remove undefined/null/empty strings
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === undefined || queryParams[key] === '' || queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
+
+    return axiosInstance.get(`/report/user-transactions/${userId}`, { params: queryParams });
   }
 };

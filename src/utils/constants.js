@@ -7,7 +7,12 @@ export const PROCESS_STAGES = {
   FIRST_DRY: { value: 1, label: '1st Dry' },
   SECOND_DRY: { value: 2, label: '2nd Dry' },
   FIRST_WASH: { value: 3, label: '1st Wash' },
-  FINAL_WASH: { value: 4, label: 'Final Wash' }
+  FINAL_WASH: { value: 4, label: 'Final Wash' }, 
+  FIRST_DRYER: { value: 5, label: '1st Dryer' },
+  SECOND_DRYER: { value: 6, label: '2nd Dryer' },
+  FINAL_DRYER: { value: 7, label: 'Final Dryer' },
+  COOL_DRYER: { value: 8, label: 'Cool Dryer' },
+  RE_DRYER: { value: 9, label: 'ReDryer' },
 };
 
 // Transaction Types
@@ -27,7 +32,12 @@ export const CATEGORIES = [
   { id: 1, name: '1st Dry' },
   { id: 2, name: '2nd Dry' },
   { id: 3, name: '1st Wash' },
-  { id: 4, name: 'Final Wash' }
+  { id: 4, name: 'Final Wash' },
+  { id: 5, name: '1st Dryer' },
+  { id: 6, name: '2nd Dryer' },
+  { id: 7, name: 'Final Dryer' },
+  { id: 8, name: 'Cool Dryer' },
+  { id: 9, name: 'ReDryer' },
 ];
 
 // Date Format

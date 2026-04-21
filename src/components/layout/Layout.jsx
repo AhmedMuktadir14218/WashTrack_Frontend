@@ -1,43 +1,77 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, IconButton, AppBar, Toolbar, useMediaQuery, useTheme } from '@mui/material';
+import { Menu as MenuIcon } from '@mui/icons-material';
 import Sidebar from './Sidebar';
-import Header from './Header';
 
 const DRAWER_WIDTH = 280;
 
-const Layout = () => {
+const Layout = ({ isDarkMode, toggleTheme }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation(); // ✅ Add this
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
       <Sidebar
         drawerWidth={DRAWER_WIDTH}
         mobileOpen={mobileOpen}
         handleDrawerToggle={handleDrawerToggle}
+        isCollapsed={isCollapsed}
+        toggleCollapse={toggleCollapse}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
       />
 
-      {/* Main Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { sm: `calc(100% - ${isCollapsed ? 80 : DRAWER_WIDTH}px)` },
           minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: isDarkMode ? '#0f172a' : '#f5f5f5',
+          transition: 'width 0.3s ease, background-color 0.3s ease',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {/* Header */}
-        <Header handleDrawerToggle={handleDrawerToggle} />
+        {isMobile && (
+          <AppBar
+            position="sticky"
+            sx={{
+              backgroundColor: isDarkMode ? '#1e293b' : 'white',
+              color: 'text.primary',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              zIndex: theme.zIndex.drawer + 1,
+            }}
+          >
+            <Toolbar>
+              <IconButton
+                color="inherit"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                WRD System
+              </Typography>
+            </Toolbar>
+          </AppBar>
+        )}
 
-        {/* Page Content - Add key to force re-render */}
-        <Box sx={{ p: 3 }} key={location.pathname}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, flexGrow: 1 }} key={location.pathname}>
           <Outlet />
         </Box>
       </Box>
