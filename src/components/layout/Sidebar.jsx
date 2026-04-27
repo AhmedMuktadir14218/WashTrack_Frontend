@@ -541,11 +541,11 @@ const DRAWER_WIDTH = 260;
 const DRAWER_WIDTH_COLLAPSED = 72;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'User'] },
-  { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin', 'User'] },
-  { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin', 'User'] },
+  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'Incharge'] },
+  { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin'] },
+  { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin'] },
   { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },
-  { text: 'Machine Track', icon: <Analytics />, path: '/admin/machine-track', roles: ['Admin'] },
+  { text: 'Machine Track', icon: <Analytics />, path: '/admin/machine-track', roles: ['Admin', 'Incharge'] },
   { text: 'Manage Users', icon: <People />, path: '/admin/users', roles: ['Admin'] },
 ];
 

@@ -87,7 +87,7 @@ const { isDarkMode, toggleTheme } = useThemeMode();
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requiredRole="Admin">
+          <ProtectedRoute requiredRole={['Admin', 'Incharge']}>
             <Layout key={location.pathname} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </ProtectedRoute>
         }

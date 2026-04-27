@@ -24,10 +24,14 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role if required
-  if (requiredRole && !hasRole(requiredRole)) {
+  // Check role if required - support both single role and array of roles
+  const hasRequiredRole = Array.isArray(requiredRole) 
+    ? requiredRole.some(role => hasRole(role))
+    : hasRole(requiredRole);
+
+  if (requiredRole && !hasRequiredRole) {
     // Redirect to appropriate dashboard based on role
-    if (hasRole('Admin')) {
+    if (hasRole('Admin') || hasRole('Incharge')) {
       return <Navigate to="/admin/dashboard" replace />;
     } else if (hasRole('User')) {
       return <Navigate to="/user/transactions" replace />;

@@ -8,7 +8,7 @@ const DRAWER_WIDTH = 280;
 
 const Layout = ({ isDarkMode, toggleTheme }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

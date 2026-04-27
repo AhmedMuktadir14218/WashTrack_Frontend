@@ -119,6 +119,10 @@ export const AuthProvider = ({ children }) => {
     return hasRole('User');
   };
 
+  const isIncharge = () => {
+    return hasRole('Incharge');
+  };
+
   // ==================== PROCESS STAGE METHODS (NEW) ====================
   const getStageAccesses = () => {
     if (!user || !user.processStageAccesses) return [];
@@ -181,6 +185,7 @@ export const AuthProvider = ({ children }) => {
     hasRole,
     isAdmin,
     isUser,
+    isIncharge,
 
     // Process Stage Utilities (NEW)
     getStageAccesses,

@@ -1,6 +1,8 @@
 // D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\dashboard\Dashboard.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { dashboardApi } from '../../api/dashboardApi';
+import DashboardTableModal from './DashboardTableModal';
+import { useAuth } from '../../hooks/useAuth';
 
 // ============ CUSTOM SVG ICONS ============
 const IconFilter = ({ className = '' }) => (
@@ -77,22 +79,246 @@ const IconClock = ({ className = '' }) => (
 
 // ============ MAIN DASHBOARD ============
 const Dashboard = ({ isDarkMode }) => {
+  const { user, isAdmin, isIncharge } = useAuth();
 
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
 
-  const [filters, setFilters] = useState({
-    fromDate: '',
-    toDate: '',
-    unit: '3',
-    shift: '',
-    plant: '',
-  });
+  const plantUnits = {
+    TPL: ['Unit 1', 'Unit 5', 'Unit 2', 'Unit 4', 'Unit 3'],
+    TWL: ['Unit TWL'],
+  };
+
+  const allUnits = ['Unit 1', 'Unit 5', 'Unit 2', 'Unit 4', 'Unit 3', 'Unit TWL'];
+
+  const getAccessiblePlants = () => {
+    if (isAdmin() || isIncharge()) {
+      if (user && user.userAssigns) {
+        const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
+        return uniquePlants;
+      }
+      return ['TPL', 'TWL'];
+    }
+    if (user && user.userAssigns) {
+      const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
+      return uniquePlants;
+    }
+    return [];
+  };
+
+  const getAccessibleUnits = (plantId) => {
+    if (isAdmin() || isIncharge()) {
+      if (user && user.userAssigns) {
+        const units = user.userAssigns
+          .filter(assignment => assignment.plantId === plantId)
+          .map(assignment => assignment.unitId);
+        return [...new Set(units)];
+      }
+      return plantUnits[plantId] || [];
+    }
+    if (user && user.userAssigns) {
+      const units = user.userAssigns
+        .filter(assignment => assignment.plantId === plantId)
+        .map(assignment => assignment.unitId);
+      return [...new Set(units)];
+    }
+    return [];
+  };
+
+  const accessiblePlants = getAccessiblePlants();
+
+  const getDefaultFilters = () => {
+    return {
+      fromDate: todayStr,
+      toDate: todayStr,
+      unit: '',
+      shift: '',
+      plant: '',
+    };
+  };
+
+  const [filters, setFilters] = useState(getDefaultFilters);
+
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ processStageIds: [], modalTitle: '', mode: 'process' });
+
+  const openModal = (config) => {
+    setModalConfig(config);
+    setIsModalOpen(true);
+  };
+
+  const processDashboardData = (data) => {
+    if (!data || data.length === 0) return null;
+
+    const aggregated = {
+      '1st Dry': { delivery: 0, receive: 0 },
+      'Unwash': { delivery: 0, receive: 0 },
+      '2nd Dry': { delivery: 0, receive: 0 },
+      '1st Wash': { delivery: 0, receive: 0 },
+      'Final Wash': { delivery: 0, receive: 0 },
+      '1st Dryer': { delivery: 0 },
+      '2nd Dryer': { delivery: 0 },
+      'Final Dryer': { delivery: 0 },
+      'Cool Dryer': { delivery: 0 },
+      'ReDryer': { delivery: 0 },
+    };
+
+    data.forEach((item) => {
+      const stage = item.processStageName;
+      const type = item.transactionType.toLowerCase();
+      const qty = item.totalQuantity || 0;
+
+      if (aggregated[stage]) {
+        if (type === 'delivery') {
+          aggregated[stage].delivery += qty;
+        } else if (type === 'receive' && aggregated[stage].receive !== undefined) {
+          aggregated[stage].receive += qty;
+        }
+      }
+    });
+
+    return aggregated;
+  };
+
+  const fetchDashboardData = async () => {
+    if (!filters.fromDate || !filters.toDate) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      let allData = [];
+
+      if (filters.plant) {
+        if (filters.unit) {
+          const payload = {
+            fromDate: filters.fromDate,
+            toDate: filters.toDate,
+            plant: filters.plant,
+            unit: filters.unit,
+            shift: filters.shift ? Number(filters.shift) : undefined,
+          };
+          const response = await dashboardApi.getDashboardSummary(payload);
+          if (response.success && response.data) {
+            allData = response.data;
+          }
+        } else {
+          const accessibleUnitsForPlant = getAccessibleUnits(filters.plant);
+          
+          if (accessibleUnitsForPlant.length > 0) {
+            const promises = accessibleUnitsForPlant.map(async (unit) => {
+              const payload = {
+                fromDate: filters.fromDate,
+                toDate: filters.toDate,
+                plant: filters.plant,
+                unit: unit,
+                shift: filters.shift ? Number(filters.shift) : undefined,
+              };
+              const response = await dashboardApi.getDashboardSummary(payload);
+              return response.success && response.data ? response.data : [];
+            });
+            
+            const results = await Promise.all(promises);
+            allData = results.flat();
+          } else {
+            const payload = {
+              fromDate: filters.fromDate,
+              toDate: filters.toDate,
+              plant: filters.plant,
+              shift: filters.shift ? Number(filters.shift) : undefined,
+            };
+            const response = await dashboardApi.getDashboardSummary(payload);
+            if (response.success && response.data) {
+              allData = response.data;
+            }
+          }
+        }
+      } else {
+        const plantsToFetch = accessiblePlants.length > 0 ? accessiblePlants : ['TPL', 'TWL'];
+        
+        const promises = plantsToFetch.map(async (plant) => {
+          const accessibleUnitsForPlant = getAccessibleUnits(plant);
+          
+          if (accessibleUnitsForPlant.length > 0) {
+            const unitPromises = accessibleUnitsForPlant.map(async (unit) => {
+              const payload = {
+                fromDate: filters.fromDate,
+                toDate: filters.toDate,
+                plant: plant,
+                unit: unit,
+                shift: filters.shift ? Number(filters.shift) : undefined,
+              };
+              const response = await dashboardApi.getDashboardSummary(payload);
+              return response.success && response.data ? response.data : [];
+            });
+            
+            const unitResults = await Promise.all(unitPromises);
+            return unitResults.flat();
+          } else {
+            const payload = {
+              fromDate: filters.fromDate,
+              toDate: filters.toDate,
+              plant: plant,
+              shift: filters.shift ? Number(filters.shift) : undefined,
+            };
+            const response = await dashboardApi.getDashboardSummary(payload);
+            return response.success && response.data ? response.data : [];
+          }
+        });
+
+        const results = await Promise.all(promises);
+        allData = results.flat();
+      }
+
+      setDashboardData(processDashboardData(allData));
+    } catch (err) {
+      setError(err.message || 'Failed to fetch dashboard data');
+      console.error('Dashboard data fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [filters]);
+
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return '0';
+    return num.toLocaleString();
+  };
 
   const handleFilterChange = (field, value) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
+    if (field === 'plant') {
+      setFilters((prev) => ({ ...prev, [field]: value, unit: '' }));
+    } else {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const getAvailableUnits = () => {
+    if (filters.plant && getAccessibleUnits(filters.plant).length > 0) {
+      return getAccessibleUnits(filters.plant);
+    }
+    if (filters.plant && plantUnits[filters.plant]) {
+      return plantUnits[filters.plant];
+    }
+    return allUnits;
   };
 
   const resetFilters = () => {
-    setFilters({ fromDate: '', toDate: '', unit: '', shift: '', plant: '' });
+    setFilters({
+      fromDate: todayStr,
+      toDate: todayStr,
+      unit: '',
+      shift: '',
+      plant: '',
+    });
   };
 
   return (
@@ -120,27 +346,72 @@ const Dashboard = ({ isDarkMode }) => {
           onFilterChange={handleFilterChange}
           onReset={resetFilters}
           isDarkMode={isDarkMode}
+          plantUnits={plantUnits}
+          allUnits={allUnits}
+          getAvailableUnits={getAvailableUnits}
+          accessiblePlants={accessiblePlants}
+          isAdmin={isAdmin}
+          isIncharge={isIncharge}
+          user={user}
         />
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isDarkMode ? 'border-blue-500' : 'border-blue-600'}`}></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
         {/* Top Summary Cards */}
-        <TopSummaryCards isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <TopSummaryCards isDarkMode={isDarkMode} dashboardData={dashboardData} onCardClick={openModal} />
+        )}
 
         {/* DHU Section Label */}
-        <SectionLabel title="DHU Summary" color="blue" isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <SectionLabel title="DHU Summary (Coming Soon)" color="blue" isDarkMode={isDarkMode} />
+        )}
 
         {/* DHU 1st & Final Wash Panels */}
-        <DHUSections isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <DHUSections isDarkMode={isDarkMode} />
+        )}
 
         {/* Dry Section Details */}
-        <DrySectionDetails isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <DrySectionDetails isDarkMode={isDarkMode} />
+        )}
 
         {/* Dryer Production Summary Label */}
-        <SectionLabel title="Dryer Production Summary" color="sky" isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <SectionLabel title="Dryer Production Summary" color="sky" isDarkMode={isDarkMode} />
+        )}
 
         {/* Dryer Production Cards */}
-        <DryerProductionSummary isDarkMode={isDarkMode} />
+        {!loading && !error && (
+          <DryerProductionSummary isDarkMode={isDarkMode} dashboardData={dashboardData} onCardClick={openModal} />
+        )}
       </div>
       </div>
+
+      {/* Dashboard Details Modal */}
+      <DashboardTableModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        isDarkMode={isDarkMode}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        processStageIds={modalConfig.processStageIds}
+        modalTitle={modalConfig.modalTitle}
+        mode={modalConfig.mode}
+      />
     </>
   );
 };
@@ -168,7 +439,7 @@ const Header = () => (
 );
 
 // ============ FILTER PANEL ============
-const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
+const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits, allUnits, getAvailableUnits, accessiblePlants, isAdmin, isIncharge, user }) => (
   <div className="overflow-visible">
     <div
       className={`backdrop-blur-sm border-2 rounded-xl shadow-lg p-3 mt-4 mb-2 ${
@@ -176,7 +447,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
           ? 'bg-slate-800/95 border-blue-500/30'
           : 'bg-white/95 border-blue-200'
       }`}
-    > 
+    >
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* From Date */}
@@ -222,6 +493,38 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
             }`}
           />
         </div>
+                {/* Select Plant */}
+        <div className="space-y-1.5">
+          <label
+            className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+            }`}
+          >
+            <IconBuilding className="w-3 h-3 text-blue-500" />
+            Select Plant
+          </label>
+          <select
+            value={filters.plant}
+            onChange={(e) => onFilterChange('plant', e.target.value)}
+            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
+              isDarkMode
+                ? 'bg-slate-900/50 border-slate-600 text-slate-200'
+                : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+          >
+            <option value="">All Plants</option>
+            {(isAdmin || isIncharge) && (!user || !user.userAssigns || user.userAssigns.length === 0) ? (
+              <>
+                <option value="TWL">TWL</option>
+                <option value="TPL">TPL</option>
+              </>
+            ) : (
+              accessiblePlants.map((plant) => (
+                <option key={plant} value={plant}>{plant}</option>
+              ))
+            )}
+          </select>
+        </div>
 
         {/* Select Unit */}
         <div className="space-y-1.5">
@@ -236,17 +539,16 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
           <select
             value={filters.unit}
             onChange={(e) => onFilterChange('unit', e.target.value)}
+            disabled={!filters.plant}
             className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}
+            } ${!filters.plant ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <option value="">-- Select Unit --</option>
-            {[1, 2, 3, 4, 5].map((u) => (
-              <option key={u} value={String(u)}>
-                Unit {u}
-              </option>
+            <option value="">All Units</option>
+            {getAvailableUnits().map((unit) => (
+              <option key={unit} value={unit}>{unit}</option>
             ))}
           </select>
         </div>
@@ -271,37 +573,12 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
             }`}
           >
             <option value="">-- Select Shift --</option>
-            <option value="A">Shift A (06:00–14:00)</option>
-            <option value="B">Shift B (14:00–22:00)</option>
-            <option value="C">Shift C (22:00–06:00)</option>
+            <option value="1">Day</option>
+            <option value="2">Night</option>
           </select>
         </div>
 
-        {/* Select Plant */}
-        <div className="space-y-1.5">
-          <label
-            className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${
-              isDarkMode ? 'text-slate-400' : 'text-slate-500'
-            }`}
-          >
-            <IconBuilding className="w-3 h-3 text-blue-500" />
-            Select Plant
-          </label>
-          <select
-            value={filters.plant}
-            onChange={(e) => onFilterChange('plant', e.target.value)}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
-              isDarkMode
-                ? 'bg-slate-900/50 border-slate-600 text-slate-200'
-                : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}
-          >
-            <option value="">-- Select Plant --</option>
-            <option value="Plant1">Plant 1</option>
-            <option value="Plant2">Plant 2</option>
-            <option value="Plant3">Plant 3</option>
-          </select>
-        </div>
+
       </div>
 
       {/* <div className="flex justify-end mt-3 gap-2">
@@ -324,36 +601,50 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode }) => (
 );
 
 // ============ TOP SUMMARY CARDS ============
-const TopSummaryCards = ({ isDarkMode }) => {
+const PROCESS_STAGE_IDS = {
+  '1st Dry Section': [1],
+  'UnWash Godown': [2],
+  '1st Wash Section': [4],
+  '2nd Dry Section': [3],
+};
+
+const DRYER_STAGE_IDS = {
+  '1st Wash Dryer': [6],
+  'Final Wash Dryer': [8],
+  'Cool Dryer': [9],
+  'Re-Dryer': [10],
+};
+
+const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
   const cards = [
     {
       title: '1st Dry Section',
       type: 'blue',
       icon: 'chart',
-      received: 500,
-      delivery: 500,
+      received: dashboardData?.['1st Dry']?.receive || 0,
+      delivery: dashboardData?.['1st Dry']?.delivery || 0,
       showBoth: true,
     },
     {
       title: 'UnWash Godown',
       type: 'blue',
       icon: 'home',
-      mainValue: 980,
+      mainValue: dashboardData?.['Unwash']?.delivery || 0,
       showChart: true,
     },
     {
       title: '1st Wash Section',
       type: 'blue',
       icon: 'water',
-      delivery: 600,
+      delivery: dashboardData?.['1st Wash']?.delivery || 0,
       showDeliveryOnly: true,
     },
     {
       title: '2nd Dry Section',
       type: 'blue',
       icon: 'fire',
-      received: 450,
-      delivery: 800,
+      received: dashboardData?.['2nd Dry']?.receive || 0,
+      delivery: dashboardData?.['2nd Dry']?.delivery || 0,
       showBoth: true,
     },
   ];
@@ -361,13 +652,22 @@ const TopSummaryCards = ({ isDarkMode }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
       {cards.map((card, index) => (
-        <TopCard key={index} card={card} isDarkMode={isDarkMode} />
+        <TopCard
+          key={index}
+          card={card}
+          isDarkMode={isDarkMode}
+          onCardClick={() => onCardClick({
+            processStageIds: PROCESS_STAGE_IDS[card.title] || [1],
+            modalTitle: card.title,
+            mode: 'process',
+          })}
+        />
       ))}
     </div>
   );
 };
 
-const TopCard = ({ card, isDarkMode }) => {
+const TopCard = ({ card, isDarkMode, onCardClick }) => {
   const isOrange = card.type === 'orange';
 
   const getIcon = () => {
@@ -388,6 +688,7 @@ const TopCard = ({ card, isDarkMode }) => {
 
   return (
     <div
+      onClick={onCardClick}
       className={`border-2 rounded-2xl p-3 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${
         isDarkMode
           ? isOrange
@@ -399,9 +700,9 @@ const TopCard = ({ card, isDarkMode }) => {
       }`}
     >
       {/* Header */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-1">
         <h2
-          className={`font-bold text-xs ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+          className={`font-bold text-base leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
         >
           {card.title}
         </h2>
@@ -450,14 +751,14 @@ const TopCard = ({ card, isDarkMode }) => {
           <WashIcon />
           <div className="text-center">
             <p
-              className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${
+              className={`text-xs font-bold uppercase tracking-wider mb-0 ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
               Delivery
             </p>
             <span
-              className={`text-xl font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {card.delivery}
             </span>
@@ -469,14 +770,14 @@ const TopCard = ({ card, isDarkMode }) => {
         <div className="flex items-end justify-between gap-2">
           <div className="text-center">
             <span
-              className={`text-xl font-black block leading-none ${
+              className={`text-3xl font-black block leading-none ${
                 isDarkMode ? 'text-slate-200' : 'text-slate-800'
               }`}
             >
               {card.mainValue}
             </span>
             <span
-              className={`text-[9px] font-bold uppercase mt-0.5 block leading-tight ${
+              className={`text-xs font-bold uppercase mt-0.5 block leading-tight ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
@@ -492,29 +793,36 @@ const TopCard = ({ card, isDarkMode }) => {
   );
 };
 
-const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => (
-  <div className="text-center">
-    <p
-      className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${
-        isDarkMode ? 'text-slate-400' : 'text-slate-500'
-      }`}
-    >
-      {label}
-    </p>
-    <div className="flex items-center gap-0.5 justify-center">
-      <span
-        className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => {
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return '0';
+    return num.toLocaleString();
+  };
+
+  return (
+    <div className="text-center">
+      <p
+        className={`text-xs font-bold uppercase tracking-wider mb-0 ${
+          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+        }`}
       >
-        {value}
-      </span>
-      {trend === 'up' ? (
-        <IconTrendingUp className={`w-2.5 h-2.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-      ) : (
-        <IconTrendingDown className={`w-2.5 h-2.5 ${isGreen ? 'text-green-500' : 'text-orange-500'}`} />
-      )}
+        {label}
+      </p>
+      <div className="flex items-center gap-0.5 justify-center">
+        <span
+          className={`text-2xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+        >
+          {formatNumber(value)}
+        </span>
+        {trend === 'up' ? (
+          <IconTrendingUp className={`w-3 h-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+        ) : (
+          <IconTrendingDown className={`w-3 h-3 ${isGreen ? 'text-green-500' : 'text-orange-500'}`} />
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CardIcon = ({ type }) => (
   <div
@@ -572,12 +880,12 @@ const MiniBarChart = ({ isDarkMode }) => {
 
         return (
           <div key={i} className="flex flex-col items-center gap-0.5">
-            <span className={`text-[7px] font-bold ${textColor}`}>{bar.value}</span>
+            <span className={`text-[9px] font-bold ${textColor}`}>{bar.value}</span>
             <div
               className={`w-[13px] ${barColor} rounded-t`}
               style={{ height: bar.height }}
             />
-            <span className={`text-[7px] font-semibold ${textColor}`}>{bar.label}</span>
+            <span className={`text-[9px] font-semibold ${textColor}`}>{bar.label}</span>
           </div>
         );
       })}
@@ -624,21 +932,21 @@ const DHUSections = ({ isDarkMode }) => (
     <DHUPanel
       title="1st Wash Section"
       type="blue"
-      outputQty={400}
-      defectQty={360}
-      dhuPercent={2.6}
+      outputQty={0}
+      defectQty={0}
+      dhuPercent={0}
       dhuStatus="good"
-      defects={['design mis match', 'chemical issue', 'skill issue']}
+      defects={['Test Test 1', 'Test  Test 2', 'Test  Test Test 3']}
       isDarkMode={isDarkMode}
     />
     <DHUPanel
       title="Final Wash Section"
       type="blue"
-      outputQty={900}
-      defectQty={506}
-      dhuPercent={9.6}
+      outputQty={0}
+      defectQty={0}
+      dhuPercent={0}
       dhuStatus="action"
-      defects={['design mis match', 'chemical issue', 'skill issue']}
+      defects={['Test Test 1', 'Test  Test 2', 'Test  Test Test 3']}
       isDarkMode={isDarkMode}
     />
   </div>
@@ -666,7 +974,7 @@ const DHUPanel = ({
     >
       {/* Header */}
       <div
-        className={`text-white font-bold text-center py-2 text-xs tracking-wide uppercase flex items-center justify-center gap-1.5 ${
+        className={`text-white font-bold text-center py-2 text-sm tracking-wide uppercase flex items-center justify-center gap-1.5 ${
           isOrange
             ? 'bg-gradient-to-r from-orange-700 to-orange-600'
             : 'bg-gradient-to-r from-blue-600 to-blue-500'
@@ -701,7 +1009,7 @@ const DHUPanel = ({
         <div className="flex flex-col gap-2">
           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode}>
             <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${
+              className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
@@ -709,7 +1017,7 @@ const DHUPanel = ({
             </p>
             <GaugeSmall value={75} />
             <span
-              className={`text-lg font-black block mt-0.5 ${
+              className={`text-xl font-black block leading-none mt-0.5 ${
                 isDarkMode ? 'text-slate-200' : 'text-slate-800'
               }`}
             >
@@ -718,14 +1026,14 @@ const DHUPanel = ({
           </InnerCard>
           <InnerCard isOrange={isOrange} isDarkMode={isDarkMode}>
             <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${
+              className={`text-[10px] font-bold uppercase tracking-wider mb-0 ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
               Defect Qty
             </p>
             <span
-              className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {defectQty}
             </span>
@@ -745,13 +1053,13 @@ const DHUPanel = ({
           }`}
         >
           <p
-            className={`font-bold text-xs mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+            className={`font-bold text-sm mb-0.5 leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
           >
             DHU%
           </p>
           <DHUGauge value={dhuPercent} status={dhuStatus} isDarkMode={isDarkMode} />
           <span
-            className={`font-bold text-xs mt-0.5 ${
+            className={`font-bold text-sm mt-0.5 leading-tight ${
               dhuStatus === 'good' ? 'text-green-600' : 'text-orange-600'
             }`}
           >
@@ -759,52 +1067,36 @@ const DHUPanel = ({
           </span>
         </div>
 
-        {/* Column 3 - Defect Qty & Top 3 */}
-        <div className="flex flex-col gap-2">
-          <InnerCard isOrange={isOrange} isDarkMode={isDarkMode}>
-            <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${
-                isDarkMode ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Defect Qty
-            </p>
-            <span
-              className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
-            >
-              {defectQty}
-            </span>
-          </InnerCard>
-          <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex-1">
-            <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${
-                isDarkMode ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Top 3 Defects
-            </p>
-            {defects.map((defect, i) => (
-              <div key={i} className="flex items-center gap-1.5 mb-1">
-                <span
-                  className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black ${
-                    isOrange
-                      ? 'bg-orange-100 text-orange-600'
-                      : 'bg-blue-100 text-blue-700'
-                  }`}
-                >
-                  {i + 1}
-                </span>
-                <span
-                  className={`text-[10px] font-semibold ${
-                    isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                  }`}
-                >
-                  {defect}
-                </span>
-              </div>
-            ))}
-          </InnerCard>
-        </div>
+        {/* Column 3 - Full height Top 3 Defects */}
+        <InnerCard isOrange={isOrange} isDarkMode={isDarkMode} className="flex flex-col justify-between">
+          <p
+            className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+            }`}
+          >
+            Top 3 Defects
+          </p>
+          {defects.map((defect, i) => (
+            <div key={i} className="flex items-center gap-1.5 mb-1.5">
+              <span
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
+                  isOrange
+                    ? 'bg-orange-100 text-orange-600'
+                    : 'bg-blue-100 text-blue-700'
+                }`}
+              >
+                {i + 1}
+              </span>
+              <span
+                className={`text-xs font-semibold leading-tight ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}
+              >
+                {defect}
+              </span>
+            </div>
+          ))}
+        </InnerCard>
       </div>
     </div>
   );
@@ -894,7 +1186,7 @@ const DHUGauge = ({ value, status, isDarkMode }) => {
       </svg>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
         <span
-          className={`text-xl font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+          className={`text-2xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
         >
           {value}%
         </span>
@@ -909,21 +1201,21 @@ const DrySectionDetails = ({ isDarkMode }) => (
     <DryDetailPanel
       title="1st Dry Section Details"
       type="teal"
-      outputQty={988}
-      defectQty={880}
-      dhuPercent={5.5}
+      outputQty={0}
+      defectQty={0}
+      dhuPercent={0}
       dhuStatus="good"
-      defects={['over-drying marks', 'uneven dryness', 'handling issue']}
+      defects={['Test Test 1', 'Test  Test 2', 'Test  Test Test 3']}
       isDarkMode={isDarkMode}
     />
     <DryDetailPanel
       title="2nd Dry Section Details"
       type="teal"
-      outputQty={560}
-      defectQty={566}
-      dhuPercent={6.6}
+      outputQty={0}
+      defectQty={0}
+      dhuPercent={0}
       dhuStatus="action"
-      defects={['surface pilling', 'temperature variation', 'fabric type error']}
+      defects={['Test Test 1', 'Test  Test 2', 'Test  Test Test 3']}
       isDarkMode={isDarkMode}
     />
   </div>
@@ -951,7 +1243,7 @@ const DryDetailPanel = ({
     >
       {/* Header */}
       <div
-        className={`text-white font-bold text-center py-2 text-xs tracking-wide uppercase flex items-center justify-center gap-1.5 ${
+        className={`text-white font-bold text-center py-2 text-sm tracking-wide uppercase flex items-center justify-center gap-1.5 ${
           isAmber
             ? 'bg-gradient-to-r from-amber-600 to-amber-500'
             : 'bg-gradient-to-r from-teal-600 to-teal-500'
@@ -995,21 +1287,21 @@ const DryDetailPanel = ({
           }`}
         >
           <p
-            className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${
+            className={`text-[10px] font-bold uppercase tracking-wider mb-0 leading-tight ${
               isDarkMode ? 'text-slate-400' : 'text-slate-500'
             }`}
           >
             DHU %
           </p>
           <span
-            className={`text-2xl font-black leading-none mt-0.5 ${
+            className={`text-3xl font-black leading-none mt-0.5 ${
               isDarkMode ? 'text-slate-200' : 'text-slate-800'
             }`}
           >
             {dhuPercent}%
           </span>
           <span
-            className={`font-bold text-[10px] mt-1 text-center leading-tight ${
+            className={`font-bold text-xs mt-1 text-center leading-tight ${
               dhuStatus === 'good' ? 'text-green-600' : 'text-amber-600'
             }`}
           >
@@ -1029,14 +1321,14 @@ const DryDetailPanel = ({
             }`}
           >
             <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${
+              className={`text-[10px] font-bold uppercase tracking-wider mb-0 leading-tight ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
               Output Qty
             </p>
             <span
-              className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {outputQty}
             </span>
@@ -1051,23 +1343,23 @@ const DryDetailPanel = ({
             }`}
           >
             <p
-              className={`text-[8px] font-bold uppercase tracking-wider mb-0.5 ${
+              className={`text-[10px] font-bold uppercase tracking-wider mb-0 leading-tight ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
               Defect Qty
             </p>
             <span
-              className={`text-lg font-black ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {defectQty}
             </span>
           </div>
         </div>
 
-        {/* Top 3 Defects */}
+        {/* Top 3 Defects - Full height */}
         <div
-          className={`rounded-xl p-2 shadow-sm border-[1.5px] ${
+          className={`rounded-xl p-2 shadow-sm border-[1.5px] flex flex-col justify-between ${
             isDarkMode
               ? 'bg-slate-800/50 border-slate-600/30'
               : isAmber
@@ -1076,16 +1368,16 @@ const DryDetailPanel = ({
           }`}
         >
           <p
-            className={`text-[8px] font-bold uppercase tracking-wider mb-1 ${
+            className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
               isDarkMode ? 'text-slate-400' : 'text-slate-500'
             }`}
           >
             Top 3 Defects
           </p>
           {defects.map((defect, i) => (
-            <div key={i} className="flex items-center gap-1.5 mb-1">
+            <div key={i} className="flex items-center gap-1.5 mb-1.5">
               <span
-                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
                   isAmber
                     ? 'bg-amber-100 text-amber-700'
                     : 'bg-teal-100 text-teal-700'
@@ -1094,7 +1386,7 @@ const DryDetailPanel = ({
                 {i + 1}
               </span>
               <span
-                className={`text-[10px] font-semibold ${
+                className={`text-xs font-semibold leading-tight ${
                   isDarkMode ? 'text-slate-300' : 'text-slate-700'
                 }`}
               >
@@ -1109,103 +1401,87 @@ const DryDetailPanel = ({
 };
 
 // ============ DRYER PRODUCTION SUMMARY ============
-const DryerProductionSummary = ({ isDarkMode }) => {
+const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
   const dryers = [
-    { name: '1st Wash Dryer', delivery: 400 },
-    { name: 'Final Wash Dryer', delivery: 880 },
-    { name: 'Cool Dryer', delivery: 980 },
-    { name: 'Re-Dryer', delivery: 500 },
+    { name: '1st Wash Dryer', delivery: dashboardData?.['1st Dryer']?.delivery || 0 },
+    { name: 'Final Wash Dryer', delivery: dashboardData?.['Final Dryer']?.delivery || 0 },
+    { name: 'Cool Dryer', delivery: dashboardData?.['Cool Dryer']?.delivery || 0 },
+    { name: 'Re-Dryer', delivery: dashboardData?.['ReDryer']?.delivery || 0 },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
       {dryers.map((dryer, index) => (
-        <DryerCard key={index} dryer={dryer} />
+        <DryerCard
+          key={index}
+          dryer={dryer}
+          isDarkMode={isDarkMode}
+          onCardClick={() => onCardClick({
+            processStageIds: DRYER_STAGE_IDS[dryer.name] || [6, 7, 8, 9, 10],
+            modalTitle: dryer.name,
+            mode: 'dryer',
+          })}
+        />
       ))}
     </div>
   );
 };
 
-const DryerCard = ({ dryer }) => (
-  <div className="
-    bg-white 
-    rounded-xl 
-    border border-blue-100 
-    shadow-sm 
-    hover:shadow-md 
-    transition-all 
-    duration-300
-    p-4
-    flex 
-    items-center 
-    gap-4
-  ">
+const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return '0';
+    return num.toLocaleString();
+  };
 
-    {/* Icon Section */}
-    <div className="
-      w-14 
-      h-14 
-      rounded-lg 
-      bg-blue-50 
-      flex 
-      items-center 
-      justify-center
-      border border-blue-100
-    ">
-      <DryerIcon />
-    </div>
+  return (
+    <div
+      onClick={onCardClick}
+      className={`border-2 rounded-2xl p-4 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl flex items-center gap-4 ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-sky-500/10 to-sky-600/5 border-sky-400/30 hover:shadow-sky-500/20'
+          : 'bg-gradient-to-br from-white to-sky-50 border-sky-200 hover:shadow-sky-200/50'
+      }`}
+    >
 
-    {/* Content */}
-    <div className="flex flex-col flex-1">
+      {/* Icon Section */}
+      <div
+        className={`w-14 h-14 rounded-lg flex items-center justify-center border ${
+          isDarkMode
+            ? 'bg-sky-500/15 border-sky-500/30'
+            : 'bg-sky-50 border-sky-100'
+        }`}
+      >
+        <DryerIcon isDarkMode={isDarkMode} />
+      </div>
 
-      {/* Title */}
-      <h4 className="
-        text-sm 
-        font-semibold 
-        text-gray-600
-        mb-1
-      ">
-        {dryer.name}
-      </h4>
+      {/* Content */}
+      <div className="flex flex-col flex-1">
 
-      {/* Delivery Value */}
-      <div className="flex items-end gap-2">
+        {/* Title */}
+        <h4 className={`text-base font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+          {dryer.name}
+        </h4>
 
-        <span className="
-          text-2xl 
-          font-bold 
-          text-blue-600
-          leading-none
-        ">
-          {dryer.delivery}
-        </span>
+        {/* Delivery Value */}
+        <div className="flex items-end gap-2">
+          <span className={`text-3xl font-bold leading-none ${isDarkMode ? 'text-sky-400' : 'text-sky-600'}`}>
+            {formatNumber(dryer.delivery)}
+          </span>
+          <span className={`text-sm font-medium pb-0.5 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+            Delivery
+          </span>
+        </div>
 
-        <span className="
-          text-xs 
-          text-gray-400 
-          font-medium
-          pb-1
-        ">
-          Delivery
-        </span>
+        {/* Bottom Accent Line */}
+        <div className={`mt-2 h-1 w-10 rounded-full ${isDarkMode ? 'bg-sky-500/30' : 'bg-sky-200'}`} />
 
       </div>
 
-      {/* Bottom Accent Line */}
-      <div className="
-        mt-2 
-        h-1 
-        w-10 
-        bg-blue-200 
-        rounded-full
-      " />
-
     </div>
+  );
+};
 
-  </div>
-);
-
-const DryerIcon = () => (
+const DryerIcon = ({ isDarkMode }) => (
   <div className="w-10 h-10">
     <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
       <rect
@@ -1214,29 +1490,28 @@ const DryerIcon = () => (
         width="52"
         height="54"
         rx="7"
-        fill="#bfdbfe"
-        stroke="#1d4ed8"
+        fill={isDarkMode ? '#0c4a6e' : '#bae6fd'}
+        stroke={isDarkMode ? '#0ea5e9' : '#0284c7'}
         strokeWidth="2.5"
       />
-      <rect x="6" y="6" width="52" height="13" rx="7" fill="#1e3a8a" />
-      <rect x="6" y="13" width="52" height="6" fill="#1e3a8a" />
-      <circle cx="14" cy="12" r="2.5" fill="#60a5fa" />
+      <rect x="6" y="6" width="52" height="13" rx="7" fill={isDarkMode ? '#0c4a6e' : '#0369a1'} />
+      <rect x="6" y="13" width="52" height="6" fill={isDarkMode ? '#0c4a6e' : '#0369a1'} />
+      <circle cx="14" cy="12" r="2.5" fill="#38bdf8" />
       <circle cx="20" cy="12" r="2.5" fill="#34d399" />
-      <rect x="34" y="8" width="18" height="7" rx="3" fill="#1d4ed8" />
-      <circle cx="38" cy="11.5" r="1.2" fill="#93c5fd" />
-      <circle cx="43" cy="11.5" r="1.2" fill="#93c5fd" />
-      <circle cx="48" cy="11.5" r="1.2" fill="#93c5fd" />
-      <circle cx="32" cy="38" r="16" fill="white" stroke="#1d4ed8" strokeWidth="2.5" />
-      <circle cx="32" cy="38" r="11" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5" />
+      <rect x="34" y="8" width="18" height="7" rx="3" fill={isDarkMode ? '#0284c7' : '#075985'} />
+      <circle cx="38" cy="11.5" r="1.2" fill="#7dd3fc" />
+      <circle cx="43" cy="11.5" r="1.2" fill="#7dd3fc" />
+      <circle cx="48" cy="11.5" r="1.2" fill="#7dd3fc" />
+      <circle cx="32" cy="38" r="16" fill={isDarkMode ? '#164e63' : 'white'} stroke={isDarkMode ? '#0ea5e9' : '#0284c7'} strokeWidth="2.5" />
+      <circle cx="32" cy="38" r="11" fill={isDarkMode ? '#0c4a6e' : '#e0f2fe'} stroke={isDarkMode ? '#0ea5e9' : '#0ea5e9'} strokeWidth="1.5" />
       <path
         d="M21 40 Q26.5 35.5 32 40 T43 40 L43 47 A11 11 0 0 1 21 47Z"
-        fill="#3b82f6"
+        fill="#0ea5e9"
         opacity="0.7"
       />
-      <circle cx="32" cy="38" r="3" fill="#1e40af" />
+      <circle cx="32" cy="38" r="3" fill={isDarkMode ? '#7dd3fc' : '#075985'} />
     </svg>
   </div>
 );
 
- 
 export default Dashboard;
