@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (requiredRole && !hasRequiredRole) {
     // Redirect to appropriate dashboard based on role
-    if (hasRole('Admin') || hasRole('Incharge')) {
+    if (hasRole('Admin') || hasRole('Incharge') || hasRole('Planner')) {
       return <Navigate to="/admin/dashboard" replace />;
     } else if (hasRole('User')) {
       return <Navigate to="/user/transactions" replace />;

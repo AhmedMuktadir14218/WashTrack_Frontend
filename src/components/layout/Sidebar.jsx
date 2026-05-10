@@ -532,7 +532,8 @@ import {
   AdminPanelSettings,
   PowerSettingsNew,
   LightMode,
-  DarkMode
+  DarkMode,
+  CalendarMonth
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -541,7 +542,8 @@ const DRAWER_WIDTH = 260;
 const DRAWER_WIDTH_COLLAPSED = 72;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'Incharge'] },
+  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['Admin', 'Incharge','Planner'] },
+  { text: 'Wash Plans', icon: <CalendarMonth />, path: '/plans', roles: ['Admin', 'Incharge','Planner'] },
   { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin'] },
   { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin'] },
   { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },
@@ -570,6 +572,14 @@ const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle, isCollapsed, tog
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Check if current path matches or starts with menu item path
+  const isActivePath = (itemPath) => {
+    if (itemPath === '/plans') {
+      return location.pathname === '/plans' || location.pathname === '/plans/create';
+    }
+    return location.pathname === itemPath;
   };
 
   // Theme Colors
@@ -628,17 +638,11 @@ const Sidebar = ({ drawerWidth, mobileOpen, handleDrawerToggle, isCollapsed, tog
       </Box>
 
       {/* Navigation */}
-      {/* {!isCollapsed && (
-        <Box sx={{ px: 3, pt: 2.5, pb: 1 }}>
-          <Typography variant="caption" sx={{ color: textMuted, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Navigation</Typography>
-        </Box>
-      )} */}
-
       <List sx={{ flexGrow: 1, px: 2, py: 1.5, overflowY: 'auto' }}>
         {menuItems.map((item) => {
           const hasAccess = item.roles.some(role => hasRole(role));
           if (!hasAccess) return null;
-          const isActive = location.pathname === item.path;
+          const isActive = isActivePath(item.path);
 
           return (
             <Tooltip key={item.text} title={item.text} placement="right" disableHoverListener={!isCollapsed} arrow

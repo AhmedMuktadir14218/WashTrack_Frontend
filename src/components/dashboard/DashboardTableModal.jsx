@@ -142,7 +142,7 @@ const DashboardTableModal = ({
   modalTitle = 'Dashboard Details',
   mode = 'process', // 'process' | 'dryer'
 }) => {
-  const { user, isAdmin, isIncharge } = useAuth();
+  const { user, isAdmin, isIncharge, isPlanner } = useAuth();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -177,41 +177,42 @@ const DashboardTableModal = ({
   const [showFilters, setShowFilters] = useState(false);
   const pageSize = 100; // Larger page to get enough raw data for aggregation
 
-  // Get accessible plants based on user assignments
-  const getAccessiblePlants = () => {
-    if (isAdmin() || isIncharge()) {
-      if (user && user.userAssigns) {
-        const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
-        return uniquePlants;
-      }
-      return ['TPL', 'TWL'];
-    }
-    if (user && user.userAssigns) {
-      const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
-      return uniquePlants;
-    }
-    return [];
-  };
+// ============ FIXED FUNCTIONS IN MODAL ============
 
-  // Get accessible units for a specific plant
-  const getAccessibleUnits = (plantId) => {
-    if (isAdmin() || isIncharge()) {
-      if (user && user.userAssigns) {
-        const units = user.userAssigns
-          .filter(assignment => assignment.plantId === plantId)
-          .map(assignment => assignment.unitId);
-        return [...new Set(units)];
-      }
-      return ['Unit 1', 'Unit 5', 'Unit 2', 'Unit 4', 'Unit 3', 'Unit TWL'];
-    }
-    if (user && user.userAssigns) {
-      const units = user.userAssigns
-        .filter(assignment => assignment.plantId === plantId)
-        .map(assignment => assignment.unitId);
-      return [...new Set(units)];
-    }
+// Get accessible plants based on user assignments
+const getAccessiblePlants = () => {
+  // ✅ First priority: User's actual assignments
+  if (user && user.userAssigns && user.userAssigns.length > 0) {
+    const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantName))];
+    return uniquePlants;
+  }
+  
+  // ✅ Normal users with no assignments get nothing
+  if (!isAdmin() && !isIncharge() && !isPlanner()) {
     return [];
-  };
+  }
+  
+  // ✅ Only super admins without assignments get all plants
+  return ['TPL', 'TWL'];
+};
+
+// Get accessible units for a specific plant
+const getAccessibleUnits = (plantId) => {
+  // ✅ First priority: User's actual assignments
+  if (user && user.userAssigns && user.userAssigns.length > 0) {
+    const units = user.userAssigns
+      .filter(assignment => assignment.plantName === plantId) // ✅ Match by plantName
+      .map(assignment => assignment.unitName); // ✅ Return unitName
+    return [...new Set(units)];
+  }
+  
+  // ✅ Fallback for super admins
+  if (isAdmin() || isIncharge() || isPlanner()) {
+    return ['Unit 1', 'Unit 5', 'Unit 2', 'Unit 4', 'Unit 3', 'Unit TWL'];
+  }
+  
+  return [];
+};
 
   const accessiblePlants = getAccessiblePlants();
 

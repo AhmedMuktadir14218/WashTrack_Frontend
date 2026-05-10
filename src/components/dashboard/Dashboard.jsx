@@ -79,7 +79,18 @@ const IconClock = ({ className = '' }) => (
 
 // ============ MAIN DASHBOARD ============
 const Dashboard = ({ isDarkMode }) => {
-  const { user, isAdmin, isIncharge } = useAuth();
+  const { user, isAdmin, isIncharge, isPlanner } = useAuth();
+ useEffect(() => {
+    console.log('========== DASHBOARD DEBUG ==========');
+    console.log('👤 User object:', user);
+    console.log('🎭 User Roles:', user?.roles);
+    console.log('🏭 User Assigns:', user?.userAssigns);
+    console.log('📋 Process Stage Accesses:', user?.processStageAccesses);
+    console.log('✅ isAdmin():', isAdmin());
+    console.log('✅ isIncharge():', isIncharge());
+    console.log('✅ isPlanner():', isPlanner());
+    console.log('=====================================');
+  }, [user]);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -91,40 +102,42 @@ const Dashboard = ({ isDarkMode }) => {
 
   const allUnits = ['Unit 1', 'Unit 5', 'Unit 2', 'Unit 4', 'Unit 3', 'Unit TWL'];
 
-  const getAccessiblePlants = () => {
-    if (isAdmin() || isIncharge()) {
-      if (user && user.userAssigns) {
-        const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
-        return uniquePlants;
-      }
-      return ['TPL', 'TWL'];
-    }
-    if (user && user.userAssigns) {
-      const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantId))];
-      return uniquePlants;
-    }
-    return [];
-  };
+// ============ FIXED FUNCTIONS ============
 
-  const getAccessibleUnits = (plantId) => {
-    if (isAdmin() || isIncharge()) {
-      if (user && user.userAssigns) {
-        const units = user.userAssigns
-          .filter(assignment => assignment.plantId === plantId)
-          .map(assignment => assignment.unitId);
-        return [...new Set(units)];
-      }
-      return plantUnits[plantId] || [];
-    }
-    if (user && user.userAssigns) {
-      const units = user.userAssigns
-        .filter(assignment => assignment.plantId === plantId)
-        .map(assignment => assignment.unitId);
-      return [...new Set(units)];
-    }
+const getAccessiblePlants = () => {
+  // ✅ Check if user exists AND has assignments
+  if (user && user.userAssigns && user.userAssigns.length > 0) {
+    // ✅ Use plantName (not plantId)
+    const uniquePlants = [...new Set(user.userAssigns.map(assignment => assignment.plantName))];
+    return uniquePlants;
+  }
+  
+  // ✅ Only return default plants if truly no restrictions
+  // For normal users with no assignments, return empty
+  if (!isAdmin() && !isIncharge() && !isPlanner()) {
     return [];
-  };
+  }
+  
+  // ✅ Super admin with no specific assignments gets all
+  return ['TPL', 'TWL'];
+};
 
+const getAccessibleUnits = (plantId) => {
+  // ✅ Check if user exists AND has assignments
+  if (user && user.userAssigns && user.userAssigns.length > 0) {
+    const units = user.userAssigns
+      .filter(assignment => assignment.plantName === plantId) // ✅ Match by name
+      .map(assignment => assignment.unitName); // ✅ Return unitName
+    return [...new Set(units)];
+  }
+  
+  // ✅ Fallback to predefined units if no assignments
+  if (plantUnits[plantId]) {
+    return plantUnits[plantId];
+  }
+  
+  return [];
+};
   const accessiblePlants = getAccessiblePlants();
 
   const getDefaultFilters = () => {
@@ -161,7 +174,7 @@ const Dashboard = ({ isDarkMode }) => {
       'Final Wash': { delivery: 0, receive: 0 },
       '1st Dryer': { delivery: 0 },
       '2nd Dryer': { delivery: 0 },
-      'Final Dryer': { delivery: 0 },
+      'Final Wash Dryer': { delivery: 0 },
       'Cool Dryer': { delivery: 0 },
       'ReDryer': { delivery: 0 },
     };
@@ -352,6 +365,7 @@ const Dashboard = ({ isDarkMode }) => {
           accessiblePlants={accessiblePlants}
           isAdmin={isAdmin}
           isIncharge={isIncharge}
+          isPlanner={isPlanner}
           user={user}
         />
 
@@ -439,7 +453,7 @@ const Header = () => (
 );
 
 // ============ FILTER PANEL ============
-const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits, allUnits, getAvailableUnits, accessiblePlants, isAdmin, isIncharge, user }) => (
+const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits, allUnits, getAvailableUnits, accessiblePlants, isAdmin, isIncharge, user, isPlanner }) => (
   <div className="overflow-visible">
     <div
       className={`backdrop-blur-sm border-2 rounded-xl shadow-lg p-3 mt-4 mb-2 ${
@@ -512,17 +526,11 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
                 : 'bg-slate-50 border-slate-200 text-slate-700'
             }`}
           >
-            <option value="">All Plants</option>
-            {(isAdmin || isIncharge) && (!user || !user.userAssigns || user.userAssigns.length === 0) ? (
-              <>
-                <option value="TWL">TWL</option>
-                <option value="TPL">TPL</option>
-              </>
-            ) : (
-              accessiblePlants.map((plant) => (
-                <option key={plant} value={plant}>{plant}</option>
-              ))
-            )}
+           <option value="">All Plants</option>
+  {/* ✅ SIMPLIFIED LOGIC: Just show accessible plants */}
+  {accessiblePlants.map((plant) => (
+    <option key={plant} value={plant}>{plant}</option>
+  ))}
           </select>
         </div>
 
@@ -1404,7 +1412,7 @@ const DryDetailPanel = ({
 const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
   const dryers = [
     { name: '1st Wash Dryer', delivery: dashboardData?.['1st Dryer']?.delivery || 0 },
-    { name: 'Final Wash Dryer', delivery: dashboardData?.['Final Dryer']?.delivery || 0 },
+    { name: 'Final Wash Dryer', delivery: dashboardData?.['Final Wash Dryer']?.delivery || 0 },
     { name: 'Cool Dryer', delivery: dashboardData?.['Cool Dryer']?.delivery || 0 },
     { name: 'Re-Dryer', delivery: dashboardData?.['ReDryer']?.delivery || 0 },
   ];

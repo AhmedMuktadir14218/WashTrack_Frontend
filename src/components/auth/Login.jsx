@@ -49,7 +49,7 @@ const Login = () => {
   // ✅ Redirect after authentication
   useEffect(() => {
     if (isAuthenticated) {
-      if (isAdmin() || hasRole('Incharge')) {
+      if (isAdmin() || hasRole('Incharge') || hasRole('Planner')) {
         navigate('/admin/dashboard');
       } else if (hasRole('User')) {
         navigate('/user/transactions');
@@ -111,7 +111,7 @@ const Login = () => {
     const result = await login(formData);
     
     if (result.success) {
-      if (result.user?.roles?.includes('Admin') || result.user?.roles?.includes('Incharge')) {
+      if (result.user?.roles?.includes('Admin') || result.user?.roles?.includes('Incharge') || result.user?.roles?.includes('Planner')) {
         navigate('/admin/dashboard');
       } else if (result.user?.roles?.includes('User')) {
         navigate('/user/transactions');

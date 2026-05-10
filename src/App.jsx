@@ -19,6 +19,8 @@ import TransactionFilter from './components/transactions/TransactionFilter';
 import WashStatus from './components/transactions/WashStatus';
 import Reports from './components/reports/Reports';
 import UserManagement from './components/users/UserManagement';
+import Plans from './components/Plans/Plans';
+import CreatePlan from './components/Plans/CreatePlan';
 // User Components
 import UserLayout from './components/layout/UserLayout';
 import UserTransactionPage from './components/user/UserTransactionPage';
@@ -87,7 +89,7 @@ const { isDarkMode, toggleTheme } = useThemeMode();
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requiredRole={['Admin', 'Incharge']}>
+          <ProtectedRoute requiredRole={['Admin', 'Incharge','Planner']}>
             <Layout key={location.pathname} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </ProtectedRoute>
         }
@@ -107,6 +109,19 @@ const { isDarkMode, toggleTheme } = useThemeMode();
         <Route path="*" element={<Navigate to="dashboard" replace />} />
         <Route path="users" element={<UserManagement key="users" />} />
         <Route path="machine-track" element={<MachineTrack key="machine-track" />} />
+      </Route>
+
+      {/* Plans Routes (nested) */}
+      <Route
+        path="/plans"
+        element={
+          <ProtectedRoute requiredRole={['Admin', 'Incharge','Planner']}>
+            <Layout key={location.pathname} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Plans key="plans" />} />
+        <Route path="create" element={<CreatePlan key="create-plan" />} />
       </Route>
 
       {/* User Routes */}
@@ -174,4 +189,4 @@ function App() {
   );
 }
 
-export default App;  
+export default App;

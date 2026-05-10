@@ -17,9 +17,9 @@ import {
   Card,
   CardHeader,
   CardContent,
-  Dialog,
+  Tooltip,
 } from '@mui/material';
-import { Edit, Delete, Add, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Edit, Delete, Add, Visibility, VisibilityOff, Business, Domain } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import { userApi } from '../../api/userApi';
 import CreateUserModal from './CreateUserModal';
@@ -49,7 +49,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const response = await userApi.getAllUsers(pageNumber + 1, pageSize);
-      
+
       if (response.data.success) {
         setUsers(response.data.data.users);
         setTotalCount(response.data.data.totalCount);
@@ -63,34 +63,29 @@ const UserManagement = () => {
     }
   };
 
-  // Handle page change
   const handleChangePage = (event, newPage) => {
     setPageNumber(newPage);
   };
 
-  // Handle page size change
   const handleChangeRowsPerPage = (event) => {
     setPageSize(parseInt(event.target.value, 10));
     setPageNumber(0);
   };
 
-  // Handle edit user
   const handleEditUser = (user) => {
     setSelectedUser(user);
     setEditModalOpen(true);
   };
 
-  // Handle delete user
   const handleDeleteUser = (user) => {
     setSelectedUser(user);
     setDeleteModalOpen(true);
   };
 
-  // Confirm delete
   const handleConfirmDelete = async () => {
     try {
       const response = await userApi.deleteUser(selectedUser.id);
-      
+
       if (response.data.success) {
         toast.success('User deleted successfully');
         setDeleteModalOpen(false);
@@ -103,14 +98,12 @@ const UserManagement = () => {
     }
   };
 
-  // Handle create user success
   const handleUserCreated = () => {
     setCreateModalOpen(false);
     setPageNumber(0);
     fetchUsers();
   };
 
-  // Handle edit user success
   const handleUserUpdated = () => {
     setEditModalOpen(false);
     setSelectedUser(null);
@@ -144,19 +137,19 @@ const UserManagement = () => {
             <>
               <TableContainer component={Paper}>
                 <Table>
-                  <TableHead sx={{ bgcolor: 'primary.light' }}>
+                  <TableHead sx={{ bgcolor: 'primary.main' }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
                         Username
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
-                        Email
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
                         Full Name
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
                         Roles
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
+                        Plant / Unit
                       </TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>
                         Status
@@ -180,20 +173,49 @@ const UserManagement = () => {
                           <TableCell sx={{ fontWeight: 500 }}>
                             {user.username}
                           </TableCell>
-                          <TableCell>{user.email}</TableCell>
                           <TableCell>{user.fullName}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                               {user.roles.map((role) => (
-                                <Chip
-                                  key={role}
-                                  label={role}
-                                  size="small"
-                                  color={role === 'Admin' ? 'error' : 'primary'}
-                                  variant="outlined"
-                                />
+                                 <Chip
+        key={role}
+        label={role}
+        size="small"
+        color={
+          role === 'Admin'
+            ? 'error'
+            : role === 'Incharge'
+            ? 'warning'
+            : role === 'Planner'
+            ? 'secondary'
+            : 'primary'
+        }
+        variant="outlined"
+      />
                               ))}
                             </Box>
+                          </TableCell>
+                          <TableCell>
+                            {user.userAssigns && user.userAssigns.length > 0 ? (
+                              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                {user.userAssigns.map((assign, idx) => (
+                                  <Tooltip
+                                    key={idx}
+                                    title={`${assign.plantName} - ${assign.unitName}`}
+                                  >
+                                    <Chip
+                                      icon={<Domain fontSize="small" />}
+                                      label={assign.unitName}
+                                      size="small"
+                                      color="secondary"
+                                      variant="outlined"
+                                    />
+                                  </Tooltip>
+                                ))}
+                              </Box>
+                            ) : (
+                              <span style={{ color: '#999', fontSize: 13 }}>—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Chip
