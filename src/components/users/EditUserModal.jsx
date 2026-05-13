@@ -53,6 +53,7 @@ const UNITS_BY_PLANT = {
     { id: 2, name: 'Unit 2' },
     { id: 3, name: 'Unit 3' },
     { id: 4, name: 'Unit 4' },
+    { id: 7, name: 'Unit 5' },
     { id: 5, name: 'TPL G' },
   ],
   2: [{ id: 6, name: 'Unit TWL' }],

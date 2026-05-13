@@ -1,3 +1,4 @@
+// D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\Plans\Plans.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { plansApi } from '../../api/plansApi';
@@ -6,6 +7,7 @@ const Plans = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [plantUnitList, setPlantUnitList] = useState([]);
   const [pagination, setPagination] = useState({
     pageNumber: 1,
@@ -18,6 +20,7 @@ const Plans = () => {
     plantId: '',
     unitId: '',
     shift: '',
+    processStageId: '', // ✅ Added processStageId filter
     search: ''
   });
 
@@ -50,12 +53,18 @@ const Plans = () => {
       if (filters.plantId) params.PlantId = parseInt(filters.plantId);
       if (filters.unitId) params.UnitId = parseInt(filters.unitId);
       if (filters.shift) params.Shift = parseInt(filters.shift);
+      if (filters.processStageId) params.ProcessStageId = parseInt(filters.processStageId); // ✅ Send ProcessStageId
       if (filters.search) params.Search = filters.search;
 
       const response = await plansApi.getWashPlans(params);
 
       if (response.data?.success) {
-        setPlans(response.data.data.records || []);
+        const rawRecords = response.data.data.records || [];
+        
+        // Keep only rows where finalTargetQty is strictly greater than 0
+        const filteredRecords = rawRecords.filter(plan => plan.finalTargetQty > 0);
+
+        setPlans(filteredRecords);
         setPagination(prev => ({
           ...prev,
           totalRecords: response.data.data.totalRecords || 0
@@ -65,6 +74,85 @@ const Plans = () => {
       console.error('Error fetching plans:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setExporting(true);
+      
+      const params = {
+        PageNumber: 1,
+        PageSize: pagination.totalRecords > 0 ? pagination.totalRecords : 10000, 
+      };
+      
+      if (filters.fromDate) params.FromDate = filters.fromDate;
+      if (filters.toDate) params.ToDate = filters.toDate;
+      if (filters.plantId) params.PlantId = parseInt(filters.plantId);
+      if (filters.unitId) params.UnitId = parseInt(filters.unitId);
+      if (filters.shift) params.Shift = parseInt(filters.shift);
+      if (filters.processStageId) params.ProcessStageId = parseInt(filters.processStageId); // ✅ Send ProcessStageId
+      if (filters.search) params.Search = filters.search;
+
+      const response = await plansApi.getWashPlans(params);
+
+      if (response.data?.success) {
+        const rawRecords = response.data.data.records || [];
+        const exportData = rawRecords.filter(plan => plan.finalTargetQty > 0);
+
+        if (exportData.length === 0) {
+          alert('No data available to export.');
+          return;
+        }
+
+        // ✅ Updated CSV Headers to match requested order
+        const headers = [
+          'Plan Date', 'Unit', 'Work Order', 'Buyer', 'Style', 'Color', 'PO',
+          'Shift', 'Process Stage', 'Machines QTY', 'Order Qty', 'Wash Balance',
+          'Base Target', 'Final Target'
+        ];
+
+        const csvRows = [headers.join(',')];
+
+        exportData.forEach(plan => {
+          const buyer = plan.buyer || plan.buyerDepartment || '';
+          const machineQty = plan.machines ? plan.machines.length : 0; // ✅ Machine QTY
+          
+          const row = [
+            plan.planDate || '',
+            `"${(plan.unitName || '').replace(/"/g, '""')}"`,
+            plan.workOrderNo || '',
+            `"${buyer.replace(/"/g, '""')}"`,
+            `"${(plan.styleName || '').replace(/"/g, '""')}"`,
+            `"${(plan.color || '').replace(/"/g, '""')}"`,
+            `"${(plan.washType || '').replace(/"/g, '""')}"`,
+            plan.shift === 1 ? 'Day' : 'Night',
+            plan.processStageName || '',
+            machineQty,
+            plan.orderQuantity || 0,
+            plan.washBalance || 0,
+            plan.baseTargetQty || 0,
+            plan.finalTargetQty || 0
+          ];
+          
+          csvRows.push(row.join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Wash_Plans_Export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -88,6 +176,7 @@ const Plans = () => {
       plantId: '',
       unitId: '',
       shift: '',
+      processStageId: '',
       search: ''
     });
     setPagination(prev => ({ ...prev, pageNumber: 1 }));
@@ -101,27 +190,6 @@ const Plans = () => {
   const filteredUnits = plantUnitList.filter(p => p.plantId === parseInt(filters.plantId));
   const totalPages = Math.ceil(pagination.totalRecords / pagination.pageSize);
 
-  const getMachineDisplay = (plan) => {
-    if (plan.machines && Array.isArray(plan.machines) && plan.machines.length > 0) {
-      return plan.machines.map(m => m.machineCode || m.code || m).join(', ');
-    }
-    return '-';
-  };
-
-  if (loading && plans.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex items-center gap-3 text-gray-500">
-          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading plans...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
       {/* Header */}
@@ -130,20 +198,42 @@ const Plans = () => {
           <h1 className="text-2xl font-bold text-gray-800">Wash Plans</h1>
           <p className="text-sm text-gray-500 mt-1">View and manage wash production plans</p>
         </div>
-        <button
-          onClick={() => navigate('/plans/create')}
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 shadow-sm"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Create Plan
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            disabled={exporting || pagination.totalRecords === 0}
+            className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 shadow-sm"
+          >
+            {exporting ? (
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            )}
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+
+          <button
+            onClick={() => navigate('/plans/create')}
+            className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 shadow-sm"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Create Plan
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Adjusted grid to handle 7 items smoothly */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">From Date</label>
             <input
@@ -174,6 +264,24 @@ const Plans = () => {
               <option value="2">Night</option>
             </select>
           </div>
+          
+          {/* ✅ New Process Stage Filter */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Process Stage</label>
+            <select
+              value={filters.processStageId}
+              onChange={(e) => handleFilterChange('processStageId', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Stages</option>
+              <option value="1">1st Dry</option>
+              <option value="2">Unwash</option>
+              <option value="3">2nd Dry</option>
+              <option value="4">1st Wash</option>
+              <option value="5">Final Wash</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Plant</label>
             <select
@@ -201,7 +309,7 @@ const Plans = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Search</label>
             <div className="flex gap-1">
               <input
@@ -236,16 +344,18 @@ const Plans = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
+              {/* ✅ Updated Headers */}
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Plan Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Work Order</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Style</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Buyer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Style</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Color</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wash Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Process Stage</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Machines</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">PO</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Shift</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Process Stage</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Machines QTY</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wash Balance</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Base Target</th>
@@ -276,17 +386,21 @@ const Plans = () => {
               ) : (
                 plans.map((plan) => (
                   <tr key={`${plan.id || plan.workOrderId}-${plan.processStageId}`} className="hover:bg-gray-50 transition-colors">
+                    {/* ✅ Updated Table Data Mapping */}
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
                       {plan.planDate}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {plan.unitName}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 font-medium">
                       {plan.workOrderNo}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 max-w-[140px] truncate" title={plan.styleName}>
-                      {plan.styleName}
-                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-[100px] truncate" title={plan.buyer || plan.buyerDepartment}>
                       {plan.buyer || plan.buyerDepartment} 
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 max-w-[140px] truncate" title={plan.styleName}>
+                      {plan.styleName}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 max-w-[100px] truncate" title={plan.color}>
                       {plan.color}
@@ -295,17 +409,17 @@ const Plans = () => {
                       {plan.washType}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${plan.shift === 1 ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {plan.shift === 1 ? 'Day' : 'Night'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                         {plan.processStageName}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 max-w-[200px] truncate" title={getMachineDisplay(plan)}>
-                      {getMachineDisplay(plan)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${plan.shift === 1 ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                        {plan.shift === 1 ? 'Day' : 'Night'}
-                      </span>
+                    <td className="px-4 py-3 text-center whitespace-nowrap text-sm font-bold text-gray-700">
+                      {plan.machines ? plan.machines.length : 0}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {plan.orderQuantity?.toLocaleString()}
@@ -377,6 +491,10 @@ const Plans = () => {
 };
 
 export default Plans;
+
+
+
+
 
 
 // GET

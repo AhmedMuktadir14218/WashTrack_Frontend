@@ -768,7 +768,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
             <span
               className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
-              {card.delivery}
+              {card.delivery?.toLocaleString()}
             </span>
           </div>
         </div>
@@ -782,7 +782,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
                 isDarkMode ? 'text-slate-200' : 'text-slate-800'
               }`}
             >
-              {card.mainValue}
+              {card.mainValue?.toLocaleString()}
             </span>
             <span
               className={`text-xs font-bold uppercase mt-0.5 block leading-tight ${
