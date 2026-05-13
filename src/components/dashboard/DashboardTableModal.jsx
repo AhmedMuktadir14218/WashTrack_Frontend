@@ -13,7 +13,7 @@ export const PROCESS_STAGE_MAP = {
   5: 'Final Wash',
   6: '1st Dryer',
   7: '2nd Dryer',
-  8: 'Final Dryer',
+  8: 'Final Wash Dryer',
   9: 'Cool Dryer',
   10: 'ReDryer',
 };
@@ -137,21 +137,42 @@ const DashboardTableModal = ({
   isOpen,
   onClose,
   isDarkMode,
-  filters = {}, // Directly use Dashboard's filters
-  onFilterChange = null, // Optional: callback to update Dashboard's filters
+  filters = {},
+  onFilterChange = null,
   modalTitle = 'Dashboard Details',
-  mode = 'process', // 'process' | 'dryer'
+  mode = 'process',
+  processStageIds = null,
 }) => {
   const { user, isAdmin, isIncharge, isPlanner } = useAuth();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  // Fixed modal title based on mode
-  const displayTitle = mode === 'dryer' ? 'Dryer-wise Details' : 'Process wise Details';
+  const displayTitle = modalTitle || (mode === 'dryer' ? 'Dryer-wise Details' : 'Process wise Details');
 
-  // Determine columns and stage IDs based on mode
-  const columns = mode === 'dryer' ? DRYER_COLUMNS : SUMMARY_COLUMNS;
-  const allStageIds = mode === 'dryer' ? DRYER_STAGE_IDS : WASH_STAGE_IDS;
+  const activeStageIds = processStageIds || (mode === 'dryer' ? DRYER_STAGE_IDS : WASH_STAGE_IDS);
+
+  const activeStageColumns = activeStageIds.map(id => ({
+    key: `stage_${id}`,
+    label: PROCESS_STAGE_MAP[id],
+    align: 'text-right',
+    isStage: true,
+  }));
+
+  const baseColumns = [
+    { key: 'factory', label: 'Factory', width: 'min-w-[80px]' },
+    { key: 'unit', label: 'Unit', width: 'min-w-[90px]' },
+    { key: 'workOrderNo', label: 'Work Order No', width: 'min-w-[120px]' },
+    { key: 'buyerDepartment', label: 'Buyer', width: 'min-w-[150px]' },
+    { key: 'styleName', label: 'Style Name', width: 'min-w-[180px]' },
+    { key: 'fastReactNo', label: 'FastReact No', width: 'min-w-[220px]' },
+    { key: 'orderQuantity', label: 'Order Qty', width: 'min-w-[90px]', align: 'text-right' },
+    { key: 'washTargetDate', label: 'Wash Target Date', width: 'min-w-[120px]' },
+    { key: 'totalWashReceived', label: mode === 'dryer' ? 'Total Revd Qty' : 'Total Wash Received', width: mode === 'dryer' ? 'min-w-[120px]' : 'min-w-[130px]', align: 'text-right' },
+    { key: 'totalWashDelivery', label: mode === 'dryer' ? 'Total Dlv' : 'Total Wash Delivery', width: mode === 'dryer' ? 'min-w-[100px]' : 'min-w-[130px]', align: 'text-right' },
+    ...activeStageColumns,
+  ];
+
+  const columns = baseColumns;
 
   // Local filter state for modal-specific filters
   const [localFilters, setLocalFilters] = useState({
@@ -248,12 +269,11 @@ const getAccessibleUnits = (plantId) => {
           totalWashDelivery: row.totalWashDelivery,
         };
         // Initialize all stage columns to 0
-        allStageIds.forEach(id => {
+        activeStageIds.forEach(id => {
           groups[key][`stage_${id}`] = 0;
         });
       }
 
-      // Sum quantity for the matching stage
       const stageId = STAGE_NAME_TO_ID[row.stageName];
       if (stageId !== undefined && groups[key][`stage_${stageId}`] !== undefined) {
         groups[key][`stage_${stageId}`] += row.quantity || 0;
@@ -261,7 +281,7 @@ const getAccessibleUnits = (plantId) => {
     });
 
     return Object.values(groups);
-  }, [rawData, combinedFilters.transactionType, allStageIds]);
+  }, [rawData, combinedFilters.transactionType, activeStageIds]);
 
   // Reset page when filters change (server-side filters)
   useEffect(() => {
@@ -277,7 +297,7 @@ const getAccessibleUnits = (plantId) => {
       toDate: combinedFilters.toDate,
       page: currentPage,
       pageSize: pageSize,
-      processStageIds: allStageIds,
+      processStageIds: activeStageIds,
     };
 
     if (combinedFilters.factory) {
@@ -308,7 +328,7 @@ const getAccessibleUnits = (plantId) => {
     } finally {
       setLoading(false);
     }
-  }, [combinedFilters.fromDate, combinedFilters.toDate, combinedFilters.factory, combinedFilters.unit, combinedFilters.shift, combinedFilters.search, combinedFilters.transactionType, currentPage, allStageIds]);
+  }, [combinedFilters.fromDate, combinedFilters.toDate, combinedFilters.factory, combinedFilters.unit, combinedFilters.shift, combinedFilters.search, combinedFilters.transactionType, currentPage, activeStageIds]);
 
   const handleResetFilters = () => {
     setLocalFilters({
