@@ -174,7 +174,7 @@ const getAccessibleUnits = (plantId) => {
       'Final Wash': { delivery: 0, receive: 0 },
       '1st Dryer': { delivery: 0 },
       '2nd Dryer': { delivery: 0 },
-      'Final Wash Dryer': { delivery: 0 },
+      'Final Dryer': { delivery: 0 },
       'Cool Dryer': { delivery: 0 },
       'ReDryer': { delivery: 0 },
     };
@@ -618,9 +618,10 @@ const PROCESS_STAGE_IDS = {
 
 const DRYER_STAGE_IDS = {
   '1st Wash Dryer': [6],
-  'Final Wash Dryer': [8],
+  '2nd Dryer': [7],
+  'Final Dryer': [8],
   'Cool Dryer': [9],
-  'Re-Dryer': [10],
+  'ReDryer': [10],
 };
 
 const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
@@ -637,7 +638,8 @@ const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
       title: 'UnWash Godown',
       type: 'blue',
       icon: 'home',
-      mainValue: dashboardData?.['Unwash']?.delivery || 0,
+      // mainValue: dashboardData?.['Unwash']?.delivery || 0,
+      delivery: dashboardData?.['Unwash']?.delivery || 0,
       showChart: true,
     },
     {
@@ -775,27 +777,44 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
       )}
 
       {card.showChart && (
-        <div className="flex items-end justify-between gap-2">
+        <div className="flex items-center justify-between">
+          <WashIcon2 />
           <div className="text-center">
-            <span
-              className={`text-3xl font-black block leading-none ${
-                isDarkMode ? 'text-slate-200' : 'text-slate-800'
-              }`}
-            >
-              {card.mainValue?.toLocaleString()}
-            </span>
-            <span
-              className={`text-xs font-bold uppercase mt-0.5 block leading-tight ${
+            <p
+              className={`text-xs font-bold uppercase tracking-wider mb-0 ${
                 isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}
+            > 
+               Delivery
+            </p>
+            <span
+              className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
-              Unwash
-              <br />
-              Delivery
+              {card.delivery?.toLocaleString()}
             </span>
           </div>
-          <MiniBarChart isDarkMode={isDarkMode} />
         </div>
+        // <div className="flex items-end justify-between gap-2">
+        //   <div className="text-center">
+        //     <span
+        //       className={`text-3xl font-black block leading-none ${
+        //         isDarkMode ? 'text-slate-200' : 'text-slate-800'
+        //       }`}
+        //     >
+        //       {card.delivery?.toLocaleString()}
+        //     </span>
+        //     <span
+        //       className={`text-xs font-bold uppercase mt-0.5 block leading-tight ${
+        //         isDarkMode ? 'text-slate-400' : 'text-slate-500'
+        //       }`}
+        //     >
+        //       Unwash
+        //       <br />
+        //       Delivery
+        //     </span>
+        //   </div>
+        //   <MiniBarChart isDarkMode={isDarkMode} />
+        // </div>
       )}
     </div>
   );
@@ -822,11 +841,11 @@ const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => {
         >
           {formatNumber(value)}
         </span>
-        {trend === 'up' ? (
+        {/* {trend === 'up' ? (
           <IconTrendingUp className={`w-3 h-3 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
         ) : (
           <IconTrendingDown className={`w-3 h-3 ${isGreen ? 'text-green-500' : 'text-orange-500'}`} />
-        )}
+        )} */}
       </div>
     </div>
   );
@@ -854,23 +873,34 @@ const WashIcon = () => (
       <div
         key={i}
         style={{ width: size, height: size }}
-        className="rounded-full bg-cyan-100 border-[1.5px] border-cyan-600"
+        className="rounded-full bg-cyan-300 border-[1.5px] border-cyan-600"
+      />
+    ))}
+  </div>
+);
+const WashIcon2 = () => (
+  <div className="flex gap-1">
+    {[13, 9, 6, 4].map((size, i) => (
+      <div
+        key={i}
+        style={{ width: size, height: size }}
+        className="rounded-full bg-gray-300 border-[1.5px] border-gray-600"
       />
     ))}
   </div>
 );
 
 const MiniBarChart = ({ isDarkMode }) => {
-  const bars = [
-    { value: 900, height: '55%', active: false, label: 'Rec' },
-    { value: 950, height: '70%', active: false, label: 'Nov' },
-    { value: 950, height: '70%', active: true, label: 'Rec' },
-    { value: 980, height: '90%', active: true, highlight: true, label: 'Dec' },
-  ];
+  // const bars = [
+  //   { value: 900, height: '55%', active: false, label: 'Rec' },
+  //   { value: 950, height: '70%', active: false, label: 'Nov' },
+  //   { value: 950, height: '70%', active: true, label: 'Rec' },
+  //   { value: 980, height: '90%', active: true, highlight: true, label: 'Dec' },
+  // ];
 
   return (
     <div className="flex items-end gap-0.5 h-10">
-      {bars.map((bar, i) => {
+      {/* {bars.map((bar, i) => {
         const barColor = bar.highlight
           ? 'bg-blue-600'
           : bar.active
@@ -896,7 +926,7 @@ const MiniBarChart = ({ isDarkMode }) => {
             <span className={`text-[9px] font-semibold ${textColor}`}>{bar.label}</span>
           </div>
         );
-      })}
+      })} */}
     </div>
   );
 };
@@ -1412,13 +1442,14 @@ const DryDetailPanel = ({
 const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
   const dryers = [
     { name: '1st Wash Dryer', delivery: dashboardData?.['1st Dryer']?.delivery || 0 },
-    { name: 'Final Wash Dryer', delivery: dashboardData?.['Final Wash Dryer']?.delivery || 0 },
+    { name: '2nd Dryer', delivery: dashboardData?.['2nd Dryer']?.delivery || 0 },
+    { name: 'Final Dryer', delivery: dashboardData?.['Final Dryer']?.delivery || 0 },
     { name: 'Cool Dryer', delivery: dashboardData?.['Cool Dryer']?.delivery || 0 },
-    { name: 'Re-Dryer', delivery: dashboardData?.['ReDryer']?.delivery || 0 },
+    { name: 'ReDryer', delivery: dashboardData?.['ReDryer']?.delivery || 0 },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
       {dryers.map((dryer, index) => (
         <DryerCard
           key={index}

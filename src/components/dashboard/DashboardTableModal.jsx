@@ -13,7 +13,7 @@ export const PROCESS_STAGE_MAP = {
   5: 'Final Wash',
   6: '1st Dryer',
   7: '2nd Dryer',
-  8: 'Final Wash Dryer',
+  8: 'Final Dryer',
   9: 'Cool Dryer',
   10: 'ReDryer',
 };
@@ -151,12 +151,17 @@ const DashboardTableModal = ({
 
   const activeStageIds = processStageIds || (mode === 'dryer' ? DRYER_STAGE_IDS : WASH_STAGE_IDS);
 
-  const activeStageColumns = activeStageIds.map(id => ({
-    key: `stage_${id}`,
-    label: PROCESS_STAGE_MAP[id],
-    align: 'text-right',
-    isStage: true,
-  }));
+  const activeStageColumns = mode === 'process'
+    ? activeStageIds.flatMap(id => [
+        { key: `stage_${id}_RCV`, label: `${PROCESS_STAGE_MAP[id]} RCV`, align: 'text-right', isStage: true },
+        { key: `stage_${id}_DLV`, label: `${PROCESS_STAGE_MAP[id]} DLV`, align: 'text-right', isStage: true },
+      ])
+    : activeStageIds.map(id => ({
+        key: `stage_${id}`,
+        label: PROCESS_STAGE_MAP[id],
+        align: 'text-right',
+        isStage: true,
+      }));
 
   const baseColumns = [
     { key: 'factory', label: 'Factory', width: 'min-w-[80px]' },
@@ -250,8 +255,7 @@ const getAccessibleUnits = (plantId) => {
     const groups = {};
 
     rawData.forEach(row => {
-      // Client-side filter by transactionType (Receive/Delivery)
-      if (combinedFilters.transactionType && row.transactionType !== combinedFilters.transactionType) return;
+      if (mode === 'dryer' && combinedFilters.transactionType && row.transactionType !== combinedFilters.transactionType) return;
 
       const key = `${row.factory}|${row.unit}|${row.workOrderNo}|${row.buyerDepartment}|${row.styleName}|${row.fastReactNo}`;
 
@@ -268,20 +272,36 @@ const getAccessibleUnits = (plantId) => {
           totalWashReceived: row.totalWashReceived,
           totalWashDelivery: row.totalWashDelivery,
         };
-        // Initialize all stage columns to 0
-        activeStageIds.forEach(id => {
-          groups[key][`stage_${id}`] = 0;
-        });
+        if (mode === 'process') {
+          activeStageIds.forEach(id => {
+            groups[key][`stage_${id}_RCV`] = 0;
+            groups[key][`stage_${id}_DLV`] = 0;
+          });
+        } else {
+          activeStageIds.forEach(id => {
+            groups[key][`stage_${id}`] = 0;
+          });
+        }
       }
 
       const stageId = STAGE_NAME_TO_ID[row.stageName];
-      if (stageId !== undefined && groups[key][`stage_${stageId}`] !== undefined) {
-        groups[key][`stage_${stageId}`] += row.quantity || 0;
+      if (stageId !== undefined) {
+        if (mode === 'process') {
+          if (row.transactionType === 'Receive' && groups[key][`stage_${stageId}_RCV`] !== undefined) {
+            groups[key][`stage_${stageId}_RCV`] += row.quantity || 0;
+          } else if (row.transactionType === 'Delivery' && groups[key][`stage_${stageId}_DLV`] !== undefined) {
+            groups[key][`stage_${stageId}_DLV`] += row.quantity || 0;
+          }
+        } else {
+          if (groups[key][`stage_${stageId}`] !== undefined) {
+            groups[key][`stage_${stageId}`] += row.quantity || 0;
+          }
+        }
       }
     });
 
     return Object.values(groups);
-  }, [rawData, combinedFilters.transactionType, activeStageIds]);
+  }, [rawData, combinedFilters.transactionType, activeStageIds, mode]);
 
   // Reset page when filters change (server-side filters)
   useEffect(() => {
@@ -497,12 +517,7 @@ const getAccessibleUnits = (plantId) => {
               <FilterInput label="Shift" type="select" value={combinedFilters.shift} onChange={(v) => handleFilterChange('shift', v)} isDarkMode={isDarkMode}
                 options={[{ value: '', label: 'All Shifts' }, { value: '1', label: 'Day' }, { value: '2', label: 'Night' }]}
               />
-              {/* Receive / Delivery Filter - only for Process (Summary) mode */}
-              {mode === 'process' && (
-                <FilterInput label="Receive / Delivery" type="select" value={combinedFilters.transactionType} onChange={(v) => handleFilterChange('transactionType', v)} isDarkMode={isDarkMode}
-                  options={[{ value: '', label: 'All Types' }, { value: 'Receive', label: 'Receive' }, { value: 'Delivery', label: 'Delivery' }]}
-                />
-              )}
+
             </div>
           )}
         </div>
