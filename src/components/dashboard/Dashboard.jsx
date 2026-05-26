@@ -1462,6 +1462,8 @@ import { dashboardApi } from '../../api/dashboardApi';
 import DashboardTableModal from './DashboardTableModal';
 import { useAuth } from '../../hooks/useAuth';
 
+const AUTO_REFRESH_INTERVAL_MS = 1 * 60 * 1000;
+
 // ============ CUSTOM SVG ICONS ============
 const IconFilter = ({ className = '' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1619,6 +1621,7 @@ const getAccessibleUnits = (plantId) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState({ processStageIds: [], modalTitle: '', mode: 'process' });
 
+  const [dhuLoading, setDhuLoading] = useState(false);
   const [dhuData, setDhuData] = useState({
     drySummary: [],
     wetSummary: [],
@@ -1666,13 +1669,23 @@ const getAccessibleUnits = (plantId) => {
     return aggregated;
   };
 
-  const fetchDashboardData = async () => {
+  const getSummaryRows = (response) => {
+    if (!response?.success) {
+      throw new Error(response?.message || 'Failed to fetch dashboard summary');
+    }
+
+    return Array.isArray(response.data) ? response.data : [];
+  };
+
+  const fetchDashboardData = async ({ showLoading = true } = {}) => {
     if (!filters.fromDate || !filters.toDate) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    if (showLoading) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       let allData = [];
@@ -1687,9 +1700,7 @@ const getAccessibleUnits = (plantId) => {
             shift: filters.shift ? Number(filters.shift) : undefined,
           };
           const response = await dashboardApi.getDashboardSummary(payload);
-          if (response.success && response.data) {
-            allData = response.data;
-          }
+          allData = getSummaryRows(response);
         } else {
           const accessibleUnitsForPlant = getAccessibleUnits(filters.plant);
           
@@ -1703,7 +1714,7 @@ const getAccessibleUnits = (plantId) => {
                 shift: filters.shift ? Number(filters.shift) : undefined,
               };
               const response = await dashboardApi.getDashboardSummary(payload);
-              return response.success && response.data ? response.data : [];
+              return getSummaryRows(response);
             });
             
             const results = await Promise.all(promises);
@@ -1716,9 +1727,7 @@ const getAccessibleUnits = (plantId) => {
               shift: filters.shift ? Number(filters.shift) : undefined,
             };
             const response = await dashboardApi.getDashboardSummary(payload);
-            if (response.success && response.data) {
-              allData = response.data;
-            }
+            allData = getSummaryRows(response);
           }
         }
       } else {
@@ -1737,7 +1746,7 @@ const getAccessibleUnits = (plantId) => {
                 shift: filters.shift ? Number(filters.shift) : undefined,
               };
               const response = await dashboardApi.getDashboardSummary(payload);
-              return response.success && response.data ? response.data : [];
+              return getSummaryRows(response);
             });
             
             const unitResults = await Promise.all(unitPromises);
@@ -1750,7 +1759,7 @@ const getAccessibleUnits = (plantId) => {
               shift: filters.shift ? Number(filters.shift) : undefined,
             };
             const response = await dashboardApi.getDashboardSummary(payload);
-            return response.success && response.data ? response.data : [];
+            return getSummaryRows(response);
           }
         });
 
@@ -1758,12 +1767,20 @@ const getAccessibleUnits = (plantId) => {
         allData = results.flat();
       }
 
+      if (!showLoading && allData.length === 0) {
+        return;
+      }
+
       setDashboardData(processDashboardData(allData));
     } catch (err) {
-      setError(err.message || 'Failed to fetch dashboard data');
+      if (showLoading) {
+        setError(err.message || 'Failed to fetch dashboard data');
+      }
       console.error('Dashboard data fetch error:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -1784,16 +1801,21 @@ const getAccessibleUnits = (plantId) => {
     return params;
   };
 
-  const fetchDHUData = async () => {
+  const fetchDHUData = async ({ showLoading = true } = {}) => {
     if (!filters.fromDate) return;
+    if (showLoading) {
+      setDhuLoading(true);
+    }
     try {
       const baseParams = buildDhuParams();
+      const dryParams = { ...baseParams };
+      delete dryParams.unitIds;
 
       const [drySummary, wetSummary, dryIssues1, dryIssues3, wetIssues2, wetIssues4] = await Promise.all([
-        dashboardApi.getDryProcessSummary(baseParams),
+        dashboardApi.getDryProcessSummary(dryParams),
         dashboardApi.getWetProcessSummary(baseParams),
-        dashboardApi.getTopIssues({ ...baseParams, processModuleIds: [1] }),
-        dashboardApi.getTopIssues({ ...baseParams, processModuleIds: [3] }),
+        dashboardApi.getTopIssues({ ...dryParams, processModuleIds: [1] }),
+        dashboardApi.getTopIssues({ ...dryParams, processModuleIds: [3] }),
         dashboardApi.getWetTopIssues({ ...baseParams, processModuleIds: [2] }),
         dashboardApi.getWetTopIssues({ ...baseParams, processModuleIds: [4] }),
       ]);
@@ -1808,6 +1830,10 @@ const getAccessibleUnits = (plantId) => {
       });
     } catch (err) {
       console.error('DHU data fetch error:', err);
+    } finally {
+      if (showLoading) {
+        setDhuLoading(false);
+      }
     }
   };
 
@@ -1910,9 +1936,36 @@ const getAccessibleUnits = (plantId) => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchDHUData();
-  }, [filters]);
+    if (!user) {
+      return;
+    }
+
+    const refreshDashboard = (options) => {
+      fetchDashboardData(options);
+      fetchDHUData(options);
+    };
+
+    refreshDashboard();
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboard({ showLoading: false });
+      }
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboard({ showLoading: false });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [filters, user]);
 
   const formatNumber = (num) => {
     if (num === null || num === undefined) return '0';
@@ -2003,11 +2056,15 @@ const getAccessibleUnits = (plantId) => {
 
 
         {/* DHU Summary */}
-        {!loading && !error && (
+        {!error && (
           <SectionLabel title="DHU Summary" color="blue" isDarkMode={isDarkMode} />
         )}
 
-        {!loading && !error && (
+        {dhuLoading && !error && (
+          <DHUOverviewGridSkeleton isDarkMode={isDarkMode} />
+        )}
+
+        {!dhuLoading && !error && (
           <DHUOverviewGrid isDarkMode={isDarkMode} getSectionDHU={getSectionDHU} />
         )}
 
@@ -2197,21 +2254,6 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
 
       </div>
 
-      {/* <div className="flex justify-end mt-3 gap-2">
-        <button
-          onClick={onReset}
-          className={`px-4 py-2 rounded-lg border-2 text-xs font-bold transition cursor-pointer ${
-            isDarkMode
-              ? 'border-slate-600 text-slate-400 hover:bg-slate-700'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          Reset
-        </button>
-        <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 cursor-pointer">
-          Apply Filter
-        </button>
-      </div> */}
     </div>
   </div>
 );
@@ -2572,7 +2614,105 @@ const SectionLabel = ({ title, color, isDarkMode }) => {
   );
 };
 
- 
+// ============ DHU SKELETON ============
+const PulseBlock = ({ className = '' }) => (
+  <div className={`animate-pulse rounded ${className}`} />
+);
+
+const DHUOverviewGridSkeleton = ({ isDarkMode }) => {
+  const barClass = isDarkMode ? 'bg-slate-700/60' : 'bg-slate-200/80';
+
+  const DrySkeleton = () => (
+    <div className={`rounded-2xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-slate-700/40' : 'bg-white border-blue-200'}`}>
+      <div className={`px-4 py-1 border-b flex items-center gap-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-blue-50 border-blue-100'}`}>
+        <PulseBlock className={`h-4 w-4 ${barClass}`} />
+        <PulseBlock className={`h-3 w-40 ${barClass}`} />
+      </div>
+      <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className={`rounded-xl border p-3 ${isDarkMode ? 'bg-slate-800/70 border-slate-700' : 'bg-gray-100 border-slate-200'}`}>
+            <div className="flex justify-between mb-3">
+              <PulseBlock className={`h-4 w-20 ${barClass}`} />
+              <PulseBlock className={`h-6 w-14 rounded-lg ${barClass}`} />
+            </div>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {[1, 2, 3, 4].map((j) => (
+                <div key={j} className={`rounded-lg p-1.5 border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                  <PulseBlock className={`h-2 w-10 mb-1 ${barClass}`} />
+                  <PulseBlock className={`h-4 w-12 ${barClass}`} />
+                </div>
+              ))}
+            </div>
+            <div className={`rounded-xl border p-2.5 ${isDarkMode ? 'bg-slate-900/60 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <PulseBlock className={`h-3 w-24 mb-2 ${barClass}`} />
+              {[1, 2, 3].map((k) => (
+                <div key={k} className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <PulseBlock className={`h-5 w-5 rounded-full ${barClass}`} />
+                    <PulseBlock className={`h-3 w-20 ${barClass}`} />
+                  </div>
+                  <PulseBlock className={`h-3 w-8 ${barClass}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const WashSkeleton = () => (
+    <div className={`rounded-2xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-sky-500/20' : 'bg-white border-sky-200'}`}>
+      <div className={`px-4 py-1 border-b flex items-center gap-2 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-sky-50 border-sky-100'}`}>
+        <PulseBlock className={`h-4 w-4 ${barClass}`} />
+        <PulseBlock className={`h-3 w-36 ${barClass}`} />
+      </div>
+      <div className="px-3 py-2 grid grid-cols-[1.1fr_0.9fr] gap-3">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className={`rounded-xl p-2 border ${isDarkMode ? 'bg-slate-800/70 border-slate-700' : 'bg-gray-100 border-slate-200'}`}>
+                <PulseBlock className={`h-2 w-12 mb-1 ${barClass}`} />
+                <PulseBlock className={`h-5 w-16 ${barClass}`} />
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className={`rounded-xl p-2 border flex flex-col items-center ${isDarkMode ? 'bg-slate-800/70 border-slate-700' : 'bg-gray-100 border-slate-200'}`}>
+                <PulseBlock className={`h-14 w-14 rounded-full mb-1 ${barClass}`} />
+                <PulseBlock className={`h-2 w-8 ${barClass}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={`rounded-xl border p-3 ${isDarkMode ? 'bg-slate-800/70 border-slate-700' : 'bg-gray-100 border-slate-200'}`}>
+          <PulseBlock className={`h-3 w-24 mb-3 ${barClass}`} />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <PulseBlock className={`h-6 w-6 rounded-full ${barClass}`} />
+                <PulseBlock className={`h-3 w-24 ${barClass}`} />
+              </div>
+              <PulseBlock className={`h-3 w-8 ${barClass}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+      <div className="lg:col-span-8"><DrySkeleton /></div>
+      <div className="lg:col-span-4"><WashSkeleton /></div>
+      <div className="lg:col-span-8"><DrySkeleton /></div>
+      <div className="lg:col-span-4"><WashSkeleton /></div>
+    </div>
+  );
+};
+
+  
 // ============ DHU OVERVIEW GRID ============
 const DHUOverviewGrid = ({ isDarkMode, getSectionDHU }) => {
   const firstDryData = getSectionDHU(1);

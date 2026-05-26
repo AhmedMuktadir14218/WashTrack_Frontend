@@ -45,7 +45,10 @@ axiosInstance.interceptors.response.use(
           // Unauthorized - clear token and redirect to login
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          window.dispatchEvent(new Event('auth:logout'));
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           toast.error('Session expired. Please login again.');
           break;
           

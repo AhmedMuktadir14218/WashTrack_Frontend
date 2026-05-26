@@ -646,25 +646,25 @@ const CreatePlan = () => {
   // ════════════════════════════════════════════════════════
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="px-6 py-4">
-            <button onClick={() => navigate('/plans')} className="group inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 font-medium transition-all">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+        {/* <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 sticky top-0 z-40"> */}
+          <div className="px-3 py-2">
+            <button onClick={() => navigate('/plans')} className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2 shadow-sm">
               <svg className="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
               Back to Plans
             </button>
           </div>
-        </div>
-        <div className="px-6 py-8 sm:py-12">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 mb-4">
-              <svg className="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+        {/* </div> */}
+        <div className="px-4 py-6 sm:py-8">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-100 dark:border-indigo-500/30 mb-4">
+              <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Create Wash Plan</h1>
-            <p className="text-gray-500 text-lg">Select a process stage to continue</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-slate-100 mb-2">Create Wash Plan</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-lg">Select a process stage to continue</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
               Available Process Stages
             </h2>
@@ -672,24 +672,24 @@ const CreatePlan = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {user.processStageAccesses.map((stage) => (
                   <button key={stage.processStageId} onClick={() => { setSelectedProcessStage(stage); setStep(2); }}
-                    className="group p-6 rounded-xl border-2 border-gray-100 hover:border-indigo-300 bg-white hover:bg-indigo-50/50 transition-all text-left hover:shadow-md">
+                    className="group p-6 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 bg-white dark:bg-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-700 transition-all text-left hover:shadow-md">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center">
-                        <span className="text-indigo-600 font-bold text-lg">{stage.processStageId}</span>
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/30 flex items-center justify-center">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold text-lg">{stage.processStageId}</span>
                       </div>
-                      <svg className="w-6 h-6 text-gray-300 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      <svg className="w-6 h-6 text-gray-300 dark:text-slate-600 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                     </div>
-                    <h3 className="font-bold text-gray-800 text-lg group-hover:text-indigo-700">{stage.processStageName}</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-slate-200 text-lg group-hover:text-indigo-700 dark:group-hover:text-indigo-400">{stage.processStageName}</h3>
                   </button>
                 ))}
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-50 mb-4">
-                  <svg className="w-10 h-10 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-50 dark:bg-yellow-500/20 mb-4">
+                  <svg className="w-10 h-10 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
-                <p className="text-xl font-semibold text-gray-800 mb-1">No Process Stages Available</p>
-                <p className="text-gray-500">Contact your administrator for access</p>
+                <p className="text-xl font-semibold text-gray-800 dark:text-slate-200 mb-1">No Process Stages Available</p>
+                <p className="text-gray-500 dark:text-slate-400">Contact your administrator for access</p>
               </div>
             )}
           </div>
@@ -702,32 +702,26 @@ const CreatePlan = () => {
   // STEP 2 - Tab-Based Layout
   // ════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
 
       {/* ── Sticky Header ── */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 sticky top-0 z-40 shadow-sm">
         <div className="px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/plans')} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-indigo-600 transition-colors">
+              <button onClick={() => navigate('/plans')} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
               </button>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
                 Create Wash Plan
-                <span className="px-2.5 py-0.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+                <span className="px-2.5 py-0.5 text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-full border border-indigo-200 dark:border-indigo-500/30">
                   {selectedProcessStage?.processStageName}
                 </span>
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              {/* {isDryStage && (
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-emerald-50 text-emerald-700 rounded border border-emerald-200">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Base Target & Final Target Optional
-                </span>
-              )} */}
               <button onClick={() => { setStep(1); setPlanItems([]); setActiveTab('workOrders'); }}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors flex items-center gap-1.5">
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 rounded-lg border border-gray-300 dark:border-slate-600 transition-colors flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 Change Stage
               </button>
@@ -740,34 +734,34 @@ const CreatePlan = () => {
       <div className="px-4 sm:px-6 py-3 space-y-3">
 
         {/* ── Configuration ── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 px-4 py-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">Process Stage</label>
-              <input type="text" value={selectedProcessStage?.processStageName || ''} disabled className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-700 cursor-not-allowed" />
+              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Process Stage</label>
+              <input type="text" value={selectedProcessStage?.processStageName || ''} disabled className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-300 cursor-not-allowed" />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">Plan Date</label>
-              <input type="date" value={planDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setPlanDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
+              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Plan Date</label>
+              <input type="date" value={planDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setPlanDate(e.target.value)} className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">Shift</label>
-              <select value={shift} onChange={(e) => setShift(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white">
+              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Shift</label>
+              <select value={shift} onChange={(e) => setShift(e.target.value)} className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white dark:bg-slate-700">
                 <option value="">Select</option>
                 <option value="1">Day (11h)</option>
                 <option value="2">Night (12h)</option>
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">Plant</label>
-              <select value={plantId} onChange={(e) => { setPlantId(e.target.value); setUnitId(''); setMachines([]); setPlanItems([]); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white">
+              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Plant</label>
+              <select value={plantId} onChange={(e) => { setPlantId(e.target.value); setUnitId(''); setMachines([]); setPlanItems([]); }} className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white dark:bg-slate-700">
                 <option value="">Select Plant</option>
                 {uniquePlants.map(p => <option key={p.plantId} value={p.plantId}>{p.plantName}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">Unit</label>
-              <select value={unitId} onChange={(e) => { setUnitId(e.target.value); setPlanItems([]); }} disabled={!plantId} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
+              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Unit</label>
+              <select value={unitId} onChange={(e) => { setUnitId(e.target.value); setPlanItems([]); }} disabled={!plantId} className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white dark:bg-slate-700 disabled:bg-gray-50 dark:disabled:bg-slate-600 disabled:text-gray-400 disabled:cursor-not-allowed">
                 <option value="">Select Unit</option>
                 {filteredUnits.map(u => <option key={u.unitId} value={u.unitId}>{u.unitName}</option>)}
               </select>
@@ -776,31 +770,31 @@ const CreatePlan = () => {
         </div>
 
         {/* ── Tab Card ── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 220px)' }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 220px)' }}>
 
           {/* Tab Headers */}
-          <div className="flex border-b border-gray-200 flex-shrink-0">
+          <div className="flex border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
             <button onClick={() => setActiveTab('workOrders')}
-              className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'workOrders' ? 'border-indigo-500 text-indigo-700 bg-indigo-50/30' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+              className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'workOrders' ? 'border-indigo-500 text-indigo-700 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/10' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               Work Orders
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'workOrders' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>{workOrders.length}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'workOrders' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'}`}>{workOrders.length}</span>
             </button>
 
             {showPlannedTab && (
               <button onClick={() => setActiveTab('planned')}
-                className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'planned' ? 'border-indigo-500 text-indigo-700 bg-indigo-50/30' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+                className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'planned' ? 'border-indigo-500 text-indigo-700 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/10' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                 Planned
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'planned' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>{filteredWashPlans.length}</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'planned' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'}`}>{filteredWashPlans.length}</span>
               </button>
             )}
 
             <button onClick={() => setActiveTab('selected')}
-              className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'selected' ? 'border-indigo-500 text-indigo-700 bg-indigo-50/30' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+              className={`flex-1 px-6 py-3 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 ${activeTab === 'selected' ? 'border-indigo-500 text-indigo-700 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/10' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
               Selected
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'selected' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>{selectedCount}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'selected' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'}`}>{selectedCount}</span>
             </button>
           </div>
 
@@ -809,11 +803,11 @@ const CreatePlan = () => {
           {/* ═══════════════════════════════════════════ */}
           {activeTab === 'workOrders' && (
             <div className="flex flex-col flex-1 min-h-0">
-              <div className="px-4 py-2.5 border-b border-gray-100 flex-shrink-0">
+              <div className="px-4 py-2.5 border-b border-gray-100 dark:border-slate-700 flex-shrink-0">
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   <input type="text" placeholder="Search WO, Style, Color, Buyer..." value={searchTerm} onChange={handleSearchChange} disabled={!plantId || !unitId}
-                    className="w-full border border-gray-200 rounded-lg pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed placeholder:text-gray-400" />
+                    className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 dark:disabled:bg-slate-600 disabled:cursor-not-allowed placeholder:text-gray-400 dark:placeholder:text-slate-500" />
                   {searchLoading && (
                     <svg className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   )}
@@ -823,8 +817,8 @@ const CreatePlan = () => {
               {!plantId || !unitId ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <svg className="w-14 h-14 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                    <p className="text-sm font-semibold text-gray-600">Select Plant & Unit first</p>
+                    <svg className="w-14 h-14 mx-auto text-gray-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    <p className="text-sm font-semibold text-gray-600 dark:text-slate-400">Select Plant & Unit first</p>
                   </div>
                 </div>
               ) : searchLoading && workOrders.length === 0 ? (
@@ -835,62 +829,61 @@ const CreatePlan = () => {
                 <>
                   <div ref={tableScrollRef} className="flex-1 overflow-auto custom-scrollbar">
                     <table className="w-full text-sm" style={{ minWidth: isWashStage ? '1010px' : '810px' }}>
-                       <thead className="bg-gray-50 sticky top-0 z-10">
-                         <tr>
-                           <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-8"></th>
-                           <th className="px-2 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-14">WO/PO No</th>
-                           <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-28">Style / Color</th>
-                           <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-28">Buyer / Marks</th>
-                           <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-14">Plant / Unit</th>
-                           <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">Ord Qty</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">Balance</th>
-                          {/* ✅ Machine Column ONLY in Wash Stage */}
-                          {!isDryStage && (
-                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-48">Machines</th>
-                          )}
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Base Tgt</th>
-                          {isWashStage && (
-                            <>
-                              <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">%</th>
-                              <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Adjusted</th>
-                            </>
-                          )}
-                          {((isWashStage) || (!isWashStage && showPlannedTab)) && (
-                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Final Tgt</th>
-                          )}
-                          
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-14">Action</th>
+                       <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-8"></th>
+                            <th className="px-2 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">WO/PO No</th>
+                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-28">Style / Color</th>
+                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-28">Buyer / Marks</th>
+                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Plant / Unit</th>
+                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">Ord Qty</th>
+                           <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">Balance</th>
+                           {!isDryStage && (
+                             <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-48">Machines</th>
+                           )}
+                           <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">Base Tgt</th>
+                           {isWashStage && (
+                             <>
+                               <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">%</th>
+                               <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">Adjusted</th>
+                             </>
+                           )}
+                           {((isWashStage) || (!isWashStage && showPlannedTab)) && (
+                             <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">Final Tgt</th>
+                           )}
+                           
+                           <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                         {workOrders.map((order, idx) => {
                           const added = isInPlan(order.workOrderNo);
                           const item = getPlanItem(order.workOrderNo);
                           return (
-                            <tr key={`${order.workOrderNo}-${idx}`} className={`transition-colors ${added ? 'bg-indigo-50/40' : 'hover:bg-gray-50'}`}>
+                            <tr key={`${order.workOrderNo}-${idx}`} className={`transition-colors ${added ? 'bg-indigo-50/40 dark:bg-indigo-500/10' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
                               <td className="px-3 py-2 text-center">
                                 <input type="checkbox" checked={added}
                                   onChange={() => { if (added) handleRemoveFromPlan(order.workOrderNo); else ensureInPlan(order); }}
-                                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" />
+                                  className="h-4 w-4 text-indigo-600 border-gray-300 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer" />
                               </td>
                               <td className="px-3 py-2">
-                                <div className="font-bold text-indigo-600 text-xs">{order.workOrderNo}</div>
-                                <div className=" text-gray-900 text-xs">{order.fastReactNo}</div>
+                                <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">{order.workOrderNo}</div>
+                                <div className=" text-gray-900 dark:text-slate-300 text-xs">{order.fastReactNo}</div>
                               </td>
                               <td className="px-3 py-2">
-                                <div className="text-xs text-gray-900 font-medium break-words">{order.styleName}</div>
-                                <div className="text-[10px] text-gray-500 mt-0.5 break-words">{order.color}</div>
+                                <div className="text-xs text-gray-900 dark:text-slate-200 font-medium break-words">{order.styleName}</div>
+                                <div className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5 break-words">{order.color}</div>
                               </td>
                               <td className="px-3 py-2">
-                                <div className="text-xs text-gray-700 break-words">{order.buyer}</div>
-                                <div className="text-[10px] text-gray-400 mt-0.5 break-words">{order.marks || '-'}</div>
+                                <div className="text-xs text-gray-700 dark:text-slate-300 break-words">{order.buyer}</div>
+                                <div className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 break-words">{order.marks || '-'}</div>
                               </td>
-                              <td className="px-3 py-2 text-center text-xs text-gray-700 font-medium">
+                              <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300 font-medium">
                                 <div>{order.unit || '-'}</div>
                                 <div>{order.plant || order.plant ||  '-'}</div>
                                 </td>
                               
-                              <td className="px-3 py-2 text-center text-xs text-gray-700">{order.orderQuantity?.toLocaleString()}</td>
+                              <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300">{order.orderQuantity?.toLocaleString()}</td>
                               <td className="px-3 py-2 text-center">
                                 <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${(order.washBalance ?? 0) > 0 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
                                   {(order.washBalance ?? 0).toLocaleString()}
@@ -903,17 +896,17 @@ const CreatePlan = () => {
                                   <button type="button" ref={el => { dropdownBtnRefs.current[order.workOrderNo] = el; }}
                                     onClick={(e) => { ensureInPlan(order); toggleDropdown(order.workOrderNo, e); }}
                                     className={`w-full border rounded px-2 py-1 text-left text-[11px] font-medium transition-colors flex items-center justify-between gap-1 ${
-                                      added && item?.machineIds?.length > 0 ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-300'
+                                      added && item?.machineIds?.length > 0 ? 'border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400' : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-500/30'
                                     }`}>
                                     <span className="truncate">
                                       {added && item?.selectedMachines?.length > 0 ? item.selectedMachines.map(m => m.machineCode).join(', ') : 'Select...'}
                                     </span>
-                                    <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                    <svg className="w-3 h-3 text-gray-400 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                                   </button>
                                   {added && item?.selectedMachines?.length > 0 && (
                                     <div className="flex flex-wrap gap-0.5 mt-1">
                                       {item.selectedMachines.map(m => (
-                                        <span key={m.id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-semibold">
+                                        <span key={m.id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded text-[9px] font-semibold">
                                           {m.machineCode}
                                           <button type="button" onClick={() => removeMachineTag(order.workOrderNo, m.id)} className="ml-0.5 text-indigo-400 hover:text-indigo-600">
                                             <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
@@ -928,14 +921,14 @@ const CreatePlan = () => {
                                {/* Base Target - Now always an editable input unless viewing in Planned Tab specifically */}
                               <td className="px-3 py-1.5">
                                 {showPlannedTab ? (
-                                  <div className="w-full border border-gray-200 rounded px-2 py-1 text-xs text-center font-bold text-blue-700 bg-blue-50 cursor-not-allowed min-h-[26px] flex items-center justify-center">
+                                   <div className="w-full border border-gray-200 dark:border-slate-600 rounded px-2 py-1 text-xs text-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/20 cursor-not-allowed min-h-[26px] flex items-center justify-center">
                                     {item?.baseTargetQty || 0}
                                   </div>
                                 ) : (
                                   <input type="number" min="0" value={added ? (item?.baseTargetQty || '') : ''}
                                     onChange={(e) => { ensureInPlan(order); handleBaseTargetChange(order.workOrderNo, e.target.value); }}
                                     onFocus={() => ensureInPlan(order)} placeholder="0"
-                                    className="w-full border border-gray-200 rounded px-2 py-1 text-xs text-center font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
+                                    className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-2 py-1 text-xs text-center font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
                                 )}
                               </td>
 
@@ -945,13 +938,13 @@ const CreatePlan = () => {
                                     <input type="number" min="0" max="200" step="1" value={added ? (item?.percentage || '') : ''}
                                       onChange={(e) => { ensureInPlan(order); handlePercentageChange(order.workOrderNo, e.target.value); }}
                                       onFocus={() => ensureInPlan(order)} placeholder="0"
-                                      className="w-full border border-gray-200 rounded px-1.5 py-1 text-xs text-center font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
+                                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-1.5 py-1 text-xs text-center font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-gray-300 transition-colors" />
                                   </td>
                                   <td className="px-3 py-1.5">
                                     <input type="number" min="0" value={added ? (item?.adjustedTargetQty || '') : ''}
                                       onChange={(e) => { ensureInPlan(order); handleAdjustedTargetChange(order.workOrderNo, e.target.value); }}
                                       onFocus={() => ensureInPlan(order)} placeholder="0"
-                                      className="w-full border border-amber-200 rounded px-1.5 py-1 text-xs text-center font-bold text-amber-700 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-amber-300 transition-colors" />
+                                      className="w-full border border-amber-200 dark:border-amber-500/30 rounded px-1.5 py-1 text-xs text-center font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-amber-300 transition-colors" />
                                   </td>
                                 </>
                               )}
@@ -962,39 +955,39 @@ const CreatePlan = () => {
                                   <input type="number" min="0" value={item?.finalTargetQty || ''}
                                     onChange={(e) => { ensureInPlan(order); handleFinalTargetChange(order.workOrderNo, e.target.value); }}
                                     onFocus={() => ensureInPlan(order)} placeholder="0"
-                                    className="w-full border border-gray-200 rounded px-1.5 py-1 text-xs text-center font-bold text-green-700 bg-green-50 focus:outline-none focus:ring-1 focus:ring-green-500 hover:border-green-300 transition-colors" />
+                                    className="w-full border border-gray-200 dark:border-green-500/30 rounded px-1.5 py-1 text-xs text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 focus:outline-none focus:ring-1 focus:ring-green-500 hover:border-green-300 transition-colors" />
                                 </td>
                               )}
                               
                              
                               <td className="px-3 py-2 text-center">
                                 {added ? (
-                                  <button onClick={() => handleRemoveFromPlan(order.workOrderNo)} className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors" title="Remove">
+                                  <button onClick={() => handleRemoveFromPlan(order.workOrderNo)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Remove">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 ) : (
                                   <button onClick={() => ensureInPlan(order)} className="px-2 py-1 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors">ADD</button>
                                 )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                               </td>
+                             </tr>
+                           );
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
 
-                  {/* Bottom Bar */}
-                  <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      {modalPagination.totalRecords > 0 && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[11px] font-medium text-gray-600">
-                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                   {/* Bottom Bar */}
+                   <div className="px-4 py-2.5 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 flex items-center justify-between flex-shrink-0">
+                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
+                       {modalPagination.totalRecords > 0 && (
+                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-[11px] font-medium text-gray-600 dark:text-slate-300">
+                           <svg className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           {workOrders.length} / {modalPagination.totalRecords}
                         </span>
                       )}
                       {hasMoreResults && (
                         <button onClick={handleLoadMore} disabled={searchLoading}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-indigo-200 rounded-lg text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-slate-700 border border-indigo-200 dark:border-indigo-500/30 rounded-lg text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-600 hover:border-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                           {searchLoading ? (
                             <><svg className="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading</>
                           ) : (
@@ -1005,8 +998,8 @@ const CreatePlan = () => {
                     </div>
                     {selectedCount > 0 && (
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-600">
-                          <span className="font-bold text-indigo-600">{selectedCount}</span> selected
+                        <span className="text-xs text-gray-600 dark:text-slate-400">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedCount}</span> selected
                           <span className="mx-1">•</span>
                           {isWashStage ? (
                             <>
@@ -1030,16 +1023,16 @@ const CreatePlan = () => {
               ) : searchTerm ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <svg className="w-14 h-14 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <p className="text-sm font-semibold text-gray-600">No results found</p>
+                    <svg className="w-14 h-14 mx-auto text-gray-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <p className="text-sm font-semibold text-gray-600 dark:text-slate-400">No results found</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <svg className="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <p className="text-base font-semibold text-gray-600">Type to search work orders</p>
-                    <p className="text-xs text-gray-400 mt-1">WO No, Style, Color, or Buyer</p>
+                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <p className="text-base font-semibold text-gray-600 dark:text-slate-400">Type to search work orders</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">WO No, Style, Color, or Buyer</p>
                   </div>
                 </div>
               )}
@@ -1051,44 +1044,44 @@ const CreatePlan = () => {
           {/* ═══════════════════════════════════════════ */}
           {activeTab === 'planned' && showPlannedTab && (
             <div className="flex flex-col flex-1 min-h-0">
-              <div className="px-4 py-2 border-b border-gray-200 bg-gray-50/50 flex-shrink-0">
+              <div className="px-4 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex-shrink-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-0.5 uppercase tracking-wide">Process Stage</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide">Process Stage</label>
                     <input type="text" value={selectedProcessStage?.processStageName || ''} disabled
-                      className="w-full bg-gray-100 border border-gray-200 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 cursor-not-allowed" />
+                      className="w-full bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 dark:text-slate-300 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-0.5 uppercase tracking-wide">Plan Date</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide">Plan Date</label>
                     <input type="date" value={plannedFilters.planDate}
                       onChange={(e) => setPlannedFilters(prev => ({ ...prev, planDate: e.target.value }))}
-                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-0.5 uppercase tracking-wide">Shift</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide">Shift</label>
                     <select value={plannedFilters.shift}
                       onChange={(e) => setPlannedFilters(prev => ({ ...prev, shift: e.target.value }))}
-                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-slate-700">
                       <option value="">All Shifts</option>
                       <option value="1">Day</option>
                       <option value="2">Night</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-0.5 uppercase tracking-wide">Plant</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide">Plant</label>
                     <select value={plannedFilters.plantId}
                       onChange={(e) => setPlannedFilters(prev => ({ ...prev, plantId: e.target.value, unitId: '' }))}
-                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-slate-700">
                       <option value="">All Plants</option>
                       {uniquePlants.map(p => <option key={p.plantId} value={p.plantId}>{p.plantName}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-0.5 uppercase tracking-wide">Unit</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide">Unit</label>
                     <select value={plannedFilters.unitId}
                       onChange={(e) => setPlannedFilters(prev => ({ ...prev, unitId: e.target.value }))}
                       disabled={!plannedFilters.plantId}
-                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
+                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-slate-700 disabled:bg-gray-50 dark:disabled:bg-slate-600 disabled:text-gray-400 disabled:cursor-not-allowed">
                       <option value="">All Units</option>
                       {plannedFilteredUnits.map(u => <option key={u.unitId} value={u.unitId}>{u.unitName}</option>)}
                     </select>
@@ -1106,56 +1099,56 @@ const CreatePlan = () => {
                 <>
                   <div className="flex-1 overflow-auto custom-scrollbar">
                     <table className="w-full text-sm" style={{ minWidth: '850px' }}>
-                      <thead className="bg-gray-50 sticky top-0 z-10">
+                      <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-8"></th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">WO/PO No</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-28">Style / Color</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-24">Buyer</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-14">Unit / Plant</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">Ord Qty</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Base Tgt</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Final Tgt</th>
-                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-14">Action</th>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-8"></th>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">WO/PO No</th>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-28">Style / Color</th>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-24">Buyer</th>
+                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Unit / Plant</th>
+                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">Ord Qty</th>
+                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">Base Tgt</th>
+                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-20">Final Tgt</th>
+                          <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                         {filteredWashPlans.map((wp, idx) => {
                           const alreadyAdded = isInPlan(wp.workOrderNo);
                           const item = getPlanItem(wp.workOrderNo);
                           return (
-                            <tr key={`${wp.id || wp.workOrderId}-${idx}`} className={`${alreadyAdded ? 'bg-green-50/50' : 'hover:bg-gray-50'} transition-colors`}>
+                            <tr key={`${wp.id || wp.workOrderId}-${idx}`} className={`${alreadyAdded ? 'bg-green-50/50 dark:bg-green-500/10' : 'hover:bg-gray-50 dark:hover:bg-slate-700'} transition-colors`}>
                               <td className="px-3 py-2 text-center">
                                 <input type="checkbox" checked={alreadyAdded}
                                   onChange={() => { if (!alreadyAdded) addFromPlanned(wp); else handleRemoveFromPlan(wp.workOrderNo); }}
-                                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" />
+                                  className="h-4 w-4 text-indigo-600 border-gray-300 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer" />
                               </td>
                               <td className="px-3 py-2">
-                                <div className="font-bold text-indigo-600 text-xs">{wp.workOrderNo}</div>
-                                <div className="text-gray-900 text-xs">{wp.fastReactNo || ''}</div>
+                                <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">{wp.workOrderNo}</div>
+                                <div className="text-gray-900 dark:text-slate-300 text-xs">{wp.fastReactNo || ''}</div>
                               </td>
                               <td className="px-3 py-2">
-                                <div className="text-xs text-gray-900 font-medium break-words">{wp.styleName}</div>
-                                <div className="text-[10px] text-gray-500 mt-0.5 break-words">{wp.color}</div>
+                                <div className="text-xs text-gray-900 dark:text-slate-200 font-medium break-words">{wp.styleName}</div>
+                                <div className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5 break-words">{wp.color}</div>
                               </td>
                               <td className="px-3 py-2">
-                                <div className="text-xs text-gray-700 break-words">{wp.buyer || wp.buyerDepartment || '-'}</div>
+                                <div className="text-xs text-gray-700 dark:text-slate-300 break-words">{wp.buyer || wp.buyerDepartment || '-'}</div>
                               </td>
-                              <td className="px-3 py-2 text-center text-xs text-gray-700 font-medium">
+                              <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300 font-medium">
                                 <div>{wp.unitName || '-'}</div>
                                 <div>{wp.plantName || '-'}</div>
                                 </td>
-                              <td className="px-3 py-2 text-center text-xs text-gray-700">{wp.orderQuantity?.toLocaleString() || '-'}</td>
-                              <td className="px-3 py-2 text-center text-xs font-bold text-blue-700 bg-blue-50/30">{wp.baseTargetQty?.toLocaleString() || '-'}</td>
+                              <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300">{wp.orderQuantity?.toLocaleString() || '-'}</td>
+                              <td className="px-3 py-2 text-center text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-500/10">{wp.baseTargetQty?.toLocaleString() || '-'}</td>
                               <td className="px-3 py-1.5">
                                 <input type="number" min="0" value={item?.finalTargetQty || ''}
                                   onChange={(e) => { addFromPlanned(wp); handleFinalTargetChange(wp.workOrderNo, e.target.value); }}
                                   onFocus={() => addFromPlanned(wp)} placeholder="0"
-                                  className="w-full border border-gray-200 rounded px-1.5 py-1 text-xs text-center font-bold text-green-700 bg-green-50 focus:outline-none focus:ring-1 focus:ring-green-500 hover:border-green-300 transition-colors" />
+                                  className="w-full border border-gray-200 dark:border-green-500/30 rounded px-1.5 py-1 text-xs text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 focus:outline-none focus:ring-1 focus:ring-green-500 hover:border-green-300 transition-colors" />
                               </td>
                               <td className="px-3 py-2 text-center">
                                 {alreadyAdded ? (
-                                  <button onClick={() => handleRemoveFromPlan(wp.workOrderNo)} className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors" title="Remove">
+                                   <button onClick={() => handleRemoveFromPlan(wp.workOrderNo)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Remove">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 ) : (
@@ -1168,8 +1161,8 @@ const CreatePlan = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
-                    <div className="text-xs text-gray-500">
+                  <div className="px-4 py-2.5 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex items-center justify-between flex-shrink-0">
+                    <div className="text-xs text-gray-500 dark:text-slate-400">
                       Showing {filteredWashPlans.length} wash plan(s)
                     </div>
                     {selectedCount > 0 && (
@@ -1184,9 +1177,9 @@ const CreatePlan = () => {
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <svg className="w-14 h-14 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p className="text-sm font-semibold text-gray-600">No wash plans found</p>
-                    <p className="text-xs text-gray-400 mt-1">Select Plan Date & Shift to see matching wash plans</p>
+                    <svg className="w-14 h-14 mx-auto text-gray-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                    <p className="text-sm font-semibold text-gray-600 dark:text-slate-400">No wash plans found</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Select Plan Date & Shift to see matching wash plans</p>
                   </div>
                 </div>
               )}
@@ -1201,23 +1194,23 @@ const CreatePlan = () => {
 
               {/* Stats */}
               <div className={`${isWashStage ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2'} gap-2 mb-3 flex-shrink-0 grid`}>
-                <div className="p-2.5 bg-indigo-50 rounded-lg border border-indigo-200">
-                  <p className="text-[9px] font-bold text-indigo-600 uppercase">Items</p>
-                  <p className="text-xl font-bold text-indigo-900">{selectedCount}</p>
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg border border-indigo-200 dark:border-indigo-500/30">
+                  <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">Items</p>
+                  <p className="text-xl font-bold text-indigo-900 dark:text-indigo-300">{selectedCount}</p>
                 </div>
-                <div className="p-2.5 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-[9px] font-bold text-blue-600 uppercase">Base Target</p>
-                  <p className="text-xl font-bold text-blue-900">{totalBaseTarget.toLocaleString()}</p>
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-200 dark:border-blue-500/30">
+                  <p className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase">Base Target</p>
+                  <p className="text-xl font-bold text-blue-900 dark:text-blue-300">{totalBaseTarget.toLocaleString()}</p>
                 </div>
                 {isWashStage && (
                   <>
-                    <div className="p-2.5 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-[9px] font-bold text-green-600 uppercase">Final Target</p>
-                      <p className="text-xl font-bold text-green-900">{totalFinalTarget.toLocaleString()}</p>
+                    <div className="p-2.5 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30">
+                      <p className="text-[9px] font-bold text-green-600 dark:text-green-400 uppercase">Final Target</p>
+                      <p className="text-xl font-bold text-green-900 dark:text-green-300">{totalFinalTarget.toLocaleString()}</p>
                     </div>
-                    <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200">
-                      <p className="text-[9px] font-bold text-amber-600 uppercase">Adjusted</p>
-                      <p className="text-xl font-bold text-amber-900">{totalAdjusted.toLocaleString()}</p>
+                    <div className="p-2.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/30">
+                      <p className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase">Adjusted</p>
+                      <p className="text-xl font-bold text-amber-900 dark:text-amber-300">{totalAdjusted.toLocaleString()}</p>
                     </div>
                   </>
                 )}
@@ -1225,9 +1218,9 @@ const CreatePlan = () => {
 
               {selectedCount === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
-                  <svg className="w-14 h-14 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                  <p className="font-semibold text-gray-600 mb-1">No items selected</p>
-                  <p className="text-xs text-gray-400 mb-3">
+                  <svg className="w-14 h-14 mb-3 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                  <p className="font-semibold text-gray-600 dark:text-slate-400 mb-1">No items selected</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
                     {showPlannedTab ? 'Add items from Planned or Work Orders tab' : 'Add items from Work Orders tab'}
                   </p>
                   <button onClick={() => setActiveTab(showPlannedTab ? 'planned' : 'workOrders')} className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
@@ -1236,75 +1229,73 @@ const CreatePlan = () => {
                 </div>
               ) : (
                 <>
-                  <div className="flex-1 overflow-auto custom-scrollbar border border-gray-200 rounded-lg">
+                  <div className="flex-1 overflow-auto custom-scrollbar border border-gray-200 dark:border-slate-700 rounded-lg">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 sticky top-0 z-10">
+                      <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase">WO No</th>
-                          <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase w-28">Style / Color</th>
-                          <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Bal</th>
-                          <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase">Base</th>
+                          <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase">WO No</th>
+                          <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase w-28">Style / Color</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase w-16">Bal</th>
+                          <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase">Base</th>
                           {isWashStage && (
                             <>
-                              <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">%</th>
-                              <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase w-16">Adj</th>
+                              <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase w-16">%</th>
+                              <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase w-16">Adj</th>
                             </>
                           )}
                           {(!isWashStage && showPlannedTab) && (
-                            <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase">Final</th>
+                            <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase">Final</th>
                           )}
                           {isWashStage && (
-                            <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 uppercase">Final</th>
+                            <th className="px-3 py-2 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase">Final</th>
                           )}
                           
-                          {/* ✅ Show Machines header ONLY for Wash Stage */}
                           {!isDryStage && (
-                            <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase">Machines</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase">Machines</th>
                           )}
                           <th className="px-3 py-2 w-10"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                         {planItems.map(item => {
                           const incomplete = !isDryStage && ((!item.machineIds || item.machineIds.length === 0) || !item.baseTargetQty || item.baseTargetQty <= 0);
 
                           return (
-                            <tr key={item.workOrderNo} className={`${incomplete ? 'bg-amber-50/50' : 'hover:bg-gray-50'} transition-colors`}>
-                              <td className="px-3 py-2"><span className="font-bold text-indigo-600 text-xs">{item.workOrderNo}</span></td>
-                              <td className="px-3 py-2">
-                                <div className="text-xs text-gray-900 font-medium break-words">{item.styleName}</div>
-                                <div className="text-[10px] text-gray-500">{item.color}</div>
-                              </td>
-                              <td className="px-3 py-2 text-center">
-                                <span className={`text-xs font-bold ${(item.washBalance ?? 0) > 0 ? 'text-orange-600' : 'text-green-600'}`}>{item.washBalance?.toLocaleString()}</span>
-                              </td>
-                              <td className="px-3 py-2 text-center text-xs font-semibold">{item.baseTargetQty?.toLocaleString() || <span className="text-gray-400">-</span>}</td>
-                              {isWashStage && (
-                                <>
-                                  <td className="px-3 py-2 text-center text-xs text-gray-600">{item.percentage}%</td>
-                                  <td className="px-3 py-2 text-center text-xs font-bold text-amber-700">{item.adjustedTargetQty?.toLocaleString() || '0'}</td>
-                                </>
-                              )}
+                            <tr key={item.workOrderNo} className={`${incomplete ? 'bg-amber-50/50 dark:bg-amber-500/10' : 'hover:bg-gray-50 dark:hover:bg-slate-700'} transition-colors`}>
+                               <td className="px-3 py-2"><span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">{item.workOrderNo}</span></td>
+                               <td className="px-3 py-2">
+                                 <div className="text-xs text-gray-900 dark:text-slate-200 font-medium break-words">{item.styleName}</div>
+                                 <div className="text-[10px] text-gray-500 dark:text-slate-400">{item.color}</div>
+                               </td>
+                               <td className="px-3 py-2 text-center">
+                                 <span className={`text-xs font-bold ${(item.washBalance ?? 0) > 0 ? 'text-orange-600' : 'text-green-600'}`}>{item.washBalance?.toLocaleString()}</span>
+                               </td>
+                               <td className="px-3 py-2 text-center text-xs font-semibold text-gray-900 dark:text-slate-200">{item.baseTargetQty?.toLocaleString() || <span className="text-gray-400 dark:text-slate-500">-</span>}</td>
+                               {isWashStage && (
+                                 <>
+                                   <td className="px-3 py-2 text-center text-xs text-gray-600 dark:text-slate-300">{item.percentage}%</td>
+                                   <td className="px-3 py-2 text-center text-xs font-bold text-amber-700 dark:text-amber-400">{item.adjustedTargetQty?.toLocaleString() || '0'}</td>
+                                 </>
+                               )}
                               
-                              {((isWashStage) || (!isWashStage && showPlannedTab)) && (
-                                <td className="px-3 py-2 text-center text-xs font-bold text-green-700">{item.finalTargetQty?.toLocaleString() || <span className="text-gray-400">-</span>}</td>
-                              )}
+                               {((isWashStage) || (!isWashStage && showPlannedTab)) && (
+                                 <td className="px-3 py-2 text-center text-xs font-bold text-green-700 dark:text-green-400">{item.finalTargetQty?.toLocaleString() || <span className="text-gray-400 dark:text-slate-500">-</span>}</td>
+                               )}
 
-                              {/* ✅ Show Machines data ONLY for Wash Stage */}
-                              {!isDryStage && (
-                                <td className="px-3 py-2">
-                                  {item.selectedMachines.length > 0 ? (
-                                    <div className="flex flex-wrap gap-0.5">{item.selectedMachines.map(m => (
-                                      <span key={m.id} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-semibold">{m.machineCode}</span>
-                                    ))}</div>
-                                  ) : (
-                                    <span className="text-[10px] font-semibold text-red-500">No machine</span>
-                                  )}
-                                </td>
-                              )}
+                               {!isDryStage && (
+                                 <td className="px-3 py-2">
+                                   {item.selectedMachines.length > 0 ? (
+                                     <div className="flex flex-wrap gap-0.5">{item.selectedMachines.map(m => (
+                                       <span key={m.id} className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded text-[9px] font-semibold">{m.machineCode}</span>
+                                     ))}</div>
+                                   ) : (
+                                     <span className="text-[10px] font-semibold text-red-500">No machine</span>
+                                   )}
+                                 </td>
+                               )}
 
-                              <td className="px-3 py-2 text-center">
-                                <button onClick={() => handleRemoveFromPlan(item.workOrderNo)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                               <td className="px-3 py-2 text-center">
+                                 <button onClick={() => handleRemoveFromPlan(item.workOrderNo)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors">
                                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                               </td>
@@ -1316,20 +1307,20 @@ const CreatePlan = () => {
                   </div>
 
                   {hasIncompleteItems && (
-                    <div className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 flex-shrink-0">
-                      <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                      <p className="text-xs font-semibold text-amber-800">
+                    <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg flex items-start gap-2 flex-shrink-0">
+                      <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                      <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
   Incomplete items — go back to Work Orders tab to fill missing fields (Final Target or Machines).
 </p>
                     </div>
                   )}
 
                   <div className="mt-3 flex items-center gap-3 flex-shrink-0">
-                    <button onClick={() => setActiveTab(showPlannedTab ? 'planned' : 'workOrders')} className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <button onClick={() => setActiveTab(showPlannedTab ? 'planned' : 'workOrders')} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors">
                       &larr; Back to Edit
                     </button>
                     <button onClick={handleSubmit} disabled={submitting || hasIncompleteItems}
-                      className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-sm rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
+                      className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-bold text-sm rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
                       {submitting ? (
                         <><svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Creating...</>
                       ) : (
@@ -1346,35 +1337,35 @@ const CreatePlan = () => {
 
       {/* ── Fixed Position Machine Dropdown ── */}
       {openDropdownFor && !isDryStage && (
-        <div id="machine-dropdown" className="fixed z-[9999] w-72 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
-          <div className="p-2 bg-gray-50 border-b border-gray-200">
+        <div id="machine-dropdown" className="fixed z-[9999] w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
+          <div className="p-2 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
             <input type="text" placeholder="Filter machines..."
               value={machineSearchTerms[openDropdownFor] || ''}
               onChange={(e) => setMachineSearchTerms(prev => ({ ...prev, [openDropdownFor]: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" autoFocus />
+              className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-200 dark:placeholder:text-slate-400 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" autoFocus />
           </div>
-          <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-200">
-            <button type="button" onClick={() => selectAllMachines(openDropdownFor)} className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold">Select All</button>
-            <button type="button" onClick={() => clearAllMachines(openDropdownFor)} className="text-[10px] text-red-500 hover:text-red-600 font-bold">Clear All</button>
+          <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
+            <button type="button" onClick={() => selectAllMachines(openDropdownFor)} className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-bold">Select All</button>
+            <button type="button" onClick={() => clearAllMachines(openDropdownFor)} className="text-[10px] text-red-500 dark:text-red-400 hover:text-red-600 font-bold">Clear All</button>
           </div>
           <div className="max-h-48 overflow-y-auto custom-scrollbar">
             {machines.length === 0 ? (
-              <div className="px-3 py-6 text-xs text-gray-400 text-center">
-                <svg className="w-6 h-6 mx-auto mb-1.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <div className="px-3 py-6 text-xs text-gray-400 dark:text-slate-500 text-center">
+                <svg className="w-6 h-6 mx-auto mb-1.5 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 No machines available for this plant/unit
               </div>
             ) : getFilteredMachines(openDropdownFor).length === 0 ? (
-              <div className="px-3 py-4 text-xs text-gray-400 text-center">No machines match your filter</div>
+              <div className="px-3 py-4 text-xs text-gray-400 dark:text-slate-500 text-center">No machines match your filter</div>
             ) : (
               getFilteredMachines(openDropdownFor).map(machine => {
                 const item = getPlanItem(openDropdownFor);
                 const checked = item?.machineIds?.includes(machine.id) || false;
                 return (
-                  <label key={machine.id} className={`flex items-center px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
+                  <label key={machine.id} className={`flex items-center px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
                     <input type="checkbox" checked={checked} onChange={() => toggleMachine(openDropdownFor, machine)}
-                      className="h-3.5 w-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-2.5 flex-shrink-0" />
-                    <span className={`text-xs font-medium ${checked ? 'text-indigo-700' : 'text-gray-700'}`}>{machine.machineCode}</span>
-                    <span className="text-[10px] text-gray-400 ml-1.5">{machine.brand}</span>
+                      className="h-3.5 w-3.5 text-indigo-600 border-gray-300 dark:border-slate-600 rounded focus:ring-indigo-500 mr-2.5 flex-shrink-0" />
+                    <span className={`text-xs font-medium ${checked ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'}`}>{machine.machineCode}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-slate-500 ml-1.5">{machine.brand}</span>
                   </label>
                 );
               })
@@ -1404,6 +1395,15 @@ const CreatePlan = () => {
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: #cbd5e1 transparent;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #475569;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+        .dark .custom-scrollbar {
+          scrollbar-color: #475569 transparent;
         }
       `}</style>
     </div>

@@ -61,10 +61,7 @@ const Plans = () => {
       if (response.data?.success) {
         const rawRecords = response.data.data.records || [];
         
-        // Keep only rows where finalTargetQty is strictly greater than 0
-        const filteredRecords = rawRecords.filter(plan => plan.finalTargetQty > 0);
-
-        setPlans(filteredRecords);
+        setPlans(rawRecords);
         setPagination(prev => ({
           ...prev,
           totalRecords: response.data.data.totalRecords || 0
@@ -98,9 +95,8 @@ const Plans = () => {
 
       if (response.data?.success) {
         const rawRecords = response.data.data.records || [];
-        const exportData = rawRecords.filter(plan => plan.finalTargetQty > 0);
 
-        if (exportData.length === 0) {
+        if (rawRecords.length === 0) {
           alert('No data available to export.');
           return;
         }
@@ -114,7 +110,7 @@ const Plans = () => {
 
         const csvRows = [headers.join(',')];
 
-        exportData.forEach(plan => {
+        rawRecords.forEach(plan => {
           const buyer = plan.buyer || plan.buyerDepartment || '';
           const machineQty = plan.machines ? plan.machines.length : 0; // ✅ Machine QTY
           
@@ -191,12 +187,12 @@ const Plans = () => {
   const totalPages = Math.ceil(pagination.totalRecords / pagination.pageSize);
 
   return (
-    <div className="p-6">
+    <div className="p-6 dark:bg-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Wash Plans</h1>
-          <p className="text-sm text-gray-500 mt-1">View and manage wash production plans</p>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Wash Plans</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">View and manage wash production plans</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -231,33 +227,32 @@ const Plans = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        {/* Adjusted grid to handle 7 items smoothly */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">From Date</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">From Date</label>
             <input
               type="date"
               value={filters.fromDate}
               onChange={(e) => handleFilterChange('fromDate', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">To Date</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">To Date</label>
             <input
               type="date"
               value={filters.toDate}
               onChange={(e) => handleFilterChange('toDate', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Shift</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Shift</label>
             <select
               value={filters.shift}
               onChange={(e) => handleFilterChange('shift', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
             >
               <option value="">All Shifts</option>
               <option value="1">Day</option>
@@ -265,13 +260,12 @@ const Plans = () => {
             </select>
           </div>
           
-          {/* ✅ New Process Stage Filter */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Process Stage</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Process Stage</label>
             <select
               value={filters.processStageId}
               onChange={(e) => handleFilterChange('processStageId', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
             >
               <option value="">All Stages</option>
               <option value="1">1st Dry</option>
@@ -283,11 +277,11 @@ const Plans = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Plant</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Plant</label>
             <select
               value={filters.plantId}
               onChange={handlePlantChange}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
             >
               <option value="">All Plants</option>
               {uniquePlants.map(plant => (
@@ -296,12 +290,12 @@ const Plans = () => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Unit</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Unit</label>
             <select
               value={filters.unitId}
               onChange={(e) => handleFilterChange('unitId', e.target.value)}
               disabled={!filters.plantId}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200 disabled:bg-gray-100 dark:disabled:bg-slate-600 disabled:cursor-not-allowed"
             >
               <option value="">All Units</option>
               {filteredUnits.map(unit => (
@@ -310,7 +304,7 @@ const Plans = () => {
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Search</label>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Search</label>
             <div className="flex gap-1">
               <input
                 type="text"
@@ -318,7 +312,7 @@ const Plans = () => {
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200"
               />
             </div>
           </div>
@@ -326,7 +320,7 @@ const Plans = () => {
         <div className="flex justify-end gap-2 mt-4">
           <button
             onClick={handleClearFilters}
-            className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             Clear
           </button>
@@ -340,32 +334,31 @@ const Plans = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              {/* ✅ Updated Headers */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 flex flex-col" style={{ maxHeight: 'calc(100vh - 380px)' }}>
+        <div className="overflow-auto flex-1 custom-scrollbar">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Plan Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Work Order</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Buyer</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Style</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Color</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">PO</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Shift</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Process Stage</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Machines QTY</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wash Balance</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Base Target</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Final Target</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Plan Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Unit</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Work Order</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Buyer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Style</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Color</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">PO</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Shift</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Process Stage</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Machines QTY</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Order Qty</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Wash Balance</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Base Target</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Final Target</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={14} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={14} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
                     <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -375,7 +368,7 @@ const Plans = () => {
                 </tr>
               ) : plans.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={14} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
                     <svg className="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
@@ -385,27 +378,26 @@ const Plans = () => {
                 </tr>
               ) : (
                 plans.map((plan) => (
-                  <tr key={`${plan.id || plan.workOrderId}-${plan.processStageId}`} className="hover:bg-gray-50 transition-colors">
-                    {/* ✅ Updated Table Data Mapping */}
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
+                  <tr key={`${plan.id || plan.workOrderId}-${plan.processStageId}`} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200 font-medium">
                       {plan.planDate}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
                       {plan.unitName}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400 font-medium">
                       {plan.workOrderNo}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[100px] truncate" title={plan.buyer || plan.buyerDepartment}>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400 max-w-[100px] truncate" title={plan.buyer || plan.buyerDepartment}>
                       {plan.buyer || plan.buyerDepartment} 
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 max-w-[140px] truncate" title={plan.styleName}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-200 max-w-[140px] truncate" title={plan.styleName}>
                       {plan.styleName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 max-w-[100px] truncate" title={plan.color}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-300 max-w-[100px] truncate" title={plan.color}>
                       {plan.color}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-400">
                       {plan.washType}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -418,10 +410,10 @@ const Plans = () => {
                         {plan.processStageName}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center whitespace-nowrap text-sm font-bold text-gray-700">
+                    <td className="px-4 py-3 text-center whitespace-nowrap text-sm font-bold text-gray-700 dark:text-slate-300">
                       {plan.machines ? plan.machines.length : 0}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
                       {plan.orderQuantity?.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -429,10 +421,10 @@ const Plans = () => {
                         {plan.washBalance?.toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200 font-medium">
                       {plan.baseTargetQty?.toLocaleString() || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-green-700 font-semibold">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-green-700 dark:text-green-400 font-semibold">
                       {plan.finalTargetQty?.toLocaleString() || '-'}
                     </td>                    
                   </tr>
@@ -444,8 +436,8 @@ const Plans = () => {
 
         {/* Pagination */}
         {pagination.totalRecords > 0 && (
-          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
-            <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 dark:border-slate-700">
+            <div className="text-sm text-gray-600 dark:text-slate-400">
               Showing {(pagination.pageNumber - 1) * pagination.pageSize + 1} to{' '}
               {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalRecords)} of{' '}
               {pagination.totalRecords} records
@@ -454,31 +446,31 @@ const Plans = () => {
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={pagination.pageNumber === 1}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded hover:bg-gray-50 dark:bg-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 First
               </button>
               <button
                 onClick={() => handlePageChange(pagination.pageNumber - 1)}
                 disabled={pagination.pageNumber === 1}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded hover:bg-gray-50 dark:bg-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              <span className="px-3 py-1.5 text-sm font-medium text-blue-600">
+              <span className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400">
                 {pagination.pageNumber} / {totalPages || 1}
               </span>
               <button
                 onClick={() => handlePageChange(pagination.pageNumber + 1)}
                 disabled={pagination.pageNumber >= totalPages}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded hover:bg-gray-50 dark:bg-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
               <button
                 onClick={() => handlePageChange(totalPages)}
                 disabled={pagination.pageNumber >= totalPages}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded hover:bg-gray-50 dark:bg-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Last
               </button>
@@ -486,6 +478,39 @@ const Plans = () => {
           </div>
         )}
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        .custom-scrollbar::-webkit-scrollbar-corner {
+          background: transparent;
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #475569;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+        .dark .custom-scrollbar {
+          scrollbar-color: #475569 transparent;
+        }
+      `}</style>
     </div>
   );
 };

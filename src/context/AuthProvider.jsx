@@ -4,6 +4,19 @@ import { AuthContext } from './AuthContext';
 import { authApi } from '../api/authApi';
 import toast from 'react-hot-toast';
 
+const isTokenExpired = (token) => {
+  try {
+    if (token.split('.').length !== 3) {
+      return false;
+    }
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? Date.now() >= payload.exp * 1000 : false;
+  } catch (error) {
+    return false;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -17,11 +30,14 @@ export const AuthProvider = ({ children }) => {
         const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
+        if (storedToken && storedUser && !isTokenExpired(storedToken)) {
           const parsedUser = JSON.parse(storedUser);
           setToken(storedToken);
           setUser(parsedUser);
           setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -33,6 +49,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      setUser(null);
+      setToken(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    return () => window.removeEventListener('auth:logout', handleAuthLogout);
   }, []);
 
   // Login function
