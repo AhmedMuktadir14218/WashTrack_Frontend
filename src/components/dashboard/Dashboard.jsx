@@ -1464,6 +1464,22 @@ import { useAuth } from '../../hooks/useAuth';
 
 const AUTO_REFRESH_INTERVAL_MS = 1 * 60 * 1000;
 
+const formatDashboardNumber = (value) => {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return '0';
+
+  if (Math.abs(num) >= 1000000) {
+    const millionValue = num / 1000000;
+    const formatted = Number.isInteger(millionValue)
+      ? millionValue.toFixed(0)
+      : millionValue.toFixed(1);
+
+    return `${formatted}M`;
+  }
+
+  return num.toLocaleString();
+};
+
 // ============ CUSTOM SVG ICONS ============
 const IconFilter = ({ className = '' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1969,7 +1985,7 @@ const getAccessibleUnits = (plantId) => {
 
   const formatNumber = (num) => {
     if (num === null || num === undefined) return '0';
-    return num.toLocaleString();
+    return formatDashboardNumber(num);
   };
 
   const handleFilterChange = (field, value) => {
@@ -2420,7 +2436,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
             <span
               className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
-              {card.delivery?.toLocaleString()}
+              {formatDashboardNumber(card.delivery)}
             </span>
           </div>
         </div>
@@ -2440,7 +2456,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
             <span
               className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
-              {card.delivery?.toLocaleString()}
+              {formatDashboardNumber(card.delivery)}
             </span>
           </div>
         </div>
@@ -2473,7 +2489,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
 const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => {
   const formatNumber = (num) => {
     if (num === null || num === undefined) return '0';
-    return num.toLocaleString();
+    return formatDashboardNumber(num);
   };
 
   return (
@@ -2917,7 +2933,7 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
             Top 3 Defects
           </span>
           <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-            Reject {rejectQty.toLocaleString()}
+            Reject {formatDashboardNumber(rejectQty)}
           </span>
         </div>
 
@@ -2946,7 +2962,7 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
                 </div>
 
                 <span className={`text-xs xl:text-[13px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-                  {Number(issue.qty || 0).toLocaleString()}
+                  {formatDashboardNumber(issue.qty)}
                 </span>
               </div>
             ))}
@@ -3051,7 +3067,7 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
                 {overallDhu}%
               </span>
               <span className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                Reject {totalRejectQty.toLocaleString()}
+                Reject {formatDashboardNumber(totalRejectQty)}
               </span>
             </div>
           </div>
@@ -3094,7 +3110,7 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
                   </div>
 
                   <span className={`text-sm xl:text-[15px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-                    {Number(issue.qty || 0).toLocaleString()}
+                    {formatDashboardNumber(issue.qty)}
                   </span>
                 </div>
               ))}
@@ -3128,7 +3144,7 @@ const MiniInfoTile = ({ label, value, isDarkMode, danger = false }) => {
         {label}
       </div>
       <div className={`text-sm xl:text-[18px] font-black mt-1 ${danger ? 'text-red-500' : isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value}
+        {typeof value === 'number' ? formatDashboardNumber(value) : value}
       </div>
     </div>
   );
@@ -3156,7 +3172,7 @@ const BigInfoTile = ({ label, value, isDarkMode, color = 'default' }) => {
         {label}
       </div>
       <div className={`text-lg xl:text-xl font-black mt-1 ${colorClass}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value}
+        {typeof value === 'number' ? formatDashboardNumber(value) : value}
       </div>
     </div>
   );
@@ -3250,7 +3266,7 @@ const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
 const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
   const formatNumber = (num) => {
     if (num === null || num === undefined) return '0';
-    return num.toLocaleString();
+    return formatDashboardNumber(num);
   };
 
   return (

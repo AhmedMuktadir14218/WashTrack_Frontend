@@ -129,7 +129,19 @@ const formatDate = (dateStr) => {
 };
 const formatNumber = (num) => {
   if (num === null || num === undefined) return '0';
-  return Number(num).toLocaleString();
+  const value = Number(num || 0);
+  if (!Number.isFinite(value)) return '0';
+
+  if (Math.abs(value) >= 1000000) {
+    const millionValue = value / 1000000;
+    const formatted = Number.isInteger(millionValue)
+      ? millionValue.toFixed(0)
+      : millionValue.toFixed(1);
+
+    return `${formatted}M`;
+  }
+
+  return value.toLocaleString();
 };
 
 // ============ MAIN MODAL ============
