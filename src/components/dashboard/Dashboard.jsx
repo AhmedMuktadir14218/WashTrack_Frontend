@@ -1666,6 +1666,9 @@ const getAccessibleUnits = (plantId) => {
       'Final Dryer': { delivery: 0 },
       'Cool Dryer': { delivery: 0 },
       'ReDryer': { delivery: 0 },
+      'Laser': { delivery: 0, receive: 0 },
+      'Acid Wash': { delivery: 0, receive: 0 },
+      'Ozone': { delivery: 0 },
     };
 
     data.forEach((item) => {
@@ -2031,7 +2034,10 @@ const getAccessibleUnits = (plantId) => {
         }`}
         style={{ margin: 0, padding: 0 }}
       >
-      <div className="max-w-[1700px] mx-auto flex flex-col gap-2">
+      <div className="
+      max-w-[1800px] 
+      mx-auto 
+      flex flex-col gap-2">
         {/* Header */}
         {/* <Header /> */}
 
@@ -2276,10 +2282,12 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
 
 // ============ TOP SUMMARY CARDS ============
 const PROCESS_STAGE_IDS = {
-  '1st Dry Section': [1],
+  '1st Dry ': [1],
   'UnWash Godown': [2],
-  '1st Wash Section': [4],
-  '2nd Dry Section': [3],
+  '1st Wash ': [4],
+  '2nd Dry ': [3],
+  'Laser ': [11],
+  'Acid Wash ': [12],
 };
 
 const DRYER_STAGE_IDS = {
@@ -2288,12 +2296,13 @@ const DRYER_STAGE_IDS = {
   'Final Dryer': [8],
   'Cool Dryer': [9],
   'ReDryer': [10],
+  'Ozone': [13],
 };
 
 const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
   const cards = [
     {
-      title: '1st Dry Section',
+      title: '1st Dry  ',
       type: 'blue',
       icon: 'chart',
       received: dashboardData?.['1st Dry']?.receive || 0,
@@ -2309,24 +2318,38 @@ const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
       showChart: true,
     },
     {
-      title: '1st Wash Section',
+      title: '1st Wash  ',
       type: 'blue',
       icon: 'water',
       delivery: dashboardData?.['1st Wash']?.delivery || 0,
       showDeliveryOnly: true,
     },
     {
-      title: '2nd Dry Section',
+      title: '2nd Dry  ',
       type: 'blue',
       icon: 'fire',
       received: dashboardData?.['2nd Dry']?.receive || 0,
       delivery: dashboardData?.['2nd Dry']?.delivery || 0,
       showBoth: true,
+    }, 
+        {
+      title: 'Laser  ',
+      type: 'blue',
+      icon: 'water',
+      delivery: dashboardData?.['Laser']?.delivery || 0,
+      showDeliveryOnly: true,
+    },
+        {
+      title: 'Acid Wash  ',
+      type: 'blue',
+      icon: 'water',
+      delivery: dashboardData?.['Acid Wash']?.delivery || 0,
+      showDeliveryOnly: true,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
       {cards.map((card, index) => (
         <TopCard
           key={index}
@@ -2898,10 +2921,10 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
       {/* KPI + Rings */}
       {/* <div className="grid grid-cols-[1.35fr_0.95fr] gap-3 items-start"> */}
         <div className="grid grid-cols-4 gap-2">
-          <MiniInfoTile label="Output" value={passQty} isDarkMode={isDarkMode} />
           <MiniInfoTile label="Target" value={targetQty} isDarkMode={isDarkMode} />
+          <MiniInfoTile label="Output" value={passQty} isDarkMode={isDarkMode} />
           <MiniInfoTile label="Defect" value={defectQty} isDarkMode={isDarkMode} danger />
-          <MiniInfoTile label="Manpower" value={manPower.toFixed(1)} isDarkMode={isDarkMode} />
+          <MiniInfoTile label="Manpower" value={manPower.toFixed(0)} isDarkMode={isDarkMode} />
         </div>
 
         {/* <div className="flex items-center justify-center gap-2">
@@ -3243,10 +3266,11 @@ const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
     { name: 'Final Dryer', delivery: dashboardData?.['Final Dryer']?.delivery || 0 },
     { name: 'Cool Dryer', delivery: dashboardData?.['Cool Dryer']?.delivery || 0 },
     { name: 'ReDryer', delivery: dashboardData?.['ReDryer']?.delivery || 0 },
+    { name: 'Ozone', delivery: dashboardData?.['Ozone']?.delivery || 0 },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
       {dryers.map((dryer, index) => (
         <DryerCard
           key={index}

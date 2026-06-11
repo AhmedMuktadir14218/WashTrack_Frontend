@@ -150,7 +150,10 @@ const UserTransactionPage = () => {
                     stageName.includes('2nd dryer') || 
                     stageName.includes('final dryer') ||
                     stageName.includes('cool dryer') ||
-                    stageName.includes('redryer');
+                    stageName.includes('redryer') ||
+                    stageName.includes('laser') ||
+                    stageName.includes('acid wash') ||
+                    stageName.includes('ozon');
 
     if (!isDryer) {
       // ✅ Get stage balance directly from work order
@@ -390,7 +393,10 @@ const UserTransactionPage = () => {
                                             stageName.includes('2nd dryer') || 
                                             stageName.includes('final dryer') ||
                                             stageName.includes('cool dryer') ||
-                                            stageName.includes('redryer');
+                                            stageName.includes('redryer') ||
+                                            stageName.includes('laser') ||
+                                            stageName.includes('acid wash') ||
+                                            stageName.includes('ozon');
 
                             return (
                               <tr key={wo.id} className={`hover:bg-gray-50 ${hasQty ? 'bg-green-50' : ''} ${!isDryer && availQty <= 0 ? 'bg-red-50' : ''}`}>

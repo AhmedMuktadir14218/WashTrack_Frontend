@@ -16,6 +16,9 @@ export const PROCESS_STAGE_MAP = {
   8: 'Final Dryer',
   9: 'Cool Dryer',
   10: 'ReDryer',
+  11: 'Laser',
+  12: 'Acid Wash',
+  13: 'Ozon',
 };
 
 // Reverse map: stageName -> stageId

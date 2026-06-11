@@ -13,6 +13,9 @@ export const PROCESS_STAGES = {
   FINAL_DRYER: { value: 7, label: 'Final Dryer' },
   COOL_DRYER: { value: 8, label: 'Cool Dryer' },
   RE_DRYER: { value: 9, label: 'ReDryer' },
+  LASER: { value: 10, label: 'Laser' },
+  ACID_WASH: { value: 11, label: 'Acid Wash' },
+  OZON: { value: 12, label: 'Ozon' },
 };
 
 // Transaction Types
@@ -38,6 +41,9 @@ export const CATEGORIES = [
   { id: 7, name: 'Final Dryer' },
   { id: 8, name: 'Cool Dryer' },
   { id: 9, name: 'ReDryer' },
+  { id: 10, name: 'Laser' },
+  { id: 11, name: 'Acid Wash' },
+  { id: 12, name: 'Ozon' },
 ];
 
 // Date Format

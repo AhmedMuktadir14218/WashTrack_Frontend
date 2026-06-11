@@ -40,6 +40,9 @@ const PROCESS_STAGES = [
   { id: 8, name: 'Final Dryer' },
   { id: 9, name: 'Cool Dryer' },
   { id: 10, name: 'ReDryer' },
+  { id: 11, name: 'Laser' },
+  { id: 12, name: 'Acid Wash' },
+  { id: 13, name: 'Ozon' },
 ];
 
 const PLANTS = [

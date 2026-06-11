@@ -1,7 +1,6 @@
 // D:\TusukaReact\WashRecieveDelivary_Frontend\src\components\workorders\WorkOrderList.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DataGrid } from '@mui/x-data-grid';
 import {
   Add,
   Edit,
@@ -10,13 +9,17 @@ import {
   Upload,
   Download,
   Search,
-  Refresh
+  Refresh,
+  ChevronLeft,
+  ChevronRight
 } from '@mui/icons-material';
-import { CircularProgress, IconButton, Tooltip, Chip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { workOrderApi } from '../../api/workOrderApi';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import { format } from 'date-fns';
+import LoadingSpinner from '../common/LoadingSpinner';
+import EmptyState from '../common/EmptyState';
 
 const WorkOrderList = () => {
   const navigate = useNavigate();
@@ -26,8 +29,9 @@ const WorkOrderList = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-// console.log('Render WorkOrderList Component',workOrders);
-  // Fetch work orders
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const fetchWorkOrders = async () => {
     try {
       setLoading(true);
@@ -47,8 +51,7 @@ const WorkOrderList = () => {
   useEffect(() => {
     fetchWorkOrders();
   }, []);
-  // console.log('WorkOrders:', workOrders);
-  // Search filter
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredData(workOrders);
@@ -62,7 +65,6 @@ const WorkOrderList = () => {
     }
   }, [searchQuery, workOrders]);
 
-  // Handle delete
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this work order?')) {
       return;
@@ -80,7 +82,6 @@ const WorkOrderList = () => {
     }
   };
 
-  // Handle download template
   const handleDownloadTemplate = async () => {
     try {
       const response = await workOrderApi.downloadTemplate();
@@ -98,150 +99,34 @@ const WorkOrderList = () => {
     }
   };
 
-  // DataGrid columns
-  const columns = [
-    {
-      field: 'id',
-      headerName: 'ID',
-      width: 70,
-      headerClassName: 'bg-gray-100 font-bold',
-    },
-    {
-      field: 'workOrderNo',
-      headerName: 'Work Order No',
-      width: 150,
-      headerClassName: 'bg-gray-100 font-bold',
-      renderCell: (params) => (
-        <span className="font-semibold text-primary-600">
-          {params.value}
-        </span>
-      ),
-    },
-    {
-      field: 'styleName',
-      headerName: 'Style Name',
-      width: 250,
-      headerClassName: 'bg-gray-100 font-bold',
-    },
-    {
-      field: 'buyer',
-      headerName: 'Buyer',
-      width: 130,
-      headerClassName: 'bg-gray-100 font-bold',
-    },
-    {
-      field: 'factory',
-      headerName: 'Factory',
-      width: 120,
-      headerClassName: 'bg-gray-100 font-bold',
-    },
-    {
-      field: 'line',
-      headerName: 'Line',
-      width: 120,
-      headerClassName: 'bg-gray-100 font-bold',
-    },
-    {
-      field: 'orderQuantity',
-      headerName: 'Order Qty',
-      width: 120,
-      headerClassName: 'bg-gray-100 font-bold',
-      renderCell: (params) => (
-        <span className="font-medium text-gray-700">
-          {params.value?.toLocaleString()}
-        </span>
-      ),
-    },
-    // {
-    //   field: 'washType',
-    //   headerName: 'Wash Type',
-    //   width: 130,
-    //   headerClassName: 'bg-gray-100 font-bold',
-    //   renderCell: (params) => (
-    //     <Chip
-    //       label={params.value || 'N/A'}
-    //       size="small"
-    //       color="primary"
-    //       variant="outlined"
-    //     />
-    //   ),
-    // },
-    {
-  field: 'washTargetDate',
-  headerName: 'Wash Target',
-  width: 150,
-  headerClassName: 'bg-gray-100 font-bold',
-  renderCell: (params) => (
-    <span className="text-gray-600 text-sm">
-      {params.value ? format(new Date(params.value), 'dd MMM yyyy') : 'N/A'}
-    </span>
-  ),
-},
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
-    {
-      field: 'createdAt',
-      headerName: 'Created Date',
-      width: 130,
-      headerClassName: 'bg-gray-100 font-bold',
-      renderCell: (params) => (
-        <span className="text-gray-600 text-sm">
-          {params.value ? format(new Date(params.value), 'dd MMM yyyy') : 'N/A'}
-        </span>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 150,
-      headerClassName: 'bg-gray-100 font-bold',
-      sortable: false,
-      renderCell: (params) => (
-        <div className="flex items-center gap-1">
-          <Tooltip title="View Details">
-            <IconButton
-              size="small"
-              onClick={() => navigate(`/admin/work-orders/${params.row.id}`)}
-              className="text-blue-600 hover:bg-blue-50"
-            >
-              <Visibility fontSize="small" />
-            </IconButton>
-          </Tooltip>
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
-          {isAdmin() && (
-            <>
-              <Tooltip title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={() => navigate(`/admin/work-orders/edit/${params.row.id}`)}
-                  className="text-green-600 hover:bg-green-50"
-                >
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  onClick={() => handleDelete(params.row.id)}
-                  className="text-red-600 hover:bg-red-50"
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </div>
-      ),
-    },
-  ];
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
-    <div className="fade-in">
+    <div className="fade-in dark:bg-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Work Orders</h1>
-          <p className="text-gray-600 text-sm mt-1">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Work Orders</h1>
+          <p className="text-gray-600 dark:text-slate-400 text-sm mt-1">
             Manage all work orders and track their status
           </p>
         </div>
@@ -284,23 +169,23 @@ const WorkOrderList = () => {
       </div>
 
       {/* Search and Refresh */}
-      <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-gray-200">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-6 border border-gray-200 dark:border-slate-700">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400" />
             <input
               type="text"
               placeholder="Search work orders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 dark:bg-slate-700 dark:text-slate-200"
             />
           </div>
 
           <button
             onClick={fetchWorkOrders}
             disabled={loading}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 transition duration-200 disabled:opacity-50"
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-lg flex items-center gap-2 transition duration-200 disabled:opacity-50"
           >
             <Refresh fontSize="small" />
             <span className="text-sm font-medium">Refresh</span>
@@ -309,37 +194,189 @@ const WorkOrderList = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-96">
-            <CircularProgress />
-          </div>
+          <LoadingSpinner size="lg" />
+        ) : filteredData.length === 0 ? (
+          <EmptyState
+            title="No Work Orders"
+            description="No work orders found. Try adjusting your search."
+            variant="search"
+          />
         ) : (
-          <div style={{ height: 600, width: '100%' }}>
-            <DataGrid
-              rows={filteredData}
-              columns={columns}
-              pageSize={10}
-              rowsPerPageOptions={[5, 10, 25, 50]}
-              disableSelectionOnClick
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell:focus': {
-                  outline: 'none',
-                },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: '#f9fafb',
-                },
-              }}
-            />
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Work Order No</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Style Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Buyer</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Factory</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Line</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Order Qty</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Wash Target</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Created Date</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                {paginatedData.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition duration-150">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{order.id}</td>
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-primary-600 dark:text-primary-400">{order.workOrderNo}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-700 dark:text-slate-300">{order.styleName}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-700 dark:text-slate-300">{order.buyer}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-700 dark:text-slate-300">{order.factory}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-700 dark:text-slate-300">{order.line}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-gray-700 dark:text-slate-300">
+                        {order.orderQuantity?.toLocaleString() || 0}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 dark:text-slate-400">
+                        {order.washTargetDate ? format(new Date(order.washTargetDate), 'dd MMM yyyy') : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 dark:text-slate-400">
+                        {order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy') : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Tooltip title="View Details">
+                          <button
+                            onClick={() => navigate(`/admin/work-orders/${order.id}`)}
+                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition duration-200"
+                          >
+                            <Visibility fontSize="small" />
+                          </button>
+                        </Tooltip>
+
+                        {isAdmin() && (
+                          <>
+                            <Tooltip title="Edit">
+                              <button
+                                onClick={() => navigate(`/admin/work-orders/edit/${order.id}`)}
+                                className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition duration-200"
+                              >
+                                <Edit fontSize="small" />
+                              </button>
+                            </Tooltip>
+
+                            <Tooltip title="Delete">
+                              <button
+                                onClick={() => handleDelete(order.id)}
+                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition duration-200"
+                              >
+                                <Delete fontSize="small" />
+                              </button>
+                            </Tooltip>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredData.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 border-t border-gray-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">
+                Page <strong>{currentPage}</strong> of <strong>{totalPages || 1}</strong>
+              </span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">
+                ({filteredData.length} total records)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 dark:text-slate-300"
+              >
+                <ChevronLeft fontSize="small" />
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-9 h-9 rounded-lg font-semibold transition duration-200 ${
+                        currentPage === pageNum
+                          ? 'bg-primary-600 text-white'
+                          : 'border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="p-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 dark:text-slate-300"
+              >
+                <ChevronRight fontSize="small" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-700 dark:text-slate-300 font-medium">
+                Per page:
+              </label>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 font-medium text-sm dark:bg-slate-700 dark:text-slate-200"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
         )}
       </div>
 
       {/* Summary */}
-      <div className="mt-4 text-sm text-gray-600">
-        Showing <strong>{filteredData.length}</strong> of{' '}
-        <strong>{workOrders.length}</strong> work orders
+      <div className="mt-4 text-sm text-gray-600 dark:text-slate-400">
+        Showing <strong className="text-gray-700 dark:text-slate-300">{paginatedData.length}</strong> of{' '}
+        <strong className="text-gray-700 dark:text-slate-300">{filteredData.length}</strong> work orders
       </div>
     </div>
   );

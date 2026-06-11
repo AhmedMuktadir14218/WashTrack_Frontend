@@ -33,10 +33,8 @@ const TransactionFilter = () => {
   };
 
   const handleApplyFilters = async () => {
-    // Build filter object with only non-empty values
     const activeFilters = Object.entries(filterParams).reduce((acc, [key, value]) => {
       if (value) {
-        // Convert numeric fields
         if (['workOrderId', 'transactionType', 'processStageId'].includes(key)) {
           acc[key] = parseInt(value);
         } else {
@@ -81,12 +79,12 @@ const TransactionFilter = () => {
   const activeFilterCount = Object.values(filterParams).filter(val => val).length;
 
   return (
-    <div className="fade-in">
+    <div className="fade-in dark:bg-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Advanced Search</h2>
-          <p className="text-gray-600 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Advanced Search</h2>
+          <p className="text-gray-600 dark:text-slate-400 text-sm mt-1">
             Find transactions with multiple filter criteria
           </p>
         </div>
@@ -95,8 +93,8 @@ const TransactionFilter = () => {
           onClick={() => setShowFilters(!showFilters)}
           className={`px-4 py-2 rounded-lg flex items-center gap-2 transition duration-200 font-medium ${
             showFilters
-              ? 'bg-primary-600 text-white shadow-lg'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary-600 text-white shadow-lg dark:bg-primary-700'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
           }`}
         >
           <FilterAlt fontSize="small" />
@@ -111,7 +109,7 @@ const TransactionFilter = () => {
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 mb-6 overflow-hidden">
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6">
             <div className="flex items-center gap-3">
               <TuneOutlined className="text-white" style={{ fontSize: 28 }} />
@@ -127,7 +125,7 @@ const TransactionFilter = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {/* Work Order ID */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Work Order ID
                 </label>
                 <input
@@ -137,13 +135,13 @@ const TransactionFilter = () => {
                   onChange={handleFilterChange}
                   disabled={loading}
                   placeholder="Enter work order ID"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
               </div>
 
               {/* Transaction Type */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Transaction Type
                 </label>
                 <select
@@ -151,7 +149,7 @@ const TransactionFilter = () => {
                   value={filterParams.transactionType}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 >
                   <option value="">All Types</option>
                   <option value={TRANSACTION_TYPES.RECEIVE}>Receive</option>
@@ -161,7 +159,7 @@ const TransactionFilter = () => {
 
               {/* Process Stage */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Process Stage
                 </label>
                 <select
@@ -169,7 +167,7 @@ const TransactionFilter = () => {
                   value={filterParams.processStageId}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 >
                   <option value="">All Stages</option>
                   {stages.map(stage => (
@@ -182,7 +180,7 @@ const TransactionFilter = () => {
 
               {/* Start Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Start Date
                 </label>
                 <input
@@ -191,13 +189,13 @@ const TransactionFilter = () => {
                   value={filterParams.startDate}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
               </div>
 
               {/* End Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   End Date
                 </label>
                 <input
@@ -206,13 +204,13 @@ const TransactionFilter = () => {
                   value={filterParams.endDate}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
               </div>
 
               {/* Batch No */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Batch No / Gate Pass
                 </label>
                 <input
@@ -222,14 +220,14 @@ const TransactionFilter = () => {
                   onChange={handleFilterChange}
                   disabled={loading}
                   placeholder="Enter batch or gate pass"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
               </div>
             </div>
 
             {/* Info Box */}
-            <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg mb-6">
-              <p className="text-sm text-blue-800">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-800 rounded-lg mb-6">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
                 <span className="font-semibold">💡 Tip:</span> You can combine multiple filters for more specific results. Leave fields empty to search by all values in that category.
               </p>
             </div>
@@ -257,7 +255,7 @@ const TransactionFilter = () => {
               <button
                 onClick={handleResetFilters}
                 disabled={loading}
-                className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-200 font-semibold rounded-lg transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Close fontSize="small" />
                 <span>Reset Filters</span>
@@ -278,12 +276,12 @@ const TransactionFilter = () => {
               description="No transactions found matching your filters. Try adjusting your criteria."
             />
           ) : (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gray-50 px-8 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-800">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
+              <div className="bg-gray-50 dark:bg-slate-700 px-8 py-4 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100">
                   Results: {filteredData.length} transaction{filteredData.length !== 1 ? 's' : ''}
                 </h3>
-                <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full font-medium">
+                <span className="text-sm text-gray-600 dark:text-slate-300 bg-gray-200 dark:bg-slate-600 px-3 py-1 rounded-full font-medium">
                   Total Qty: {filteredData.reduce((sum, t) => sum + t.quantity, 0).toLocaleString()} pcs
                 </span>
               </div>
@@ -291,34 +289,34 @@ const TransactionFilter = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   {/* Table Header */}
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Work Order
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Stage
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Quantity
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Reference
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">
                         Created By
                       </th>
                     </tr>
                   </thead>
 
                   {/* Table Body */}
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                     {filteredData.map((transaction) => {
                       const typeColor = getTypeColor(transaction.transactionType);
                       const isReceive = transaction.transactionType === TRANSACTION_TYPES.RECEIVE;
@@ -327,7 +325,7 @@ const TransactionFilter = () => {
                       return (
                         <tr
                           key={transaction.id}
-                          className="hover:bg-gray-50 transition duration-150"
+                          className="hover:bg-gray-50 dark:hover:bg-slate-700 transition duration-150"
                         >
                           {/* Type */}
                           <td className="px-6 py-4">
@@ -339,28 +337,28 @@ const TransactionFilter = () => {
 
                           {/* Work Order */}
                           <td className="px-6 py-4">
-                            <p className="font-semibold text-gray-800 text-sm">
+                            <p className="font-semibold text-gray-800 dark:text-slate-200 text-sm">
                               {transaction.workOrderNo}
                             </p>
                           </td>
 
                           {/* Stage */}
                           <td className="px-6 py-4">
-                            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
+                            <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">
                               {transaction.processStageName}
                             </span>
                           </td>
 
                           {/* Quantity */}
                           <td className="px-6 py-4">
-                            <span className="font-bold text-gray-800">
+                            <span className="font-bold text-gray-800 dark:text-slate-200">
                               {transaction.quantity.toLocaleString()}
                             </span>
                           </td>
 
                           {/* Date */}
                           <td className="px-6 py-4">
-                            <span className="text-sm text-gray-700 font-medium">
+                            <span className="text-sm text-gray-700 dark:text-slate-200 font-medium">
                               {format(new Date(transaction.transactionDate), 'dd MMM yyyy')}
                             </span>
                           </td>
@@ -368,17 +366,17 @@ const TransactionFilter = () => {
                           {/* Reference */}
                           <td className="px-6 py-4">
                             {reference ? (
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-gray-700 dark:text-slate-200">
                                 {reference}
                               </span>
                             ) : (
-                              <span className="text-xs text-gray-400 italic">-</span>
+                              <span className="text-xs text-gray-400 dark:text-slate-500 italic">-</span>
                             )}
                           </td>
 
                           {/* Created By */}
                           <td className="px-6 py-4">
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-gray-700 dark:text-slate-300">
                               {transaction.createdByUsername}
                             </span>
                           </td>
@@ -392,6 +390,12 @@ const TransactionFilter = () => {
           )}
         </div>
       )}
+
+      <style>{`
+        .dark ::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
+      `}</style>
     </div>
   );
 };

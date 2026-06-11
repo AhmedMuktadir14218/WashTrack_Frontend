@@ -100,6 +100,9 @@ const ReceiveTransaction = () => {
       'Final Dryer': 'border-l-4 border-l-green-500',
       'Cool Dryer': 'border-l-4 border-l-purple-500',
       'ReDryer': 'border-l-4 border-l-purple-500',
+        'Laser': 'border-l-4 border-l-blue-500',
+        'Acid Wash': 'border-l-4 border-l-teal-500',
+        'Ozon': 'border-l-4 border-l-cyan-500',
     };
     return colors[stageName] || 'border-l-4 border-l-gray-500';
   };

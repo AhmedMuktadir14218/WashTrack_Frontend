@@ -41,7 +41,6 @@ const WorkOrderForm = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Fetch work order data if editing
   useEffect(() => {
     if (isEditMode) {
       fetchWorkOrder();
@@ -93,7 +92,6 @@ const WorkOrderForm = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -127,7 +125,6 @@ const WorkOrderForm = () => {
     try {
       setLoading(true);
 
-      // Convert empty strings to null for date fields
       const dataToSubmit = {
         ...formData,
         tod: formData.tod || null,
@@ -175,21 +172,26 @@ const WorkOrderForm = () => {
     );
   }
 
+  const inputClass = (hasError) =>
+    `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 dark:bg-slate-700 dark:text-slate-200 ${
+      hasError ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
+    }`;
+
   return (
-    <div className="fade-in max-w-6xl mx-auto">
+    <div className="fade-in max-w-6xl mx-auto dark:bg-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={() => navigate('/work-orders')}
-          className="p-2 rounded-lg hover:bg-gray-100 transition duration-200"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition duration-200 dark:text-slate-300"
         >
           <ArrowBack />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">
             {isEditMode ? 'Edit Work Order' : 'Create Work Order'}
           </h1>
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="text-gray-600 dark:text-slate-400 text-sm mt-1">
             {isEditMode
               ? 'Update work order information'
               : 'Add a new work order to the system'}
@@ -199,16 +201,16 @@ const WorkOrderForm = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-gray-200 dark:border-slate-700 p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4 pb-2 border-b border-gray-200 dark:border-slate-600">
               Basic Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Factory */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Factory <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -217,9 +219,7 @@ const WorkOrderForm = () => {
                   value={formData.factory}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.factory ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.factory)}
                   placeholder="Enter factory name"
                 />
                 {errors.factory && (
@@ -229,7 +229,7 @@ const WorkOrderForm = () => {
 
               {/* Line */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Line <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -238,9 +238,7 @@ const WorkOrderForm = () => {
                   value={formData.line}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.line ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.line)}
                   placeholder="Enter line"
                 />
                 {errors.line && (
@@ -250,7 +248,7 @@ const WorkOrderForm = () => {
 
               {/* Unit */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Unit <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -259,19 +257,17 @@ const WorkOrderForm = () => {
                   value={formData.unit}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.unit ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.unit)}
                   placeholder="Enter unit"
                 />
                 {errors.unit && (
-                                   <p className="text-red-500 text-xs mt-1">{errors.unit}</p>
+                  <p className="text-red-500 text-xs mt-1">{errors.unit}</p>
                 )}
               </div>
 
               {/* Buyer */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Buyer <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -280,9 +276,7 @@ const WorkOrderForm = () => {
                   value={formData.buyer}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.buyer ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.buyer)}
                   placeholder="Enter buyer name"
                 />
                 {errors.buyer && (
@@ -292,7 +286,7 @@ const WorkOrderForm = () => {
 
               {/* Buyer Department */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Buyer Department
                 </label>
                 <input
@@ -301,14 +295,14 @@ const WorkOrderForm = () => {
                   value={formData.buyerDepartment}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="Enter buyer department"
                 />
               </div>
 
               {/* Work Order No */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Work Order No <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -317,9 +311,7 @@ const WorkOrderForm = () => {
                   value={formData.workOrderNo}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.workOrderNo ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.workOrderNo)}
                   placeholder="Enter work order number"
                 />
                 {errors.workOrderNo && (
@@ -331,13 +323,13 @@ const WorkOrderForm = () => {
 
           {/* Product Details */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4 pb-2 border-b border-gray-200 dark:border-slate-600">
               Product Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Style Name */}
               <div className="lg:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Style Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -346,9 +338,7 @@ const WorkOrderForm = () => {
                   value={formData.styleName}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 ${
-                    errors.styleName ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={inputClass(errors.styleName)}
                   placeholder="Enter style name"
                 />
                 {errors.styleName && (
@@ -358,7 +348,7 @@ const WorkOrderForm = () => {
 
               {/* Color */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Color
                 </label>
                 <input
@@ -367,14 +357,14 @@ const WorkOrderForm = () => {
                   value={formData.color}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="Enter color"
                 />
               </div>
 
               {/* FastReact No */}
               <div className="lg:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   FastReact No
                 </label>
                 <input
@@ -383,38 +373,21 @@ const WorkOrderForm = () => {
                   value={formData.fastReactNo}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="Enter FastReact number"
                 />
               </div>
-
-              {/* Wash Type */}
-              {/* <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Wash Type
-                </label>
-                <input
-                  type="text"
-                  name="washType"
-                  value={formData.washType}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
-                  placeholder="e.g., Acid Wash"
-                />
-              </div> */}
             </div>
           </div>
 
           {/* Quantities */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4 pb-2 border-b border-gray-200 dark:border-slate-600">
               Quantities
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Order Quantity */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Order Quantity
                 </label>
                 <input
@@ -423,14 +396,13 @@ const WorkOrderForm = () => {
                   value={formData.orderQuantity}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
 
-              {/* Cut Qty */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Cut Qty
                 </label>
                 <input
@@ -439,14 +411,13 @@ const WorkOrderForm = () => {
                   value={formData.cutQty}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
 
-              {/* Total Wash Received */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Total Wash Received
                 </label>
                 <input
@@ -455,14 +426,13 @@ const WorkOrderForm = () => {
                   value={formData.totalWashReceived}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
 
-              {/* Total Wash Delivery */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Total Wash Delivery
                 </label>
                 <input
@@ -471,14 +441,13 @@ const WorkOrderForm = () => {
                   value={formData.totalWashDelivery}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
 
-              {/* Wash Balance */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Wash Balance
                 </label>
                 <input
@@ -487,14 +456,13 @@ const WorkOrderForm = () => {
                   value={formData.washBalance}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
 
-              {/* From Received */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   From Received
                 </label>
                 <input
@@ -503,7 +471,7 @@ const WorkOrderForm = () => {
                   value={formData.fromReceived}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                   placeholder="0"
                 />
               </div>
@@ -512,13 +480,12 @@ const WorkOrderForm = () => {
 
           {/* Dates */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4 pb-2 border-b border-gray-200 dark:border-slate-600">
               Important Dates
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* TOD */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   TOD (Target Order Date)
                 </label>
                 <input
@@ -527,13 +494,12 @@ const WorkOrderForm = () => {
                   value={formData.tod}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                 />
               </div>
 
-              {/* Sewing Comp Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Sewing Comp Date
                 </label>
                 <input
@@ -542,13 +508,12 @@ const WorkOrderForm = () => {
                   value={formData.sewingCompDate}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                 />
               </div>
 
-              {/* First RCV Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   1st RCV Date
                 </label>
                 <input
@@ -557,13 +522,12 @@ const WorkOrderForm = () => {
                   value={formData.firstRCVDate}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                 />
               </div>
 
-              {/* Wash Approval Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Wash Approval Date
                 </label>
                 <input
@@ -572,13 +536,12 @@ const WorkOrderForm = () => {
                   value={formData.washApprovalDate}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                 />
               </div>
 
-              {/* Wash Target Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                   Wash Target Date
                 </label>
                 <input
@@ -587,7 +550,7 @@ const WorkOrderForm = () => {
                   value={formData.washTargetDate}
                   onChange={handleChange}
                   disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                  className={inputClass(false)}
                 />
               </div>
             </div>
@@ -595,11 +558,11 @@ const WorkOrderForm = () => {
 
           {/* Remarks */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4 pb-2 border-b border-gray-200 dark:border-slate-600">
               Additional Information
             </h2>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
                 Marks / Remarks
               </label>
               <textarea
@@ -608,14 +571,14 @@ const WorkOrderForm = () => {
                 onChange={handleChange}
                 disabled={loading}
                 rows="4"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 dark:bg-slate-700 dark:text-slate-200"
                 placeholder="Enter any additional notes or remarks..."
               />
             </div>
           </div>
 
           {/* Form Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-slate-600">
             <button
               type="submit"
               disabled={loading}
@@ -638,13 +601,19 @@ const WorkOrderForm = () => {
               type="button"
               onClick={() => navigate('/work-orders')}
               disabled={loading}
-              className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition duration-200 disabled:opacity-50"
+              className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-200 rounded-lg transition duration-200 disabled:opacity-50"
             >
               Cancel
             </button>
           </div>
         </div>
       </form>
+
+      <style>{`
+        .dark ::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
+      `}</style>
     </div>
   );
 };

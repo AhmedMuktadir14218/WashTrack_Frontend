@@ -38,107 +38,75 @@ const TransactionList = ({ workOrderId = null }) => {
   const [workOrders, setWorkOrders] = useState([]);
   const [workOrdersLoading, setWorkOrdersLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [uniqueUnits, setUniqueUnits] = useState([]); // ✅ ADDED: Store unique units
+  const [uniqueUnits, setUniqueUnits] = useState([]);
 
-  // ==========================================
-  // PAGINATION & SEARCH STATE
-  // ==========================================
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // ==========================================
-  // ADVANCED FILTER PARAMETERS
- 
-const [filterParams, setFilterParams] = useState({
-  buyer: '',
-  factory: '',
-  unit: '',  
-  processStageId: '',
-  transactionTypeId: '',
-  startDate: '',  
-  endDate: '',  
-});
-  // ==========================================
-  // LOAD INITIAL DATA
-  // ==========================================
+  const [filterParams, setFilterParams] = useState({
+    buyer: '',
+    factory: '',
+    unit: '',  
+    processStageId: '',
+    transactionTypeId: '',
+    startDate: '',  
+    endDate: '',  
+  });
+
   useEffect(() => {
     loadTransactions();
     loadWorkOrders();
   }, []);
 
-  // ==========================================
-  // EXTRACT UNIQUE UNITS FROM WORK ORDERS
-  // ==========================================
   useEffect(() => {
     if (workOrders.length > 0) {
       const units = [...new Set(workOrders.map(wo => wo.unit).filter(Boolean))].sort();
       setUniqueUnits(units);
-     // console.log('📦 Unique units loaded:', units);
     }
   }, [workOrders]);
 
-  // ==========================================
-  // LOAD TRANSACTIONS WITH PAGINATION & SEARCH
-  // ==========================================
-// ==========================================
-// LOAD TRANSACTIONS WITH PAGINATION & SEARCH (FIXED)
-// ==========================================
-const loadTransactions = async (page = 1, search = '', filters = {}) => {
-  try {
-    //console.log('🔄 Loading transactions...', { page, search, filters });
+  const loadTransactions = async (page = 1, search = '', filters = {}) => {
+    try {
+      const params = {
+        page,
+        pageSize,
+        sortBy: 'transactionDate',
+        sortOrder: 'desc',
+      };
 
-    // ✅ Build params object
-    const params = {
-      page,
-      pageSize,
-      sortBy: 'transactionDate',
-      sortOrder: 'desc',
-    };
+      if (search && search.trim()) {
+        params.searchTerm = search.trim();
+      }
 
-    // ✅ Add search if provided
-    if (search && search.trim()) {
-      params.searchTerm = search.trim();
+      if (filters.buyer) params.buyer = filters.buyer;
+      if (filters.factory) params.factory = filters.factory;
+      if (filters.unit) params.unit = filters.unit;
+      if (filters.processStageId) params.processStageId = parseInt(filters.processStageId);
+      if (filters.transactionTypeId !== '' && filters.transactionTypeId !== undefined) {
+        params.transactionTypeId = parseInt(filters.transactionTypeId);
+      }
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+
+      await getPaginated(params);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error('❌ Failed to load transactions:', error);
+      toast.error('Failed to load transactions');
     }
+  };
 
-    // ✅ Add filters only if they have values
-    if (filters.buyer) params.buyer = filters.buyer;
-    if (filters.factory) params.factory = filters.factory;
-    if (filters.unit) params.unit = filters.unit; // ✅ ADDED
-    if (filters.processStageId) params.processStageId = parseInt(filters.processStageId);
-    if (filters.transactionTypeId !== '' && filters.transactionTypeId !== undefined) {
-      params.transactionTypeId = parseInt(filters.transactionTypeId);
-    }
-    // ✅ CRITICAL: Use startDate/endDate (not fromDate/toDate)
-    if (filters.startDate) params.startDate = filters.startDate;
-    if (filters.endDate) params.endDate = filters.endDate;
-
-   // console.log('📤 Request params:', params);
-
-    await getPaginated(params);
-    setCurrentPage(page);
-   // console.log('✅ Transactions loaded');
-  } catch (error) {
-    console.error('❌ Failed to load transactions:', error);
-    toast.error('Failed to load transactions');
-  }
-};
-
-  // ==========================================
-  // LOAD WORK ORDERS
-  // ==========================================
   const loadWorkOrders = async () => {
     try {
       setWorkOrdersLoading(true);
-      //console.log('🔄 Loading work orders...');
       const response = await workOrderApi.getAll();
       
       if (response.data.success) {
         const woData = response.data.data || [];
         setWorkOrders(woData);
-       // console.log('✅ Loaded', woData.length, 'work orders');
       }
     } catch (error) {
       console.error('❌ Failed to load work orders:', error);
@@ -149,24 +117,16 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
     }
   };
 
-  // ==========================================
-  // HANDLE SEARCH WITH DEBOUNCE
-  // ==========================================
   useEffect(() => {
     const timer = setTimeout(() => {
-     // console.log('🔍 Search triggered:', searchQuery);
       loadTransactions(1, searchQuery, filterParams);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // ==========================================
-  // HANDLE FILTER CHANGES
-  // ==========================================
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-   // console.log(`🎛️ Filter changed: ${name} = ${value}`);
     
     setFilterParams(prev => ({
       ...prev,
@@ -174,97 +134,61 @@ const loadTransactions = async (page = 1, search = '', filters = {}) => {
     }));
   };
 
-  // ==========================================
-  // APPLY FILTERS
-  // ==========================================
   const handleApplyFilters = async () => {
-   // console.log('✅ Applying filters:', filterParams);
     setCurrentPage(1);
     await loadTransactions(1, searchQuery, filterParams);
     setShowFilters(false);
     toast.success('Filters applied');
   };
 
-  // ==========================================
-  // RESET FILTERS
-  // ==========================================
-// ==========================================
-// RESET FILTERS (FIXED)
-// ==========================================
-const handleResetFilters = async () => {
- // console.log('🔄 Resetting filters...');
-  setFilterParams({
-    buyer: '',
-    factory: '',
-    unit: '',
-    processStageId: '',
-    transactionTypeId: '',
-    startDate: '', // ✅ CHANGED
-    endDate: '', // ✅ CHANGED
-  });
-  setSearchQuery('');
-  setCurrentPage(1);
-  await loadTransactions(1, '', {});
-  setShowFilters(false);
-  toast.success('Filters reset');
-};
-  // ==========================================
-  // HANDLE PAGE CHANGE
-  // ==========================================
+  const handleResetFilters = async () => {
+    setFilterParams({
+      buyer: '',
+      factory: '',
+      unit: '',
+      processStageId: '',
+      transactionTypeId: '',
+      startDate: '',
+      endDate: '',
+    });
+    setSearchQuery('');
+    setCurrentPage(1);
+    await loadTransactions(1, '', {});
+    setShowFilters(false);
+    toast.success('Filters reset');
+  };
+
   const handlePageChange = (newPage) => {
-   // console.log(`📄 Page changed to: ${newPage}`);
     if (newPage > 0 && newPage <= (pagination?.totalPages || 1)) {
       loadTransactions(newPage, searchQuery, filterParams);
     }
   };
 
-  // ==========================================
-  // HANDLE PAGE SIZE CHANGE
-  // ==========================================
   const handlePageSizeChange = (newSize) => {
-    //console.log(`📊 Page size changed to: ${newSize}`);
     setPageSize(newSize);
     setCurrentPage(1);
     loadTransactions(1, searchQuery, filterParams);
   };
 
-  // ==========================================
-  // GET WORK ORDER BY ID
-  // ==========================================
   const getWorkOrderById = (workOrderId) => {
     return workOrders.find(wo => wo.id === parseInt(workOrderId));
   };
 
-  // ==========================================
-  // GET STAGE NAME BY ID
-  // ==========================================
   const getStageNameById = (stageId) => {
     const stage = stages.find(s => s.id === parseInt(stageId));
     return stage?.name || 'Unknown Stage';
   };
 
-  // ==========================================
-  // GET TYPE COLOR
-  // ==========================================
   const getTypeColor = (type) => {
     return TRANSACTION_TYPE_COLORS[type] || TRANSACTION_TYPE_COLORS[TRANSACTION_TYPES.RECEIVE];
   };
 
-  // ==========================================
-  // GET TYPE LABEL
-  // ==========================================
   const getTypeLabel = (type) => {
     return TRANSACTION_TYPE_LABELS[type] || 'Unknown';
   };
 
-  // ==========================================
-  // CALCULATE ACTIVE FILTER COUNT
-  // ==========================================
   const activeFilterCount = Object.values(filterParams).filter(val => val !== '').length;
 
-  // ==========================================
-  // HANDLE DOWNLOAD CSV
-  // ==========================================
   const handleDownloadCSV = async () => {
     try {
       if (!pagination || pagination.totalRecords === 0) {
@@ -274,60 +198,44 @@ const handleResetFilters = async () => {
 
       setIsExporting(true);
       
-      // ✅ Show loading toast with record count
       const loadingToast = toast.loading(
         `Downloading ${pagination.totalRecords} record${pagination.totalRecords !== 1 ? 's' : ''}...`
       );
 
-     // console.log('📥 CSV Export initiated');
-      // console.log('📊 Total records to export:', pagination.totalRecords);
-
-      // ✅ BUILD EXPORT FILTERS - ONLY NON-EMPTY VALUES
       const exportFilters = {};
       
       if (searchQuery && searchQuery.trim()) {
         exportFilters.searchTerm = searchQuery.trim();
-       // console.log('🔍 Search term added:', searchQuery);
       }
       
       if (filterParams.buyer) {
         exportFilters.buyer = filterParams.buyer;
-        // console.log('🏢 Buyer filter added:', filterParams.buyer);
       }
       
       if (filterParams.factory) {
         exportFilters.factory = filterParams.factory;
-        // console.log('🏭 Factory filter added:', filterParams.factory);
       }
 
-      if (filterParams.unit) { // ✅ ADDED: Unit filter
+      if (filterParams.unit) {
         exportFilters.unit = filterParams.unit;
-        // console.log('📦 Unit filter added:', filterParams.unit);
       }
       
       if (filterParams.processStageId) {
         exportFilters.processStageId = parseInt(filterParams.processStageId);
-        // console.log('📍 Stage filter added:', filterParams.processStageId);
       }
       
       if (filterParams.transactionTypeId !== '' && filterParams.transactionTypeId !== undefined) {
         exportFilters.transactionTypeId = parseInt(filterParams.transactionTypeId);
-        // console.log('📋 Transaction type filter added:', filterParams.transactionTypeId);
       }
       
       if (filterParams.startDate) {
         exportFilters.startDate = filterParams.startDate;
-        // console.log('📅 Start date filter added:', filterParams.startDate);
       }
       
       if (filterParams.endDate) {
         exportFilters.endDate = filterParams.endDate;
-        // console.log('📅 End date filter added:', filterParams.endDate);
       }
 
-      // console.log('📤 Final export filters:', exportFilters);
-
-      // ✅ Call export API
       const result = await exportToCSV(exportFilters);
 
       if (result.success) {
@@ -338,9 +246,6 @@ const handleResetFilters = async () => {
         toast.success(
           `✅ CSV downloaded (${pagination.totalRecords} records)${filterText}`
         );
-        
-       // console.log('✅ CSV export successful');
-        //  console.log('📥 Downloaded file:', result.fileName);
       } else {
         toast.dismiss(loadingToast);
         toast.error(result.message || 'Download failed');
@@ -354,15 +259,11 @@ const handleResetFilters = async () => {
     }
   };
 
-  // ==========================================
-  // HANDLE DELETE
-  // ==========================================
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this transaction?')) {
       return;
     }
 
-    // console.log('🗑️ Deleting transaction:', id);
     const result = await deleteTransaction(id);
     
     if (result.success) {
@@ -371,18 +272,12 @@ const handleResetFilters = async () => {
     }
   };
 
-  // ==========================================
-  // RENDER LOADING STATE
-  // ==========================================
   if (loading && transactions.length === 0) {
     return <LoadingSpinner size="lg" />;
   }
 
-  // ==========================================
-  // RENDER MAIN COMPONENT
-  // ==========================================
   return (
-    <div className="fade-in">
+    <div className="fade-in dark:bg-slate-900 min-h-screen">
       {/* ==================== MODAL ==================== */}
       <BulkTransactionModal
         isOpen={isModalOpen}
@@ -393,10 +288,10 @@ const handleResetFilters = async () => {
       {/* ==================== HEADER ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">
             All Transactions
           </h2>
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="text-gray-600 dark:text-slate-400 text-sm mt-1">
             {pagination?.totalRecords || 0} total record{pagination?.totalRecords !== 1 ? 's' : ''} found
           </p>
         </div>
@@ -436,8 +331,8 @@ const handleResetFilters = async () => {
             onClick={() => setShowFilters(!showFilters)}
             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition duration-200 font-medium text-sm ${
               showFilters
-                ? 'bg-primary-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary-600 text-white shadow-lg dark:bg-primary-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
             }`}
           >
             <FilterAlt fontSize="small" />
@@ -462,7 +357,7 @@ const handleResetFilters = async () => {
           <button
             onClick={() => loadTransactions(currentPage, searchQuery, filterParams)}
             disabled={loading}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 transition duration-200 disabled:opacity-50 font-medium text-sm"
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 text-gray-700 rounded-lg flex items-center gap-2 transition duration-200 disabled:opacity-50 font-medium text-sm"
           >
             <Refresh fontSize="small" />
             <span>Refresh</span>
@@ -472,7 +367,7 @@ const handleResetFilters = async () => {
 
       {/* ==================== FILTER PANEL ==================== */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 mb-6 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-3">
             <div className="flex items-center gap-3">
@@ -487,7 +382,7 @@ const handleResetFilters = async () => {
               
               {/* ==================== BUYER FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Buyer
                 </label>
                 <input
@@ -497,14 +392,14 @@ const handleResetFilters = async () => {
                   onChange={handleFilterChange}
                   disabled={loading}
                   placeholder="e.g., Zara"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
-                <p className="text-xs text-gray-500 mt-1">Partial match (case-insensitive)</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Partial match (case-insensitive)</p>
               </div>
 
               {/* ==================== FACTORY FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Factory
                 </label>
                 <input
@@ -514,14 +409,14 @@ const handleResetFilters = async () => {
                   onChange={handleFilterChange}
                   disabled={loading}
                   placeholder="e.g., TSL-2"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
-                <p className="text-xs text-gray-500 mt-1">Exact match (case-insensitive)</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Exact match (case-insensitive)</p>
               </div>
 
-              {/* ==================== UNIT FILTER - ADDED ==================== */}
+              {/* ==================== UNIT FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Unit
                 </label>
                 <select
@@ -529,7 +424,7 @@ const handleResetFilters = async () => {
                   value={filterParams.unit}
                   onChange={handleFilterChange}
                   disabled={loading || uniqueUnits.length === 0}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 >
                   <option value="">All Units</option>
                   {uniqueUnits.map(unit => (
@@ -538,12 +433,12 @@ const handleResetFilters = async () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">{uniqueUnits.length} units available</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{uniqueUnits.length} units available</p>
               </div>
 
               {/* ==================== TRANSACTION TYPE FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Transaction Type
                 </label>
                 <select
@@ -551,18 +446,18 @@ const handleResetFilters = async () => {
                   value={filterParams.transactionTypeId}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 >
                   <option value="">All Types</option>
                   <option value={TRANSACTION_TYPES.RECEIVE}>Receive</option>
                   <option value={TRANSACTION_TYPES.DELIVERY}>Delivery</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">0 = Receive, 1 = Delivery</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">0 = Receive, 1 = Delivery</p>
               </div>
 
               {/* ==================== PROCESS STAGE FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Process Stage
                 </label>
                 <select
@@ -570,7 +465,7 @@ const handleResetFilters = async () => {
                   value={filterParams.processStageId}
                   onChange={handleFilterChange}
                   disabled={loading || stagesLoading || stages.length === 0}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 font-medium disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 >
                   <option value="">All Stages</option>
                   {stages.map(stage => (
@@ -579,12 +474,12 @@ const handleResetFilters = async () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">{stages.length} stages available</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{stages.length} stages available</p>
               </div>
 
               {/* ==================== START DATE FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   Start Date
                 </label>
                 <input
@@ -593,14 +488,14 @@ const handleResetFilters = async () => {
                   value={filterParams.startDate}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
-                <p className="text-xs text-gray-500 mt-1">From date (inclusive)</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">From date (inclusive)</p>
               </div>
 
               {/* ==================== END DATE FILTER ==================== */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
                   End Date
                 </label>
                 <input
@@ -609,9 +504,9 @@ const handleResetFilters = async () => {
                   value={filterParams.endDate}
                   onChange={handleFilterChange}
                   disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 transition duration-200 disabled:bg-gray-50 dark:bg-slate-700 dark:text-slate-200 disabled:dark:bg-slate-600"
                 />
-                <p className="text-xs text-gray-500 mt-1">To date (inclusive)</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">To date (inclusive)</p>
               </div>
             </div>
 
@@ -638,7 +533,7 @@ const handleResetFilters = async () => {
               <button
                 onClick={handleResetFilters}
                 disabled={loading}
-                className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-200 font-semibold rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Close fontSize="small" />
                 <span>Reset</span>
@@ -649,16 +544,16 @@ const handleResetFilters = async () => {
       )}
 
       {/* ==================== QUICK SEARCH BAR ==================== */}
-      <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-gray-100">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-6 border border-gray-100 dark:border-slate-700">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400" />
             <input
               type="text"
               placeholder="Search by Work Order, Buyer, Style, Batch No, Gate Pass..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition duration-200 dark:bg-slate-700 dark:text-slate-200"
             />
           </div>
         </div>
@@ -674,33 +569,33 @@ const handleResetFilters = async () => {
       ) : (
         <>
           {/* ==================== TABLE ==================== */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 {/* ==================== TABLE HEADER ==================== */}
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Work Order</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">FastReact No</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Unit</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Wash Target</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Marks</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Stage</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Quantity</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Created At</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Work Order</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">FastReact No</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Unit</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Wash Target</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Marks</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Stage</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Created At</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
 
                 {/* ==================== TABLE BODY ==================== */}
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {transactions.map((transaction) => {
                     const typeColor = getTypeColor(transaction.transactionType);
                     const workOrder = getWorkOrderById(transaction.workOrderId);
 
                     return (
-                      <tr key={transaction.id} className="hover:bg-gray-50 transition duration-150">
+                      <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition duration-150">
                         {/* ==================== TYPE COLUMN ==================== */}
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${typeColor.bg} ${typeColor.text}`}>
@@ -712,33 +607,30 @@ const handleResetFilters = async () => {
                         {/* ==================== WORK ORDER COLUMN ==================== */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            {/* <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">
-                              {transaction.workOrderNo?.charAt(0).toUpperCase()}
-                            </div> */}
                             <div>
-                              <p className="font-semibold text-gray-800 text-sm">{transaction.workOrderNo}</p>
-                              <p className="text-xs text-gray-500">{transaction.styleName}</p>
+                              <p className="font-semibold text-gray-800 dark:text-slate-200 text-sm">{transaction.workOrderNo}</p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">{transaction.styleName}</p>
                             </div>
                           </div>
                         </td>
 
                         {/* ==================== FAST REACT NO COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
                             {workOrder?.fastReactNo || '-'}
                           </span>
                         </td>
 
-                        {/* ==================== UNIT COLUMN - ADDED ==================== */}
+                        {/* ==================== UNIT COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
+                          <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium">
                             {workOrder?.unit || '-'}
                           </span>
                         </td>
 
                         {/* ==================== WASH TARGET DATE COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
                             {workOrder?.washTargetDate 
                               ? format(new Date(workOrder.washTargetDate), 'dd MMM yyyy')
                               : '-'
@@ -748,38 +640,38 @@ const handleResetFilters = async () => {
 
                         {/* ==================== MARKS COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700 max-w-xs">
+                          <div className="text-sm text-gray-700 dark:text-slate-300 max-w-xs">
                             {workOrder?.marks ? (
                               <span title={workOrder.marks} className="line-clamp-2">
                                 {workOrder.marks}
                               </span>
                             ) : (
-                              <span className="text-gray-400 italic">-</span>
+                              <span className="text-gray-400 dark:text-slate-500 italic">-</span>
                             )}
                           </div>
                         </td>
 
                         {/* ==================== STAGE COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
+                          <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">
                             {transaction.processStageName}
                           </span>
                         </td>
 
                         {/* ==================== QUANTITY COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <span className="font-bold text-gray-800 text-lg">
+                          <span className="font-bold text-gray-800 dark:text-slate-200 text-lg">
                             {transaction.quantity?.toLocaleString()}
                           </span>
-                          <span className="text-xs text-gray-500 ml-2">pcs</span>
+                          <span className="text-xs text-gray-500 dark:text-slate-400 ml-2">pcs</span>
                         </td>
 
-                        {/* ==================== CREATED AT COLUMN - CHANGED ==================== */}
+                        {/* ==================== CREATED AT COLUMN ==================== */}
                         <td className="px-6 py-4">
-                          <p className="text-sm text-gray-700 font-medium">
+                          <p className="text-sm text-gray-700 dark:text-slate-300 font-medium">
                             {format(new Date(transaction.createdAt), 'dd MMM yyyy')}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-slate-400">
                             {format(new Date(transaction.createdAt), 'HH:mm:ss')}
                           </p>
                         </td>
@@ -788,16 +680,8 @@ const handleResetFilters = async () => {
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() => navigate(`/transactions/${transaction.id}`)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition duration-200"
-                              title="View Details"
-                            >
-                              <Visibility fontSize="small" />
-                            </button>
-
-                            <button
                               onClick={() => handleDelete(transaction.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition duration-200"
+                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition duration-200"
                               title="Delete Transaction"
                             >
                               <Delete fontSize="small" />
@@ -814,13 +698,13 @@ const handleResetFilters = async () => {
 
           {/* ==================== PAGINATION FOOTER ==================== */}
           {pagination && (
-            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700">
               {/* ==================== PAGE INFO ==================== */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-700 font-medium">
+                <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">
                   Page <strong>{currentPage}</strong> of <strong>{pagination.totalPages}</strong>
                 </span>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-slate-400">
                   ({pagination.totalRecords} total records)
                 </span>
               </div>
@@ -831,7 +715,7 @@ const handleResetFilters = async () => {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={!pagination.hasPrevious || loading}
-                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+                  className="p-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 dark:text-slate-300"
                   title="Previous Page"
                 >
                   <ChevronLeft fontSize="small" />
@@ -859,7 +743,7 @@ const handleResetFilters = async () => {
                         className={`w-9 h-9 rounded-lg font-semibold transition duration-200 ${
                           currentPage === pageNum
                             ? 'bg-primary-600 text-white'
-                            : 'border border-gray-300 hover:bg-gray-50'
+                            : 'border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300'
                         } disabled:opacity-50`}
                       >
                         {pageNum}
@@ -872,7 +756,7 @@ const handleResetFilters = async () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={!pagination.hasNext || loading}
-                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+                  className="p-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 dark:text-slate-300"
                   title="Next Page"
                 >
                   <ChevronRight fontSize="small" />
@@ -881,14 +765,14 @@ const handleResetFilters = async () => {
 
               {/* ==================== PAGE SIZE SELECTOR ==================== */}
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 font-medium">
+                <label className="text-sm text-gray-700 dark:text-slate-300 font-medium">
                   Items per page:
                 </label>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
                   disabled={loading}
-                  className="px-3 py-1 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 font-medium text-sm"
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 font-medium text-sm dark:bg-slate-700 dark:text-slate-200"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -900,6 +784,12 @@ const handleResetFilters = async () => {
           )}
         </>
       )}
+
+      <style>{`
+        .dark ::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
+      `}</style>
     </div>
   );
 };

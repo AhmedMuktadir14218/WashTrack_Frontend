@@ -36,6 +36,9 @@ export const STAGE_PLACEHOLDER_ICON = (stageName) => {
     'Final Dryer': '🏭',
     'Cool Dryer': '🏭',
     'ReDryer': '🏭',
+    'Laser': '🔬',
+    'Acid Wash': '🧪',
+    'Ozon': '💨',
   };
   return stageMap[stageName] || '📦';
 };
