@@ -1579,7 +1579,7 @@ const Dashboard = ({ isDarkMode }) => {
   const allUnits = ['TPL Dry Unit', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit TWL'];
 
   const PLANT_NAME_TO_ID = { TPL: 1, TWL: 2 };
-  const UNIT_NAME_TO_ID = { 'TPL Dry Unit': 1, 'Unit 1': 2, 'Unit 2': 3, 'Unit 3': 4, 'Unit 4': 5, 'Unit 5': 6, 'Unit TWL': 7 };
+  const UNIT_NAME_TO_ID = { 'TPL Dry Unit': 1, 'Unit 1': 2, 'Unit 2': 3, 'Unit 3': 4, 'Unit 4': 5, 'Unit 5': 7, 'Unit TWL': 6 };
 
 // ============ FIXED FUNCTIONS ============
 
@@ -2150,7 +2150,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
       }`}
     >
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
         {/* From Date */}
         <div className="space-y-1.5">
           <label
@@ -2165,7 +2165,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
             type="date"
             value={filters.fromDate}
             onChange={(e) => onFilterChange('fromDate', e.target.value)}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm focus:border-blue-400 ${
+            className={`w-full border-2 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs font-medium outline-none transition-all shadow-sm focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -2187,7 +2187,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
             type="date"
             value={filters.toDate}
             onChange={(e) => onFilterChange('toDate', e.target.value)}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm focus:border-blue-400 ${
+            className={`w-full border-2 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs font-medium outline-none transition-all shadow-sm focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -2207,7 +2207,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
           <select
             value={filters.plant}
             onChange={(e) => onFilterChange('plant', e.target.value)}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
+            className={`w-full border-2 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -2235,7 +2235,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
             value={filters.unit}
             onChange={(e) => onFilterChange('unit', e.target.value)}
             disabled={!filters.plant}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
+            className={`w-full border-2 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -2261,7 +2261,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
           <select
             value={filters.shift}
             onChange={(e) => onFilterChange('shift', e.target.value)}
-            className={`w-full border-2 rounded-lg px-3 py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
+            className={`w-full border-2 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs font-medium outline-none transition-all shadow-sm cursor-pointer focus:border-blue-400 ${
               isDarkMode
                 ? 'bg-slate-900/50 border-slate-600 text-slate-200'
                 : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -2349,7 +2349,7 @@ const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
       {cards.map((card, index) => (
         <TopCard
           key={index}
@@ -2388,7 +2388,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
   return (
     <div
       onClick={onCardClick}
-      className={`border-2 rounded-2xl p-2 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${
+      className={`border-2 rounded-2xl p-1.5 md:p-2 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${
         isDarkMode
           ? isOrange
             ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-400/30 hover:shadow-orange-500/20'
@@ -2401,7 +2401,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
       {/* Header */}
       <div className="flex justify-between items-center mb-1">
         <div
-          className={`font-bold text-base leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+          className={`font-bold text-sm md:text-base leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
         >
           {card.title}
         </div>
@@ -2457,7 +2457,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
               Delivery
             </p>
             <span
-              className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-2xl md:text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {formatDashboardNumber(card.delivery)}
             </span>
@@ -2477,7 +2477,7 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
                Delivery
             </p>
             <span
-              className={`text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+              className={`text-2xl md:text-3xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
             >
               {formatDashboardNumber(card.delivery)}
             </span>
@@ -2526,7 +2526,7 @@ const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => {
       </p>
       <div className="flex items-center gap-0.5 justify-center">
         <span
-          className={`text-2xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
+          className={`text-xl md:text-2xl font-black leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}
         >
           {formatNumber(value)}
         </span>
@@ -2542,7 +2542,7 @@ const StatBox = ({ label, value, trend, isGreen, isDarkMode }) => {
 
 const CardIcon = ({ type }) => (
   <div
-    className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 ${
+    className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center border-2 ${
       type === 'orange'
         ? 'bg-orange-200 border-orange-600'
         : 'bg-blue-200 border-blue-500'
@@ -2638,7 +2638,7 @@ const SectionLabel = ({ title, color, isDarkMode }) => {
         <div className={`w-0.5 h-5 ${colorClassesLight[color]} rounded-full`} />
       </div>
       <div
-        className={`text-base font-black uppercase tracking-wide py-0 ${
+        className={`text-sm md:text-base font-black uppercase tracking-wide py-0 ${
           isDarkMode ? 'text-slate-200' : 'text-slate-800'
         }`}
       >
@@ -2742,11 +2742,11 @@ const DHUOverviewGridSkeleton = ({ isDarkMode }) => {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-      <div className="lg:col-span-8"><DrySkeleton /></div>
-      <div className="lg:col-span-4"><WashSkeleton /></div>
-      <div className="lg:col-span-8"><DrySkeleton /></div>
-      <div className="lg:col-span-4"><WashSkeleton /></div>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+      <div className="md:col-span-8"><DrySkeleton /></div>
+      <div className="md:col-span-4"><WashSkeleton /></div>
+      <div className="md:col-span-8"><DrySkeleton /></div>
+      <div className="md:col-span-4"><WashSkeleton /></div>
     </div>
   );
 };
@@ -2760,8 +2760,8 @@ const DHUOverviewGrid = ({ isDarkMode, getSectionDHU }) => {
   const finalWashData = getSectionDHU(4);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-      <div className="lg:col-span-8">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+      <div className="md:col-span-8">
         <DryDHUPanel
           title="1ST DRY SECTION"
           sectionData={firstDryData}
@@ -2769,7 +2769,7 @@ const DHUOverviewGrid = ({ isDarkMode, getSectionDHU }) => {
         />
       </div>
 
-      <div className="lg:col-span-4">
+      <div className="md:col-span-4">
         <WashDHUPanel
           title="1ST WASH SECTION"
           sectionData={firstWashData}
@@ -2778,7 +2778,7 @@ const DHUOverviewGrid = ({ isDarkMode, getSectionDHU }) => {
         />
       </div>
 
-      <div className="lg:col-span-8">
+      <div className="md:col-span-8">
         <DryDHUPanel
           title="2ND DRY SECTION"
           sectionData={secondDryData}
@@ -2786,7 +2786,7 @@ const DHUOverviewGrid = ({ isDarkMode, getSectionDHU }) => {
         />
       </div>
 
-      <div className="lg:col-span-4">
+      <div className="md:col-span-4">
         <WashDHUPanel
           title="FINAL WASH SECTION"
           sectionData={finalWashData}
@@ -2808,7 +2808,7 @@ const DryDHUPanel = ({ title, sectionData, isDarkMode }) => {
 
   const gridClass =
     processes.length >= 3
-      ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
       : processes.length === 2
       ? 'grid-cols-1 md:grid-cols-2'
       : 'grid-cols-1';
@@ -2822,7 +2822,7 @@ const DryDHUPanel = ({ title, sectionData, isDarkMode }) => {
       }`}
     >
       <div
-        className={`px-4 py-1 border-b flex items-center justify-between ${
+        className={`px-3 md:px-4 py-1 border-b flex items-center justify-between ${
           isDarkMode
             ? 'bg-slate-800 border-slate-700'
             : 'bg-gradient-to-r from-blue-50 to-slate-50 border-blue-100'
@@ -2831,7 +2831,7 @@ const DryDHUPanel = ({ title, sectionData, isDarkMode }) => {
         <div className="flex items-center gap-2">
           <IconTrendingUp className="w-4 h-4 text-blue-500" />
           <div
-            className={`text-base font-black tracking-wider uppercase ${
+            className={`text-sm md:text-base font-black tracking-wider uppercase ${
               isDarkMode ? 'text-slate-100' : 'text-blue-700'
             }`}
           >
@@ -2844,7 +2844,7 @@ const DryDHUPanel = ({ title, sectionData, isDarkMode }) => {
 
 
 
-      <div className={`p-3 grid ${gridClass} gap-3`}>
+      <div className={`p-2 md:p-3 grid ${gridClass} gap-2`}>
         {processes.length > 0 ? (
           processes.map((proc, index) => (
             <DryProcessCard
@@ -2896,7 +2896,7 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-[2px]">
         <div
-          className={`px-2 py-3  text-sm xl:text-[15px] font-black leading-tight ${
+          className={`px-2 py-1 text-sm lg:text-[15px] font-black leading-tight ${
             isDarkMode ? 'text-slate-100' : 'text-slate-800'
           }`}
         >
@@ -2945,28 +2945,28 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
 
       {/* Bottom defects */}
       <div
-        className={`mt-3 rounded-xl border p-2.5 ${
+        className={`mt-2 rounded-xl border p-2 md:p-2.5 ${
           isDarkMode
             ? 'bg-slate-900/60 border-slate-700'
             : 'bg-white border-slate-200'
         }`}
       >
-        <div className="flex items-center justify-between mb-2">
-          <span className={`text-xs font-black tracking-wider uppercase ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className={`text-[10px] md:text-xs font-black tracking-wider uppercase ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Top 3 Defects
           </span>
-          <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          <span className={`text-[10px] md:text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
             Reject {formatDashboardNumber(rejectQty)}
           </span>
         </div>
 
         {topIssues.length > 0 ? (
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {topIssues.slice(0, 3).map((issue, i) => (
-              <div key={i} className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+              <div key={i} className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                    className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black shrink-0 ${
                       isDarkMode
                         ? 'bg-slate-700 text-slate-200'
                         : 'bg-blue-100 text-blue-700'
@@ -2975,7 +2975,7 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
                     {i + 1}
                   </span>
                   <span
-                    className={`text-xs xl:text-[12px] font-semibold truncate ${
+                    className={`text-xs lg:text-[12px] font-semibold truncate ${
                       isDarkMode ? 'text-slate-200' : 'text-slate-700'
                     }`}
                     title={issue.issueName}
@@ -2984,7 +2984,7 @@ const DryProcessCard = ({ process, processName, topIssues, isDarkMode }) => {
                   </span>
                 </div>
 
-                <span className={`text-xs xl:text-[13px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                <span className={`text-xs lg:text-[13px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
                   {formatDashboardNumber(issue.qty)}
                 </span>
               </div>
@@ -3042,24 +3042,24 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
           : 'bg-white border-sky-200'
       }`}
     >
-      <div className={`px-4 py-1 border-b flex items-center gap-2 ${accentHeader}`}>
+      <div className={`px-3 md:px-4 py-1 border-b flex items-center gap-2 ${accentHeader}`}>
         <IconWaterDrop className="w-4 h-4 text-sky-500" />
-        <div className={`text-base font-black tracking-wider uppercase ${accentText}`}>
+        <div className={`text-sm md:text-base font-black tracking-wider uppercase ${accentText}`}>
           {title}
         </div>
       </div>
 
-      <div className="px-3 py-2 grid grid-cols-[1.1fr_0.9fr] gap-3">
+      <div className="px-2 md:px-3 py-2 grid grid-cols-[1.1fr_0.9fr] gap-2">
         {/* Left */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-1.5 md:gap-2">
             <BigInfoTile label="Output" value={totalPassQty} isDarkMode={isDarkMode} color="blue" />
             <BigInfoTile label="Target" value={totalTargetQty || '-'} isDarkMode={isDarkMode} />
             <BigInfoTile label="Defect" value={totalDefectQty} isDarkMode={isDarkMode} color="red" />
             <BigInfoTile label="Manpower" value={totalManPower ? totalManPower.toFixed(1) : '-'} isDarkMode={isDarkMode} />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 md:gap-2">
             <SummaryDonutCard
               title="Achv"
               value={achievementPct}
@@ -3083,13 +3083,13 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
                   : 'bg-orange-50 border-orange-100'
               }`}
             >
-              <span className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className={`text-[10px] md:text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                 DHU
               </span>
-              <span className={`text-xl xl:text-2xl font-black ${dhuGood ? 'text-green-600' : 'text-orange-600'}`}>
+              <span className={`text-xl lg:text-2xl font-black ${dhuGood ? 'text-green-600' : 'text-orange-600'}`}>
                 {overallDhu}%
               </span>
-              <span className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[10px] md:text-[11px] font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                 Reject {formatDashboardNumber(totalRejectQty)}
               </span>
             </div>
@@ -3098,23 +3098,23 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
 
         {/* Right */}
         <div
-          className={`rounded-xl border p-3 ${
+          className={`rounded-xl border p-2 md:p-3 ${
             isDarkMode
               ? 'bg-slate-800/70 border-slate-700'
               : 'bg-gray-100 border-slate-200'
           }`}
         >
-          <h4 className={`text-sm font-black uppercase tracking-wider mb-3 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+          <h4 className={`text-xs md:text-sm font-black uppercase tracking-wider mb-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
             Top 3 Defects
           </h4>
 
           {topIssues.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {topIssues.slice(0, 3).map((issue, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
+                      className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-[11px] font-black shrink-0 ${
                         isDarkMode
                           ? 'bg-slate-700 text-slate-100'
                           : 'bg-sky-100 text-sky-700'
@@ -3123,7 +3123,7 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
                       {i + 1}
                     </span>
                     <span
-                      className={`text-sm xl:text-[15px] font-semibold truncate ${
+                      className={`text-sm lg:text-[15px] font-semibold truncate ${
                         isDarkMode ? 'text-slate-200' : 'text-slate-700'
                       }`}
                       title={issue.issueName}
@@ -3132,7 +3132,7 @@ const WashDHUPanel = ({ title, sectionData, isDarkMode, accent = 'blue' }) => {
                     </span>
                   </div>
 
-                  <span className={`text-sm xl:text-[15px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                  <span className={`text-sm lg:text-[15px] font-black shrink-0 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
                     {formatDashboardNumber(issue.qty)}
                   </span>
                 </div>
@@ -3166,7 +3166,7 @@ const MiniInfoTile = ({ label, value, isDarkMode, danger = false }) => {
       <div className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
         {label}
       </div>
-      <div className={`text-sm xl:text-[18px] font-black mt-1 ${danger ? 'text-red-500' : isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+      <div className={`text-sm lg:text-[18px] font-black mt-1 ${danger ? 'text-red-500' : isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
         {typeof value === 'number' ? formatDashboardNumber(value) : value}
       </div>
     </div>
@@ -3185,7 +3185,7 @@ const BigInfoTile = ({ label, value, isDarkMode, color = 'default' }) => {
 
   return (
     <div
-      className={`rounded-xl px-2 py-[7px] border ${
+      className={`rounded-xl px-1.5 md:px-2 py-1 md:py-[7px] border ${
         isDarkMode
           ? 'bg-slate-800/70 border-slate-700'
           : 'bg-gray-100 border-slate-200'
@@ -3194,7 +3194,7 @@ const BigInfoTile = ({ label, value, isDarkMode, color = 'default' }) => {
       <div className={`text-[11px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
         {label}
       </div>
-      <div className={`text-lg xl:text-xl font-black mt-1 ${colorClass}`}>
+      <div className={`text-lg lg:text-xl font-black mt-1 ${colorClass}`}>
         {typeof value === 'number' ? formatDashboardNumber(value) : value}
       </div>
     </div>
@@ -3247,7 +3247,7 @@ const MiniDonut = ({ value, label, color, isDarkMode }) => {
 const SummaryDonutCard = ({ title, value, color, isDarkMode }) => {
   return (
     <div
-      className={`rounded-xl border px-2 py-2 flex flex-col items-center justify-center ${
+      className={`rounded-xl border px-1.5 md:px-2 py-1.5 md:py-2 flex flex-col items-center justify-center ${
         isDarkMode
           ? 'bg-slate-800/70 border-slate-700'
           : 'bg-gray-100 border-slate-200'
@@ -3270,7 +3270,7 @@ const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
       {dryers.map((dryer, index) => (
         <DryerCard
           key={index}
@@ -3296,7 +3296,7 @@ const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
   return (
     <div
       onClick={onCardClick}
-      className={`border-2 rounded-2xl p-2 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl flex items-center gap-4 ${
+      className={`border-2 rounded-2xl p-1.5 md:p-2 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl flex items-center gap-2 md:gap-4 ${
         isDarkMode
           ? 'bg-gradient-to-br from-sky-500/10 to-sky-600/5 border-sky-400/30 hover:shadow-sky-500/20'
           : 'bg-gradient-to-br from-white to-sky-50 border-sky-200 hover:shadow-sky-200/50'
@@ -3305,7 +3305,7 @@ const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
 
       {/* Icon Section */}
       <div
-        className={`w-14 h-14 rounded-lg flex items-center justify-center border ${
+        className={`w-10 h-10 md:w-14 md:h-14 rounded-lg flex items-center justify-center border ${
           isDarkMode
             ? 'bg-sky-500/15 border-sky-500/30'
             : 'bg-sky-50 border-sky-100'
@@ -3318,22 +3318,22 @@ const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
       <div className="flex flex-col flex-1">
 
         {/* Title */}
-        <h4 className={`text-base font-semibold mb-1 mt-[5px] ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+        <h4 className={`text-xs md:text-base font-semibold mb-0.5 md:mb-1 mt-[2px] md:mt-[5px] ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
           {dryer.name}
         </h4>
 
         {/* Delivery Value */}
-        <div className="flex items-end gap-2">
-          <span className={`text-3xl font-bold leading-none ${isDarkMode ? 'text-sky-400' : 'text-sky-600'}`}>
+        <div className="flex items-end gap-1 md:gap-2">
+          <span className={`text-xl md:text-3xl font-bold leading-none ${isDarkMode ? 'text-sky-400' : 'text-sky-600'}`}>
             {formatNumber(dryer.delivery)}
           </span>
-          <span className={`text-sm font-medium pb-0.5 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+          <span className={`text-xs md:text-sm font-medium pb-0.5 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
             Delivery
           </span>
         </div>
 
         {/* Bottom Accent Line */}
-        <div className={`mt-2 h-1 w-10 rounded-full ${isDarkMode ? 'bg-sky-500/30' : 'bg-sky-200'}`} />
+        <div className={`mt-1 md:mt-2 h-1 w-8 md:w-10 rounded-full ${isDarkMode ? 'bg-sky-500/30' : 'bg-sky-200'}`} />
 
       </div>
 
@@ -3342,7 +3342,7 @@ const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
 };
 
 const DryerIcon = ({ isDarkMode }) => (
-  <div className="w-10 h-10">
+  <div className="w-7 h-7 md:w-10 md:h-10">
     <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
       <rect
         x="6"
