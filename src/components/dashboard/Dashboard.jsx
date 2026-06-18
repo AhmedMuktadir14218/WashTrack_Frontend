@@ -1690,7 +1690,7 @@ const getAccessibleUnits = (plantId) => {
 
   const getSummaryRows = (response) => {
     if (!response?.success) {
-      throw new Error(response?.message || 'Failed to fetch dashboard summary');
+      throw new Error(response?.message || 'Failed to fetch dashboard summary ');
     }
 
     return Array.isArray(response.data) ? response.data : [];
@@ -2257,6 +2257,7 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
           >
             <IconClock className="w-3 h-3 text-blue-500" />
             Select Shift
+
           </label>
           <select
             value={filters.shift}
@@ -2282,12 +2283,12 @@ const FilterPanel = ({ filters, onFilterChange, onReset, isDarkMode, plantUnits,
 
 // ============ TOP SUMMARY CARDS ============
 const PROCESS_STAGE_IDS = {
-  '1st Dry ': [1],
+  '1st Dry': [1],
   'UnWash Godown': [2],
-  '1st Wash ': [4],
-  '2nd Dry ': [3],
-  'Laser ': [11],
-  'Acid Wash ': [12],
+  '1st Wash': [4],
+  '2nd Dry': [3],
+  'Laser': [11],
+  'Acid Wash': [12],
 };
 
 const DRYER_STAGE_IDS = {
@@ -2356,8 +2357,8 @@ const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
           card={card}
           isDarkMode={isDarkMode}
           onCardClick={() => onCardClick({
-            processStageIds: PROCESS_STAGE_IDS[card.title] || [1],
-            modalTitle: card.title,
+            processStageIds: PROCESS_STAGE_IDS[card.title.trim()] || [1],
+            modalTitle: card.title.trim(),
             mode: 'process',
           })}
         />

@@ -546,8 +546,8 @@ const menuItems = [
   { text: 'Wash Plans', icon: <CalendarMonth />, path: '/plans', roles: ['Admin', 'Incharge','Planner'] },
   { text: 'Work Orders', icon: <Assignment />, path: '/admin/work-orders', roles: ['Admin'] },
   { text: 'Transactions', icon: <SwapHoriz />, path: '/admin/transactions', roles: ['Admin'] },
-  { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin'] },
-  { text: 'Machine Track', icon: <Analytics />, path: '/admin/machine-track', roles: ['Admin', 'Incharge'] },
+  { text: 'Reports', icon: <Assessment />, path: '/admin/reports', roles: ['Admin', 'Incharge'] },
+  // { text: 'Machine Track', icon: <Analytics />, path: '/admin/machine-track', roles: ['Admin', 'Incharge'] },
   { text: 'Manage Users', icon: <People />, path: '/admin/users', roles: ['Admin'] },
 ];
 

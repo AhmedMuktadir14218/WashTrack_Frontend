@@ -270,6 +270,9 @@ const getAccessibleUnits = (plantId) => {
     const groups = {};
 
     rawData.forEach(row => {
+      const stageId = STAGE_NAME_TO_ID[row.stageName];
+      if (stageId === undefined || !activeStageIds.includes(stageId)) return;
+
       if (mode === 'dryer' && combinedFilters.transactionType && row.transactionType !== combinedFilters.transactionType) return;
 
       const key = `${row.factory}|${row.unit}|${row.workOrderNo}|${row.buyerDepartment}|${row.styleName}|${row.fastReactNo}`;
@@ -299,18 +302,15 @@ const getAccessibleUnits = (plantId) => {
         }
       }
 
-      const stageId = STAGE_NAME_TO_ID[row.stageName];
-      if (stageId !== undefined) {
-        if (mode === 'process') {
-          if (row.transactionType === 'Receive' && groups[key][`stage_${stageId}_RCV`] !== undefined) {
-            groups[key][`stage_${stageId}_RCV`] += row.quantity || 0;
-          } else if (row.transactionType === 'Delivery' && groups[key][`stage_${stageId}_DLV`] !== undefined) {
-            groups[key][`stage_${stageId}_DLV`] += row.quantity || 0;
-          }
-        } else {
-          if (groups[key][`stage_${stageId}`] !== undefined) {
-            groups[key][`stage_${stageId}`] += row.quantity || 0;
-          }
+      if (mode === 'process') {
+        if (row.transactionType === 'Receive' && groups[key][`stage_${stageId}_RCV`] !== undefined) {
+          groups[key][`stage_${stageId}_RCV`] += row.quantity || 0;
+        } else if (row.transactionType === 'Delivery' && groups[key][`stage_${stageId}_DLV`] !== undefined) {
+          groups[key][`stage_${stageId}_DLV`] += row.quantity || 0;
+        }
+      } else {
+        if (groups[key][`stage_${stageId}`] !== undefined) {
+          groups[key][`stage_${stageId}`] += row.quantity || 0;
         }
       }
     });
@@ -327,34 +327,77 @@ const getAccessibleUnits = (plantId) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-    const payload = {
-      fromDate: combinedFilters.fromDate,
-      toDate: combinedFilters.toDate,
-      page: currentPage,
-      pageSize: pageSize,
-      processStageIds: activeStageIds,
-    };
+      const buildPayload = (unit) => {
+        const payload = {
+          fromDate: combinedFilters.fromDate,
+          toDate: combinedFilters.toDate,
+          page: currentPage,
+          pageSize: pageSize,
+          processStageIds: activeStageIds,
+        };
 
-    if (combinedFilters.factory) {
-      payload.factory = combinedFilters.factory;
-    }
+        if (combinedFilters.factory) {
+          payload.factory = combinedFilters.factory;
+        }
 
-    if (combinedFilters.unit) {
-      payload.unit = combinedFilters.unit;
-    }
+        if (unit) {
+          payload.unit = unit;
+        }
 
-    if (combinedFilters.shift) {
-      payload.shift = Number(combinedFilters.shift);
-    }
+        if (combinedFilters.shift) {
+          payload.shift = Number(combinedFilters.shift);
+        }
 
-    if (combinedFilters.search) {
-      payload.search = combinedFilters.search;
-    }
+        if (combinedFilters.search) {
+          payload.search = combinedFilters.search;
+        }
 
-    const response = await dashboardApi.getDashboardDetails(payload);
-      if (response.success && response.data) {
-        setRawData(response.data.data || []);
-        setPagination(response.data.pagination || null);
+        return payload;
+      };
+
+      if (combinedFilters.factory && !combinedFilters.unit) {
+        const accessibleUnitsForFactory = getAccessibleUnits(combinedFilters.factory);
+
+        if (accessibleUnitsForFactory.length > 0) {
+          const promises = accessibleUnitsForFactory.map(async (unit) => {
+            const payload = buildPayload(unit);
+            try {
+              const response = await dashboardApi.getDashboardDetails(payload);
+              if (response.success && response.data) {
+                return response.data.data || [];
+              }
+            } catch (err) {
+              console.error(`Error fetching details for unit ${unit}:`, err);
+            }
+            return [];
+          });
+
+          const results = await Promise.all(promises);
+          const allData = results.flat();
+          setRawData(allData);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            pageSize: allData.length,
+            totalRecords: allData.length,
+            hasNext: false,
+            hasPrevious: false,
+          });
+        } else {
+          const payload = buildPayload('');
+          const response = await dashboardApi.getDashboardDetails(payload);
+          if (response.success && response.data) {
+            setRawData(response.data.data || []);
+            setPagination(response.data.pagination || null);
+          }
+        }
+      } else {
+        const payload = buildPayload(combinedFilters.unit);
+        const response = await dashboardApi.getDashboardDetails(payload);
+        if (response.success && response.data) {
+          setRawData(response.data.data || []);
+          setPagination(response.data.pagination || null);
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard details:', error);
