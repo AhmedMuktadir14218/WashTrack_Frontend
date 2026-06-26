@@ -1468,18 +1468,18 @@ const formatDashboardNumber = (value) => {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return '0';
 
-  if (Math.abs(num) >= 1000000) {
-    const millionValue = num / 1000000;
-    const formatted = Number.isInteger(millionValue)
-      ? millionValue.toFixed(0)
-      : millionValue.toFixed(1);
+  const abs = Math.abs(num);
 
-    return `${formatted}M`;
+  if (abs >= 1000000) {
+    return `${(num / 1000000).toFixed(1).replace('.0', '')}M`;
   }
 
-  return num.toLocaleString();
-};
+  if (abs >= 1000) {
+    return `${(num / 1000).toFixed(1).replace('.0', '')}K`;
+  }
 
+  return `${num}`;
+};
 // ============ CUSTOM SVG ICONS ============
 const IconFilter = ({ className = '' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2021,20 +2021,510 @@ const getAccessibleUnits = (plantId) => {
 
   return (
     <>
-      <style>{`
-        .MuiBox-root {
-          padding: 0 !important;
-        }
-      `}</style>
+<style>{`
+  html,
+  body,
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    background: #0f172a !important;
+    overflow-x: hidden !important;
+  }
+
+  body {
+    background: #0f172a !important;
+  }
+
+  .MuiBox-root {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  .dashboard-page {
+    width: 100% !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .dashboard-container {
+    width: 100% !important;
+    max-width: 1800px !important;
+    margin: 0 auto !important;
+    padding: 6px !important;
+  }
+
+  .dashboard-container * {
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-container span,
+  .dashboard-container div,
+  .dashboard-container p {
+    min-width: 0 !important;
+  }
+
+  .dashboard-container .truncate {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  /* Mobile only: 320px - 767px */
+  @media (max-width: 767px) {
+    html,
+    body,
+    #root {
+      width: 100% !important;
+      min-height: 100dvh !important;
+      background: #0f172a !important;
+      overflow-x: hidden !important;
+    }
+
+    .dashboard-page {
+      display: block !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: 100dvh !important;
+      height: auto !important;
+      background: #0f172a !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+    }
+
+    .dashboard-container {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 8px !important;
+      gap: 10px !important;
+    }
+
+    .dashboard-container .top-summary-grid,
+    .dashboard-container .dryer-summary-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+      width: 100% !important;
+    }
+
+    .dashboard-container .md\\:grid-cols-12 {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+
+    .dashboard-container .md\\:col-span-8,
+    .dashboard-container .md\\:col-span-4 {
+      grid-column: auto !important;
+    }
+
+    .dashboard-container .lg\\:grid-cols-3,
+    .dashboard-container .md\\:grid-cols-2 {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-container .grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .dashboard-container .grid-cols-\\[1\\.1fr_0\\.9fr\\] {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+
+    .dashboard-container .grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .dashboard-container .grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .dashboard-container input,
+    .dashboard-container select {
+      width: 100% !important;
+      height: 38px !important;
+      font-size: 12px !important;
+      border-radius: 10px !important;
+    }
+
+    .dashboard-container label {
+      font-size: 9px !important;
+    }
+
+    .dashboard-container .rounded-2xl {
+      border-radius: 14px !important;
+    }
+
+    .dashboard-container .rounded-xl {
+      border-radius: 12px !important;
+    }
+
+    .dashboard-container .rounded-lg {
+      border-radius: 10px !important;
+    }
+
+    .dashboard-container .p-3,
+    .dashboard-container .md\\:p-3 {
+      padding: 9px !important;
+    }
+
+    .dashboard-container .p-2,
+    .dashboard-container .md\\:p-2,
+    .dashboard-container .p-2\\.5,
+    .dashboard-container .md\\:p-2\\.5,
+    .dashboard-container .p-1\\.5,
+    .dashboard-container .p-1 {
+      padding: 8px !important;
+    }
+
+    .dashboard-container .px-4,
+    .dashboard-container .md\\:px-4,
+    .dashboard-container .px-3,
+    .dashboard-container .md\\:px-3,
+    .dashboard-container .px-2,
+    .dashboard-container .md\\:px-2 {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+
+    .dashboard-container .py-3,
+    .dashboard-container .py-2,
+    .dashboard-container .md\\:py-2,
+    .dashboard-container .py-1\\.5,
+    .dashboard-container .md\\:py-1\\.5,
+    .dashboard-container .py-1 {
+      padding-top: 7px !important;
+      padding-bottom: 7px !important;
+    }
+
+    .dashboard-container .text-3xl,
+    .dashboard-container .md\\:text-3xl {
+      font-size: 21px !important;
+    }
+
+    .dashboard-container .text-2xl,
+    .dashboard-container .md\\:text-2xl {
+      font-size: 19px !important;
+    }
+
+    .dashboard-container .text-xl,
+    .dashboard-container .md\\:text-xl,
+    .dashboard-container .lg\\:text-xl,
+    .dashboard-container .lg\\:text-\\[18px\\] {
+      font-size: 16px !important;
+    }
+
+    .dashboard-container .text-lg,
+    .dashboard-container .text-base,
+    .dashboard-container .md\\:text-base {
+      font-size: 14px !important;
+    }
+
+    .dashboard-container .text-sm,
+    .dashboard-container .md\\:text-sm,
+    .dashboard-container .lg\\:text-\\[15px\\],
+    .dashboard-container .lg\\:text-\\[13px\\],
+    .dashboard-container .lg\\:text-\\[12px\\] {
+      font-size: 12px !important;
+    }
+
+    .dashboard-container .text-xs,
+    .dashboard-container .md\\:text-xs,
+    .dashboard-container .text-\\[11px\\],
+    .dashboard-container .md\\:text-\\[11px\\],
+    .dashboard-container .text-\\[10px\\],
+    .dashboard-container .md\\:text-\\[10px\\] {
+      font-size: 10px !important;
+    }
+
+    .dashboard-container svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+
+    .dashboard-container .w-14,
+    .dashboard-container .md\\:w-14,
+    .dashboard-container .h-14,
+    .dashboard-container .md\\:h-14 {
+      width: 42px !important;
+      height: 42px !important;
+    }
+
+    .dashboard-container .w-10,
+    .dashboard-container .md\\:w-10,
+    .dashboard-container .h-10,
+    .dashboard-container .md\\:h-10 {
+      width: 34px !important;
+      height: 34px !important;
+    }
+
+    .dashboard-container .w-8,
+    .dashboard-container .h-8 {
+      width: 30px !important;
+      height: 30px !important;
+    }
+
+    .dashboard-container .w-6,
+    .dashboard-container .h-6,
+    .dashboard-container .w-5,
+    .dashboard-container .h-5 {
+      width: 22px !important;
+      height: 22px !important;
+    }
+
+    .dashboard-container .border-2 {
+      border-width: 1px !important;
+    }
+
+    .dashboard-container .font-black {
+      font-weight: 800 !important;
+    }
+
+    .dashboard-container .tracking-wide,
+    .dashboard-container .tracking-wider,
+    .dashboard-container .tracking-widest {
+      letter-spacing: 0.02em !important;
+    }
+  }
+
+  /* Tablet portrait: 768px - 899px */
+  @media (min-width: 768px) and (max-width: 899px) {
+    .dashboard-page {
+      min-height: 100dvh !important;
+      overflow-y: auto !important;
+    }
+
+    .dashboard-container {
+      padding: 6px !important;
+    }
+
+    .dashboard-container .grid {
+      gap: 6px !important;
+    }
+
+    .dashboard-container .md\\:grid-cols-12 {
+      grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    }
+
+    .dashboard-container .md\\:col-span-8,
+    .dashboard-container .md\\:col-span-4 {
+      grid-column: span 12 / span 12 !important;
+    }
+
+    .dashboard-container .text-3xl,
+    .dashboard-container .md\\:text-3xl {
+      font-size: 20px !important;
+    }
+
+    .dashboard-container .text-2xl,
+    .dashboard-container .md\\:text-2xl {
+      font-size: 18px !important;
+    }
+
+    .dashboard-container .text-xl,
+    .dashboard-container .md\\:text-xl {
+      font-size: 16px !important;
+    }
+
+    .dashboard-container input,
+    .dashboard-container select {
+      height: 32px !important;
+      font-size: 11px !important;
+    }
+  }
+
+  /* iPad 4 landscape / 1024x768 compact */
+  @media (min-width: 900px) and (max-width: 1100px) and (max-height: 820px) {
+    .dashboard-page {
+      min-height: 100dvh !important;
+      height: auto !important;
+      overflow-y: auto !important;
+    }
+
+    .dashboard-container {
+      max-width: 100% !important;
+      padding: 3px 6px !important;
+      gap: 4px !important;
+    }
+
+    .dashboard-container * {
+      line-height: 1.04 !important;
+    }
+
+    .dashboard-container .grid {
+      gap: 4px !important;
+    }
+
+    .dashboard-container .rounded-2xl {
+      border-radius: 10px !important;
+    }
+
+    .dashboard-container .rounded-xl {
+      border-radius: 8px !important;
+    }
+
+    .dashboard-container .rounded-lg {
+      border-radius: 6px !important;
+    }
+
+    .dashboard-container .p-3,
+    .dashboard-container .md\\:p-3 {
+      padding: 5px !important;
+    }
+
+    .dashboard-container .p-2,
+    .dashboard-container .md\\:p-2,
+    .dashboard-container .p-2\\.5,
+    .dashboard-container .md\\:p-2\\.5 {
+      padding: 4px !important;
+    }
+
+    .dashboard-container .p-1,
+    .dashboard-container .p-1\\.5 {
+      padding: 3px !important;
+    }
+
+    .dashboard-container .px-4,
+    .dashboard-container .md\\:px-4,
+    .dashboard-container .px-3,
+    .dashboard-container .md\\:px-3 {
+      padding-left: 5px !important;
+      padding-right: 5px !important;
+    }
+
+    .dashboard-container .py-2,
+    .dashboard-container .md\\:py-2,
+    .dashboard-container .py-1\\.5,
+    .dashboard-container .md\\:py-1\\.5 {
+      padding-top: 3px !important;
+      padding-bottom: 3px !important;
+    }
+
+    .dashboard-container .text-3xl,
+    .dashboard-container .md\\:text-3xl {
+      font-size: 15px !important;
+    }
+
+    .dashboard-container .text-2xl,
+    .dashboard-container .md\\:text-2xl {
+      font-size: 14px !important;
+    }
+
+    .dashboard-container .text-xl,
+    .dashboard-container .md\\:text-xl,
+    .dashboard-container .lg\\:text-xl,
+    .dashboard-container .lg\\:text-\\[18px\\] {
+      font-size: 12px !important;
+    }
+
+    .dashboard-container .text-lg,
+    .dashboard-container .text-base,
+    .dashboard-container .md\\:text-base {
+      font-size: 11px !important;
+    }
+
+    .dashboard-container .text-sm,
+    .dashboard-container .md\\:text-sm,
+    .dashboard-container .lg\\:text-\\[15px\\],
+    .dashboard-container .lg\\:text-\\[13px\\],
+    .dashboard-container .lg\\:text-\\[12px\\] {
+      font-size: 9.5px !important;
+    }
+
+    .dashboard-container .text-xs,
+    .dashboard-container .md\\:text-xs,
+    .dashboard-container .text-\\[11px\\],
+    .dashboard-container .md\\:text-\\[11px\\],
+    .dashboard-container .text-\\[10px\\],
+    .dashboard-container .md\\:text-\\[10px\\] {
+      font-size: 7.5px !important;
+    }
+
+    .dashboard-container input,
+    .dashboard-container select {
+      height: 25px !important;
+      font-size: 9px !important;
+      padding: 2px 5px !important;
+    }
+
+    .dashboard-container label {
+      font-size: 7.5px !important;
+    }
+
+    .dashboard-container svg {
+      width: 12px !important;
+      height: 12px !important;
+    }
+
+    .dashboard-container .w-14,
+    .dashboard-container .md\\:w-14,
+    .dashboard-container .h-14,
+    .dashboard-container .md\\:h-14 {
+      width: 30px !important;
+      height: 30px !important;
+    }
+
+    .dashboard-container .w-10,
+    .dashboard-container .md\\:w-10,
+    .dashboard-container .h-10,
+    .dashboard-container .md\\:h-10 {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .dashboard-container .w-8,
+    .dashboard-container .h-8 {
+      width: 22px !important;
+      height: 22px !important;
+    }
+
+    .dashboard-container .w-6,
+    .dashboard-container .h-6,
+    .dashboard-container .w-5,
+    .dashboard-container .h-5 {
+      width: 16px !important;
+      height: 16px !important;
+    }
+
+    .dashboard-container .font-black {
+      font-weight: 800 !important;
+    }
+
+    .dashboard-container .tracking-wide,
+    .dashboard-container .tracking-wider,
+    .dashboard-container .tracking-widest {
+      letter-spacing: 0.015em !important;
+    }
+
+    .dashboard-container .border-2 {
+      border-width: 1px !important;
+    }
+  }
+`}</style>
       <div
-        className={`min-h-screen w-full p-0 m-0 ${
+          className={`dashboard-page  w-full p-0 m-0 ${
           isDarkMode
             ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
             : 'bg-gradient-to-br from-blue-100 via-sky-100 to-blue-50'
         }`}
         style={{ margin: 0, padding: 0 }}
       >
-      <div className="
+     <div className="
+      dashboard-container
       max-w-[1800px] 
       mx-auto 
       flex flex-col gap-2">
@@ -2287,8 +2777,7 @@ const PROCESS_STAGE_IDS = {
   'UnWash Godown': [2],
   '1st Wash': [4],
   '2nd Dry': [3],
-  'Laser': [11],
-  'Acid Wash': [12],
+  'Laser & Acid Wash': [11, 12],
 };
 
 const DRYER_STAGE_IDS = {
@@ -2333,24 +2822,30 @@ const TopSummaryCards = ({ isDarkMode, dashboardData, onCardClick }) => {
       delivery: dashboardData?.['2nd Dry']?.delivery || 0,
       showBoth: true,
     }, 
-        {
-      title: 'Laser  ',
+    {
+      title: 'Laser & Acid Wash',
       type: 'blue',
-      icon: 'water',
-      delivery: dashboardData?.['Laser']?.delivery || 0,
-      showDeliveryOnly: true,
-    },
-        {
-      title: 'Acid Wash  ',
-      type: 'blue',
-      icon: 'water',
+      icon: 'chart',
+      received: dashboardData?.['Laser']?.delivery || 0,
       delivery: dashboardData?.['Acid Wash']?.delivery || 0,
-      showDeliveryOnly: true,
+      leftLabel: 'Laser',
+      rightLabel: 'Acid Wash',
+      showBoth: true,
+    },
+    {
+      title: 'Comming Soon',
+      type: 'blue',
+      icon: 'chart',
+      received: dashboardData?.['Laser']?.delivery || 0,
+      delivery: dashboardData?.['Acid Wash']?.delivery || 0,
+      leftLabel: 'Laser',
+      rightLabel: 'Acid Wash',
+      showBoth: true,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
+    <div className="top-summary-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
       {cards.map((card, index) => (
         <TopCard
           key={index}
@@ -2426,17 +2921,17 @@ const TopCard = ({ card, isDarkMode, onCardClick }) => {
         <div className="flex items-center justify-between">
           <CardIcon type={card.type} />
           <div className="flex gap-3">
-            <StatBox
-              label="Received"
+          <StatBox
+              label={card.leftLabel || 'Received'}
               value={card.received}
               trend="up"
               isDarkMode={isDarkMode}
-            />
+            /> 
             <div
               className={`w-px ${isOrange ? 'bg-orange-200' : 'bg-blue-200'}`}
             />
             <StatBox
-              label="Delivery"
+              label={card.rightLabel || 'Delivery'}
               value={card.delivery}
               trend="down"
               isGreen
@@ -3271,7 +3766,7 @@ const DryerProductionSummary = ({ isDarkMode, dashboardData, onCardClick }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
+    <div className="dryer-summary-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5">
       {dryers.map((dryer, index) => (
         <DryerCard
           key={index}
@@ -3373,6 +3868,6 @@ const DryerIcon = ({ isDarkMode }) => (
       <circle cx="32" cy="38" r="3" fill={isDarkMode ? '#7dd3fc' : '#075985'} />
     </svg>
   </div>
-);
+); 
 
 export default Dashboard;

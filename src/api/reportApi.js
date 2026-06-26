@@ -20,7 +20,9 @@ export const reportApi = {
       WashTargetStartDate: params.washTargetStartDate,
       WashTargetEndDate: params.washTargetEndDate,
       SortBy: params.sortBy,
-      SortOrder: params.sortOrder
+      SortOrder: params.sortOrder,
+      ShiftType: params.shiftType,
+      IsCompleted: params.isCompleted
     };
 
     // Remove undefined/null/empty strings to keep URL clean
@@ -50,6 +52,8 @@ export const reportApi = {
       EndDate: params.endDate,
       WashTargetStartDate: params.washTargetStartDate,
       WashTargetEndDate: params.washTargetEndDate,
+      ShiftType: params.shiftType,
+      IsCompleted: params.isCompleted
     };
 
     // Remove undefined/null/empty strings
@@ -86,6 +90,8 @@ export const reportApi = {
       WashTargetEndDate: params.washTargetEndDate,
       SortBy: params.sortBy,
       SortOrder: params.sortOrder,
+      ShiftType: params.shiftType,
+      IsCompleted: params.isCompleted
     };
 
     // Remove undefined/null/empty strings

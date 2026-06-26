@@ -76,6 +76,8 @@ const Reports = () => {
     endDate: '',
     washTargetStartDate: '',
     washTargetEndDate: '',
+    shiftType: '',
+    isCompleted: '',
   });
   const [appliedFilters, setAppliedFilters] = useState({});
 
@@ -221,6 +223,8 @@ const Reports = () => {
       endDate: '',
       washTargetStartDate: '',
       washTargetEndDate: '',
+      shiftType: '',
+      isCompleted: '',
     };
     setFilterParams(reset);
     setAppliedFilters({});
@@ -438,9 +442,27 @@ const Reports = () => {
                   <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Wash Target Start</label>
                   <input type="date" name="washTargetStartDate" value={filterParams.washTargetStartDate} onChange={handleFilterChange} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 dark:bg-slate-700 dark:text-slate-200" />
                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Wash Target End</label>
-                  <input type="date" name="washTargetEndDate" value={filterParams.washTargetEndDate} onChange={handleFilterChange} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 dark:bg-slate-700 dark:text-slate-200" />
+               <div>
+                   <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Wash Target End</label>
+                   <input type="date" name="washTargetEndDate" value={filterParams.washTargetEndDate} onChange={handleFilterChange} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 dark:bg-slate-700 dark:text-slate-200" />
+               </div>
+
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Shift Type</label>
+                  <select name="shiftType" value={filterParams.shiftType} onChange={handleFilterChange} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 dark:bg-slate-700 dark:text-slate-200">
+                     <option value="">All Shifts</option>
+                     <option value="1">Day</option>
+                     <option value="2">Night</option>
+                  </select>
+               </div>
+
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Completion Status</label>
+                  <select name="isCompleted" value={filterParams.isCompleted} onChange={handleFilterChange} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg outline-none focus:border-primary-500 dark:bg-slate-700 dark:text-slate-200">
+                     <option value="">All</option>
+                     <option value="true">Completed</option>
+                     <option value="false">Pending</option>
+                  </select>
                </div>
              </div>
 
