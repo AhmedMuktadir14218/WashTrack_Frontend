@@ -76,6 +76,24 @@ const DRYER_COLUMNS = [
   ...DRYER_STAGE_COLUMNS,
 ];
 
+// Wash Delivery mode columns (from /api/TusukaExtreme/get-wash-delivery-details)
+const WASH_DELIVERY_COLUMNS = [
+  { key: 'factory', label: 'Factory', width: 'min-w-[80px]' },
+  { key: 'unit', label: 'Unit', width: 'min-w-[90px]' },
+  { key: 'workOrderNo', label: 'Work Order No', width: 'min-w-[120px]' },
+  { key: 'buyerDepartment', label: 'Buyer', width: 'min-w-[150px]' },
+  { key: 'styleName', label: 'Style Name', width: 'min-w-[180px]' },
+  { key: 'fastReactNo', label: 'FastReact No', width: 'min-w-[220px]' },
+  { key: 'color', label: 'Color', width: 'min-w-[120px]' },
+  { key: 'orderQuantity', label: 'Order Qty', width: 'min-w-[90px]', align: 'text-right' },
+  { key: 'washTargetDate', label: 'Target Date', width: 'min-w-[120px]' },
+  { key: 'tod', label: 'TOD', width: 'min-w-[120px]' },
+  { key: 'receive', label: 'Receive', width: 'min-w-[100px]', align: 'text-right', isStage: true },
+  { key: 'delivery', label: 'Delivery', width: 'min-w-[100px]', align: 'text-right', isStage: true },
+  { key: 'totalWashReceived', label: 'Total Recv', width: 'min-w-[110px]', align: 'text-right' },
+  { key: 'totalWashDelivery', label: 'Total Delv', width: 'min-w-[110px]', align: 'text-right' },
+];
+
 // ============ CUSTOM SVG ICONS ============
 const IconX = ({ className = 'w-5 h-5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -162,7 +180,9 @@ const DashboardTableModal = ({
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  const displayTitle = modalTitle || (mode === 'dryer' ? 'Dryer-wise Details' : 'Process wise Details');
+  const displayTitle = modalTitle || (mode === 'dryer' ? 'Dryer-wise Details' : mode === 'wash-delivery' ? 'Total Wash Delivery Details' : 'Process wise Details');
+
+  const isWashDelivery = mode === 'wash-delivery';
 
   const activeStageIds = processStageIds || (mode === 'dryer' ? DRYER_STAGE_IDS : WASH_STAGE_IDS);
 
@@ -178,7 +198,7 @@ const DashboardTableModal = ({
         isStage: true,
       }));
 
-  const baseColumns = [
+  const processBaseColumns = [
     { key: 'factory', label: 'Factory', width: 'min-w-[80px]' },
     { key: 'unit', label: 'Unit', width: 'min-w-[90px]' },
     { key: 'workOrderNo', label: 'Work Order No', width: 'min-w-[120px]' },
@@ -192,12 +212,12 @@ const DashboardTableModal = ({
     ...activeStageColumns,
   ];
 
-  const columns = baseColumns;
+  const columns = isWashDelivery ? WASH_DELIVERY_COLUMNS : processBaseColumns;
 
   // Local filter state for modal-specific filters
   const [localFilters, setLocalFilters] = useState({
     search: '',
-    transactionType: 'Delivery', // Default to Delivery
+    transactionType: isWashDelivery ? '' : 'Delivery',
   });
 
   // Combined filters - use Dashboard's filters + modal's local filters
@@ -267,6 +287,13 @@ const getAccessibleUnits = (plantId) => {
 
   // ============ AGGREGATE DATA BY WORK ORDER ============
   const aggregatedData = useMemo(() => {
+    if (isWashDelivery) {
+      return rawData.map(row => ({
+        ...row,
+        buyerDepartment: row.buyer || row.buyerDepartment || '',
+      }));
+    }
+
     const groups = {};
 
     rawData.forEach(row => {
@@ -316,7 +343,7 @@ const getAccessibleUnits = (plantId) => {
     });
 
     return Object.values(groups);
-  }, [rawData, combinedFilters.transactionType, activeStageIds, mode]);
+  }, [rawData, combinedFilters.transactionType, activeStageIds, mode, isWashDelivery]);
 
   // Reset page when filters change (server-side filters)
   useEffect(() => {
@@ -327,6 +354,39 @@ const getAccessibleUnits = (plantId) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      if (isWashDelivery) {
+        const queryParams = {
+          fromDate: combinedFilters.fromDate,
+          toDate: combinedFilters.toDate,
+          pageNumber: currentPage,
+          pageSize: pageSize,
+        };
+
+        if (combinedFilters.factory) {
+          queryParams.plant = [combinedFilters.factory];
+        }
+        if (combinedFilters.unit) {
+          queryParams.washUnit = [combinedFilters.unit];
+        }
+
+        const response = await dashboardApi.getWashDeliveryDetails(queryParams);
+        if (response && response.data) {
+          setRawData(response.data || []);
+          setPagination({
+            currentPage: response.pageNumber || 1,
+            totalPages: response.totalPages || 1,
+            pageSize: response.pageSize || 20,
+            totalRecords: response.totalRecords || 0,
+            hasNext: response.pageNumber < response.totalPages,
+            hasPrevious: response.pageNumber > 1,
+          });
+        } else {
+          setRawData([]);
+          setPagination(null);
+        }
+        return;
+      }
+
       const buildPayload = (unit) => {
         const payload = {
           fromDate: combinedFilters.fromDate,
@@ -406,12 +466,12 @@ const getAccessibleUnits = (plantId) => {
     } finally {
       setLoading(false);
     }
-  }, [combinedFilters.fromDate, combinedFilters.toDate, combinedFilters.factory, combinedFilters.unit, combinedFilters.shift, combinedFilters.search, combinedFilters.transactionType, currentPage, activeStageIds]);
+  }, [combinedFilters.fromDate, combinedFilters.toDate, combinedFilters.factory, combinedFilters.unit, combinedFilters.shift, combinedFilters.search, combinedFilters.transactionType, currentPage, activeStageIds, isWashDelivery]);
 
   const handleResetFilters = () => {
     setLocalFilters({
       search: '',
-      transactionType: 'Delivery',
+      transactionType: isWashDelivery ? '' : 'Delivery',
     });
   };
 
@@ -472,6 +532,8 @@ const getAccessibleUnits = (plantId) => {
   // Mode badge color
   const modeColor = mode === 'dryer'
     ? { bg: isDarkMode ? 'bg-sky-500/20' : 'bg-sky-100', border: isDarkMode ? 'border-sky-400/40' : 'border-sky-300', text: isDarkMode ? 'text-sky-400' : 'text-sky-700' }
+    : mode === 'wash-delivery'
+    ? { bg: isDarkMode ? 'bg-emerald-500/20' : 'bg-emerald-100', border: isDarkMode ? 'border-emerald-400/40' : 'border-emerald-300', text: isDarkMode ? 'text-emerald-400' : 'text-emerald-700' }
     : { bg: isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100', border: isDarkMode ? 'border-blue-400/40' : 'border-blue-300', text: isDarkMode ? 'text-blue-400' : 'text-blue-700' };
 
   // Stage columns count (for mobile card)
@@ -510,11 +572,11 @@ const getAccessibleUnits = (plantId) => {
                   {displayTitle}
                 </h2>
                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${modeColor.bg} ${modeColor.border} ${modeColor.text}`}>
-                  {mode === 'dryer' ? 'Dryer' : 'Process'}
+                  {mode === 'dryer' ? 'Dryer' : mode === 'wash-delivery' ? 'Wash Delivery' : 'Process'}
                 </span>
               </div>
               <p className={`text-[10px] font-semibold tracking-wider uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                {pagination && <span>({aggregatedData.length} unique work orders from {pagination.totalRecords.toLocaleString()} records)</span>}
+                {pagination && <span>({isWashDelivery ? rawData.length : aggregatedData.length} records of {pagination.totalRecords.toLocaleString()})</span>}
               </p>
             </div>
           </div>
@@ -575,6 +637,11 @@ const getAccessibleUnits = (plantId) => {
               <FilterInput label="Shift" type="select" value={combinedFilters.shift} onChange={(v) => handleFilterChange('shift', v)} isDarkMode={isDarkMode}
                 options={[{ value: '', label: 'All Shifts' }, { value: '1', label: 'Day' }, { value: '2', label: 'Night' }]}
               />
+              {!isWashDelivery && (
+              <FilterInput label="Transaction" type="select" value={combinedFilters.transactionType} onChange={(v) => handleFilterChange('transactionType', v)} isDarkMode={isDarkMode}
+                options={[{ value: '', label: 'All' }, { value: 'Receive', label: 'Receive' }, { value: 'Delivery', label: 'Delivery' }]}
+              />
+              )}
 
             </div>
           )}
@@ -649,11 +716,24 @@ const getAccessibleUnits = (plantId) => {
                     <MobileField label="Buyer" value={row.buyerDepartment} isDarkMode={isDarkMode} />
                     <MobileField label="Order Qty" value={formatNumber(row.orderQuantity)} isDarkMode={isDarkMode} />
                     <MobileField label="Target Date" value={formatDate(row.washTargetDate)} isDarkMode={isDarkMode} />
-                    <MobileField label={mode === 'dryer' ? 'Total Revd' : 'Total Recv'} value={formatNumber(row.totalWashReceived)} isDarkMode={isDarkMode} />
-                    <MobileField label={mode === 'dryer' ? 'Total Dlv' : 'Total Delv'} value={formatNumber(row.totalWashDelivery)} isDarkMode={isDarkMode} />
+                    {isWashDelivery ? (
+                      <>
+                        <MobileField label="Color" value={row.color} isDarkMode={isDarkMode} />
+                        <MobileField label="TOD" value={formatDate(row.tod)} isDarkMode={isDarkMode} />
+                        <MobileField label="Receive" value={formatNumber(row.receive)} isDarkMode={isDarkMode} />
+                        <MobileField label="Delivery" value={formatNumber(row.delivery)} isDarkMode={isDarkMode} />
+                        <MobileField label="Total Recv" value={formatNumber(row.totalWashReceived)} isDarkMode={isDarkMode} />
+                        <MobileField label="Total Delv" value={formatNumber(row.totalWashDelivery)} isDarkMode={isDarkMode} />
+                      </>
+                    ) : (
+                      <>
+                        <MobileField label={mode === 'dryer' ? 'Total Revd' : 'Total Recv'} value={formatNumber(row.totalWashReceived)} isDarkMode={isDarkMode} />
+                        <MobileField label={mode === 'dryer' ? 'Total Dlv' : 'Total Delv'} value={formatNumber(row.totalWashDelivery)} isDarkMode={isDarkMode} />
+                      </>
+                    )}
                   </div>
                   {/* Process Stage Quantities */}
-                  {stageColumns.length > 0 && (
+                  {!isWashDelivery && stageColumns.length > 0 && (
                     <div className={`mt-2 pt-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
                       <p className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                         {mode === 'dryer' ? 'Dryer Process Qty' : 'Process Stage Qty'}
@@ -773,6 +853,17 @@ const CellRenderer = ({ row, colKey, isDarkMode, isStage }) => {
       return <span className="truncate max-w-[160px] block" title={row[colKey]}>{row[colKey] || '\u2014'}</span>;
     case 'fastReactNo':
       return <span className="truncate max-w-[200px] block text-[11px]" title={row[colKey]}>{row[colKey] || '\u2014'}</span>;
+    case 'color':
+      return <span className="truncate max-w-[120px] block text-[11px]" title={row[colKey]}>{row[colKey] || '\u2014'}</span>;
+    case 'tod':
+      return formatDate(row[colKey]);
+    case 'receive':
+    case 'delivery':
+      return (
+        <span className={`font-bold tabular-nums ${row[colKey] > 0 ? (isDarkMode ? 'text-cyan-400' : 'text-cyan-700') : (isDarkMode ? 'text-slate-600' : 'text-slate-300')}`}>
+          {formatNumber(row[colKey])}
+        </span>
+      );
     case 'orderQuantity':
     case 'totalWashReceived':
     case 'totalWashDelivery':

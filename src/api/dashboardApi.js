@@ -123,4 +123,44 @@ export const dashboardApi = {
       return [];
     }
   },
+
+  getWashDelivery: async (params = {}) => {
+    try {
+      const queryParams = {};
+      if (params.fromDate) queryParams.fromDate = params.fromDate;
+      if (params.toDate) queryParams.toDate = params.toDate;
+      if (params.plant && params.plant.length > 0) queryParams.plant = params.plant;
+      if (params.washUnit && params.washUnit.length > 0) queryParams.washUnit = params.washUnit;
+
+      const response = await axiosInstance.get(`${API_BASE_URL}/TusukaExtreme/get-wash-delivery`, {
+        params: queryParams,
+        paramsSerializer: { indexes: null },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching wash delivery:', error);
+      return { success: false, data: [] };
+    }
+  },
+
+  getWashDeliveryDetails: async (params = {}) => {
+    try {
+      const queryParams = {};
+      if (params.fromDate) queryParams.fromDate = params.fromDate;
+      if (params.toDate) queryParams.toDate = params.toDate;
+      if (params.plant && params.plant.length > 0) queryParams.plant = params.plant;
+      if (params.washUnit && params.washUnit.length > 0) queryParams.washUnit = params.washUnit;
+      if (params.pageNumber) queryParams.pageNumber = params.pageNumber;
+      if (params.pageSize) queryParams.pageSize = params.pageSize;
+
+      const response = await axiosInstance.get(`${API_BASE_URL}/TusukaExtreme/get-wash-delivery-details`, {
+        params: queryParams,
+        paramsSerializer: { indexes: null },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching wash delivery details:', error);
+      return { success: false, data: [], pagination: null };
+    }
+  },
 };
