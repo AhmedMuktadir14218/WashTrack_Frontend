@@ -104,7 +104,7 @@ const Plans = () => {
         // ✅ Updated CSV Headers to match requested order
         const headers = [
           'Plan Date', 'Unit', 'Work Order', 'Buyer', 'Style', 'Color', 'PO',
-          'Shift', 'Process Stage', 'Machines QTY', 'Order Qty', 'Wash Balance',
+          'Shift', 'Process Stage', 'Machines QTY', 'Machine Names', 'Order Qty', 'Wash Balance',
           'Base Target', 'Final Target'
         ];
 
@@ -125,6 +125,7 @@ const Plans = () => {
             plan.shift === 1 ? 'Day' : 'Night',
             plan.processStageName || '',
             machineQty,
+            `"${(plan.machines || []).map(m => m.machineCode || '').join(', ').replace(/"/g, '""')}"`,
             plan.orderQuantity || 0,
             plan.washBalance || 0,
             plan.baseTargetQty || 0,
@@ -349,6 +350,7 @@ const Plans = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Shift</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Process Stage</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Machines QTY</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Machine Names</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Order Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Wash Balance</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Base Target</th>
@@ -358,7 +360,7 @@ const Plans = () => {
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={14} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
+                  <td colSpan={15} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
                     <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -368,7 +370,7 @@ const Plans = () => {
                 </tr>
               ) : plans.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
+                  <td colSpan={15} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
                     <svg className="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
@@ -412,6 +414,9 @@ const Plans = () => {
                     </td>
                     <td className="px-4 py-3 text-center whitespace-nowrap text-sm font-bold text-gray-700 dark:text-slate-300">
                       {plan.machines ? plan.machines.length : 0}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-400">
+                      {(plan.machines || []).map(m => m.machineCode || '').join(', ') || '-'}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
                       {plan.orderQuantity?.toLocaleString()}
