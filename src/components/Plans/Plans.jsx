@@ -2,12 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { plansApi } from '../../api/plansApi';
+import { useAuth } from '../../hooks/useAuth';
 
 const Plans = () => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const isAdminUser = isAdmin();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(null);
   const [plantUnitList, setPlantUnitList] = useState([]);
   const [pagination, setPagination] = useState({
     pageNumber: 1,
@@ -20,7 +24,7 @@ const Plans = () => {
     plantId: '',
     unitId: '',
     shift: '',
-    processStageId: '', // ✅ Added processStageId filter
+    processStageId: '',  
     search: ''
   });
 
@@ -104,7 +108,7 @@ const Plans = () => {
         // ✅ Updated CSV Headers to match requested order
         const headers = [
           'Plan Date', 'Unit', 'Work Order', 'Buyer', 'Style', 'Color', 'PO',
-          'Shift', 'Process Stage', 'Machines QTY', 'Machine Names', 'Order Qty', 'Wash Balance',
+          'Wash Target Date', 'Shift', 'Process Stage', 'Machines QTY', 'Machine Names', 'Order Qty', 'Wash Balance',
           'Base Target', 'Final Target'
         ];
 
@@ -122,6 +126,7 @@ const Plans = () => {
             `"${(plan.styleName || '').replace(/"/g, '""')}"`,
             `"${(plan.color || '').replace(/"/g, '""')}"`,
             `"${(plan.washType || '').replace(/"/g, '""')}"`,
+            plan.washTargetDate ? new Date(plan.washTargetDate).toLocaleDateString() : '',
             plan.shift === 1 ? 'Day' : 'Night',
             plan.processStageName || '',
             machineQty,
@@ -183,9 +188,31 @@ const Plans = () => {
     setPagination(prev => ({ ...prev, pageNumber: newPage }));
   };
 
+  const handleDelete = async (planId) => {
+    if (!confirm('Are you sure you want to delete this wash plan?')) {
+      return;
+    }
+
+    try {
+      setDeleting(planId);
+      const userId = JSON.parse(localStorage.getItem('user'))?.userId || 1;
+      
+      await plansApi.deleteWashPlan(planId, userId);
+      
+      setPlans(prev => prev.filter(p => p.id !== planId));
+      setPagination(prev => ({ ...prev, totalRecords: prev.totalRecords - 1 }));
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      alert('Failed to delete plan. Please try again.');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const uniquePlants = Array.from(new Map(plantUnitList.map(p => [p.plantId, p])).values());
   const filteredUnits = plantUnitList.filter(p => p.plantId === parseInt(filters.plantId));
   const totalPages = Math.ceil(pagination.totalRecords / pagination.pageSize);
+  const tableColSpan = isAdminUser ? 17 : 16;
 
   return (
     <div className="p-6 dark:bg-slate-900 min-h-screen">
@@ -347,20 +374,24 @@ const Plans = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Style</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Color</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">PO</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Wash Target Date</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Shift</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Process Stage</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Machines QTY</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Machine Names</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Order Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Wash Balance</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Base Target</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Final Target</th>
-              </tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Wash Balance</th> 
+                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Base Target</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Final Target</th>
+                 {isAdminUser && (
+                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+                 )}
+               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={15} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
+               {loading ? (
+                 <tr>
+                   <td colSpan={tableColSpan} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
                     <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -368,9 +399,9 @@ const Plans = () => {
                     Loading...
                   </td>
                 </tr>
-              ) : plans.length === 0 ? (
-                <tr>
-                  <td colSpan={15} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
+               ) : plans.length === 0 ? (
+                 <tr>
+                   <td colSpan={tableColSpan} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
                     <svg className="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
@@ -390,17 +421,20 @@ const Plans = () => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400 font-medium">
                       {plan.workOrderNo}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400 max-w-[100px] truncate" title={plan.buyer || plan.buyerDepartment}>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">
                       {plan.buyer || plan.buyerDepartment} 
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-200 max-w-[140px] truncate" title={plan.styleName}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-200">
                       {plan.styleName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-300 max-w-[100px] truncate" title={plan.color}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-slate-300">
                       {plan.color}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-400">
                       {plan.washType}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
+                      {plan.washTargetDate ? new Date(plan.washTargetDate).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${plan.shift === 1 ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
@@ -429,10 +463,31 @@ const Plans = () => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200 font-medium">
                       {plan.baseTargetQty?.toLocaleString() || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-green-700 dark:text-green-400 font-semibold">
-                      {plan.finalTargetQty?.toLocaleString() || '-'}
-                    </td>                    
-                  </tr>
+                     <td className="px-4 py-3 whitespace-nowrap text-sm text-green-700 dark:text-green-400 font-semibold">
+                       {plan.finalTargetQty?.toLocaleString() || '-'}
+                     </td>
+                     {isAdminUser && (
+                       <td className="px-4 py-3 whitespace-nowrap text-center">
+                         <button
+                           onClick={() => handleDelete(plan.id)}
+                           disabled={deleting === plan.id}
+                           className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                           title="Delete plan"
+                         >
+                           {deleting === plan.id ? (
+                             <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                             </svg>
+                           ) : (
+                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                           )}
+                         </button>
+                       </td>
+                     )}
+                   </tr>
                 ))
               )}
             </tbody>

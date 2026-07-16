@@ -41,6 +41,7 @@ const PROCESS_STAGES = [
   { id: 11, name: 'Laser' },
   { id: 12, name: 'Acid Wash' },
   { id: 13, name: 'Ozon' },
+  { id: 14, name: 'Acid Neutral' },
 ];
 
 const PLANTS = [

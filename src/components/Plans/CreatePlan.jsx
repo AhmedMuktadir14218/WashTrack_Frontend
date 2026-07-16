@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { plansApi } from '../../api/plansApi';
 import toast from 'react-hot-toast';
 
-const WASH_STAGE_IDS = [4, 5]; // 1st Wash, Final Wash
+const WASH_STAGE_IDS = [4, 5,14]; // 1st Wash, Final Wash
 const DRY_STAGE_IDS = [1, 3]; // 1st Dry, 2nd Dry
 
 const CreatePlan = () => {
@@ -589,23 +589,23 @@ const CreatePlan = () => {
         //   };
         // }
         // For wash stage: send all values
-        return {
-          workOrderId: item.workOrderId,
-          processStageId: selectedProcessStage.processStageId,
-          planDate,
-          shift: parseInt(shift),
-          plantId: parseInt(plantId),
-          unitId: parseInt(unitId),
-          machineIds: item.machineIds,
-          baseTargetQty: item.baseTargetQty,
-          percentage: item.percentage,
-          finalTargetQty: item.finalTargetQty,
-          adjustedTargetQty: item.adjustedTargetQty || item.finalTargetQty,
-          remarks: item.remarks || '',
-          isDeleted: false,
-          createdBy: user?.id || 0,
-          createdAt: new Date().toISOString()
-        };
+        // return {
+        //   workOrderId: item.workOrderId,
+        //   processStageId: selectedProcessStage.processStageId,
+        //   planDate,
+        //   shift: parseInt(shift),
+        //   plantId: parseInt(plantId),
+        //   unitId: parseInt(unitId),
+        //   machineIds: item.machineIds,
+        //   baseTargetQty: item.baseTargetQty,
+        //   percentage: item.percentage,
+        //   finalTargetQty: item.finalTargetQty,
+        //   adjustedTargetQty: item.adjustedTargetQty || item.finalTargetQty,
+        //   remarks: item.remarks || '',
+        //   isDeleted: false,
+        //   createdBy: user?.id || 0,
+        //   createdAt: new Date().toISOString()
+        // };
       });
 
       await plansApi.createWashPlan(planData);
@@ -831,11 +831,13 @@ const CreatePlan = () => {
                     <table className="w-full text-sm" style={{ minWidth: isWashStage ? '1010px' : '810px' }}>
                        <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10">
                           <tr>
-                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-8"></th>
-                            <th className="px-2 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">WO/PO No</th>
-                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-28">Style / Color</th>
-                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-28">Buyer / Marks</th>
+                            {/* <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-8"></th> */}
+                            <th className="px-2 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-8">WO/PO No</th>
+                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Style / Color</th>
+                            <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Buyer / Marks</th>
                             <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Plant / Unit</th>
+                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">Wash Tgt Date</th>
+                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-14">TOD</th>
                             <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">Ord Qty</th>
                            <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider w-16">Balance</th>
                            {!isDryStage && (
@@ -861,11 +863,11 @@ const CreatePlan = () => {
                           const item = getPlanItem(order.workOrderNo);
                           return (
                             <tr key={`${order.workOrderNo}-${idx}`} className={`transition-colors ${added ? 'bg-indigo-50/40 dark:bg-indigo-500/10' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
-                              <td className="px-3 py-2 text-center">
+                              {/* <td className="px-3 py-2 text-center">
                                 <input type="checkbox" checked={added}
                                   onChange={() => { if (added) handleRemoveFromPlan(order.workOrderNo); else ensureInPlan(order); }}
                                   className="h-4 w-4 text-indigo-600 border-gray-300 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer" />
-                              </td>
+                              </td> */}
                               <td className="px-3 py-2">
                                 <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">{order.workOrderNo}</div>
                                 <div className=" text-gray-900 dark:text-slate-300 text-xs">{order.fastReactNo}</div>
@@ -878,11 +880,16 @@ const CreatePlan = () => {
                                 <div className="text-xs text-gray-700 dark:text-slate-300 break-words">{order.buyer}</div>
                                 <div className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 break-words">{order.marks || '-'}</div>
                               </td>
+                              
                               <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300 font-medium">
                                 <div>{order.unit || '-'}</div>
                                 <div>{order.plant || order.plant ||  '-'}</div>
                                 </td>
-                              
+                              <td className="px-3 py-2 text-center">
+                                <div className="text-xs text-gray-700 dark:text-slate-300 break-words">{order.washTargetDate ? new Date(order.washTargetDate).toLocaleDateString() : '-'}</div> 
+                               
+                              </td>
+                               <td className="text-xs text-gray-700 dark:text-slate-300 break-words text-center">{order.tod ? new Date(order.tod).toLocaleDateString() : '-'}</td>
                               <td className="px-3 py-2 text-center text-xs text-gray-700 dark:text-slate-300">{order.orderQuantity?.toLocaleString()}</td>
                               <td className="px-3 py-2 text-center">
                                 <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${(order.washBalance ?? 0) > 0 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>

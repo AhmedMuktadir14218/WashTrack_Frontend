@@ -1084,6 +1084,172 @@ const getAccessibleUnits = (plantId) => {
       border-width: 1px !important;
     }
   }
+  @media (min-width: 1025px) and (max-width: 1800px) and (max-height: 1400px) {
+    .dashboard-page {
+      min-height: 100dvh !important;
+      height: auto !important;
+      overflow-y: auto !important;
+    }
+
+    .dashboard-container {
+      max-width: 100% !important;
+      padding: 3px 6px !important;
+      gap: 4px !important;
+    }
+
+    .dashboard-container * {
+      line-height: 1.04 !important;
+    }
+
+    .dashboard-container .grid {
+      gap: 4px !important;
+    }
+
+    .dashboard-container .rounded-2xl {
+      border-radius: 10px !important;
+    }
+
+    .dashboard-container .rounded-xl {
+      border-radius: 8px !important;
+    }
+
+    .dashboard-container .rounded-lg {
+      border-radius: 6px !important;
+    }
+
+    .dashboard-container .p-3,
+    .dashboard-container .md\\:p-3 {
+      padding: 5px !important;
+    }
+
+    .dashboard-container .p-2,
+    .dashboard-container .md\\:p-2,
+    .dashboard-container .p-2\\.5,
+    .dashboard-container .md\\:p-2\\.5 {
+      padding: 4px !important;
+    }
+
+    .dashboard-container .p-1,
+    .dashboard-container .p-1\\.5 {
+      padding: 3px !important;
+    }
+
+    .dashboard-container .px-4,
+    .dashboard-container .md\\:px-4,
+    .dashboard-container .px-3,
+    .dashboard-container .md\\:px-3 {
+      padding-left: 5px !important;
+      padding-right: 5px !important;
+    }
+
+    .dashboard-container .py-2,
+    .dashboard-container .md\\:py-2,
+    .dashboard-container .py-1\\.5,
+    .dashboard-container .md\\:py-1\\.5 {
+      padding-top: 3px !important;
+      padding-bottom: 3px !important;
+    }
+
+    .dashboard-container .text-3xl,
+    .dashboard-container .md\\:text-3xl {
+      font-size: 18px !important;
+    }
+
+    .dashboard-container .text-3xl,
+    .dashboard-container .md\\:text-3xl {
+      font-size: 18px !important;
+    }
+
+    .dashboard-container .text-xl,
+    .dashboard-container .md\\:text-xl,
+    .dashboard-container .lg\\:text-2xl,
+    .dashboard-container .lg\\:text-\\[20px\\] {
+      font-size: 18px !important;
+    }
+
+    .dashboard-container .text-lg,
+    .dashboard-container .text-base,
+    .dashboard-container .md\\:text-base {
+      font-size: 17px !important;
+    }
+
+    .dashboard-container .text-sm,
+    .dashboard-container .md\\:text-sm,
+    .dashboard-container .lg\\:text-\\[15px\\],
+    .dashboard-container .lg\\:text-\\[13px\\],
+    .dashboard-container .lg\\:text-\\[12px\\] {
+      font-size: 12px !important;
+    }
+
+    .dashboard-container .text-xs,
+    .dashboard-container .md\\:text-xs,
+    .dashboard-container .text-\\[11px\\],
+    .dashboard-container .md\\:text-\\[11px\\],
+    .dashboard-container .text-\\[10px\\],
+    .dashboard-container .md\\:text-\\[10px\\] {
+      font-size: 9.2px !important;
+    }
+
+    .dashboard-container input,
+    .dashboard-container select {
+      height: 25px !important;
+      font-size: 9px !important;
+      padding: 2px 5px !important;
+    }
+
+    .dashboard-container label {
+      font-size: 7.5px !important;
+    }
+
+    .dashboard-container svg {
+      width: 12px !important;
+      height: 12px !important;
+    }
+
+    .dashboard-container .w-14,
+    .dashboard-container .md\\:w-14,
+    .dashboard-container .h-14,
+    .dashboard-container .md\\:h-14 {
+      width: 30px !important;
+      height: 30px !important;
+    }
+
+    .dashboard-container .w-10,
+    .dashboard-container .md\\:w-10,
+    .dashboard-container .h-10,
+    .dashboard-container .md\\:h-10 {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .dashboard-container .w-8,
+    .dashboard-container .h-8 {
+      width: 22px !important;
+      height: 22px !important;
+    }
+
+    .dashboard-container .w-6,
+    .dashboard-container .h-6,
+    .dashboard-container .w-5,
+    .dashboard-container .h-5 {
+      width: 16px !important;
+      height: 16px !important;
+    }
+
+    .dashboard-container .font-black {
+      font-weight: 700 !important;
+    }
+
+    .dashboard-container .tracking-wide,
+    .dashboard-container .tracking-wider,
+    .dashboard-container .tracking-widest {
+      letter-spacing: 0.015em !important;
+    }
+
+    .dashboard-container .border-2 {
+      border-width: 1px !important;
+    }
+  }
 `}</style>
       <div
           className={`dashboard-page  w-full p-0 m-0 ${
@@ -2273,7 +2439,7 @@ const MiniDonut = ({ value, label, color, isDarkMode }) => {
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-14 h-14">
-        <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+        {/* <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
           <circle
             cx="22"
             cy="22"
@@ -2293,10 +2459,10 @@ const MiniDonut = ({ value, label, color, isDarkMode }) => {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
           />
-        </svg>
+        </svg> */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-[11px] font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-            {safeValue}%
+          <span className={`text-[16px] font-black ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+            {safeValue}
           </span>
         </div>
       </div>
@@ -2396,7 +2562,7 @@ const DryerCard = ({ dryer, isDarkMode, onCardClick }) => {
         </div>
 
         {/* Bottom Accent Line */}
-        <div className={`mt-1 md:mt-2 h-1 w-8 md:w-10 rounded-full ${isDarkMode ? 'bg-sky-500/30' : 'bg-sky-200'}`} />
+        <div className={`mt-1  ${isDarkMode ? 'bg-sky-500/30' : 'bg-sky-200'}`} />
 
       </div>
 

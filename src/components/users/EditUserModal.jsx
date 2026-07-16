@@ -26,7 +26,7 @@ const ROLES = [
   { id: 1, name: 'Admin' },
   { id: 2, name: 'User' },
   { id: 7, name: 'Incharge' },
-  { id: 9, name: 'Planner' }, // ✅ NEW
+  { id: 9, name: 'Planner' }, 
 ];
 
 const PROCESS_STAGES = [
@@ -43,6 +43,7 @@ const PROCESS_STAGES = [
   { id: 11, name: 'Laser' },
   { id: 12, name: 'Acid Wash' },
   { id: 13, name: 'Ozon' },
+  { id: 14, name: 'Acid Neutral' }
 ];
 
 const PLANTS = [

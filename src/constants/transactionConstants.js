@@ -29,7 +29,7 @@ export const STAGE_PLACEHOLDER_ICON = (stageName) => {
     'Unwash': '💧',
     '2nd Dry': '🔥',
     '1st Wash': '🧼',
-    
+    'Acid Neutral': '🧪',
     'Final Wash': '✨',
     '1st Dryer': '🏭',
     '2nd Dryer': '🏭',

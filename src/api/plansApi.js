@@ -25,5 +25,12 @@ export const plansApi = {
   // ✅ NEW: Get wash plan modal data (work orders for plan creation)
   getWashPlanModal: (params) => {
     return axiosInstance.get('/WashPlan/get-wash-plan-modal', { params });
+  },
+
+  // ✅ NEW: Delete wash plan
+  deleteWashPlan: (washPlanId, updatedBy) => {
+    return axiosInstance.delete('/WashPlan/DeleteWashPlan', { 
+      params: { washPlanId, UpdatedBy: updatedBy } 
+    });
   }
 };

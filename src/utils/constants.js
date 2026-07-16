@@ -16,6 +16,7 @@ export const PROCESS_STAGES = {
   LASER: { value: 10, label: 'Laser' },
   ACID_WASH: { value: 11, label: 'Acid Wash' },
   OZON: { value: 12, label: 'Ozon' },
+  ACID_NEUTRAL: { value: 14, label: 'Acid Neutral' },
 };
 
 // Transaction Types
@@ -44,6 +45,7 @@ export const CATEGORIES = [
   { id: 10, name: 'Laser' },
   { id: 11, name: 'Acid Wash' },
   { id: 12, name: 'Ozon' },
+  { id: 14, name: 'Acid Neutral' },
 ];
 
 // Date Format
